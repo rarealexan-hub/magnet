@@ -6,7 +6,7 @@ A web app that analyzes and optimizes dating profiles for apps like Hinge, Tinde
 
 - **Frontend**: React + Vite (port 5000)
 - **Backend**: Express + TypeScript (port 3001, proxied via Vite)
-- **AI**: OpenAI via Replit AI Integrations (gpt-5.2)
+- **AI**: OpenAI via Replit AI Integrations (gpt-5.2, with vision for screenshots)
 
 ## Project Structure
 
@@ -18,8 +18,9 @@ client/           - React frontend
     styles.css    - Full app styles
   index.html
 server/
-  index.ts        - Express server
-  ai.ts           - OpenAI integration for profile analysis/optimization
+  index.ts        - Express server (50MB body limit for screenshots)
+  ai.ts           - OpenAI integration with vision support
+  validation.ts   - Input validation
 shared/
   types.ts        - Shared TypeScript types
 ```
@@ -28,8 +29,9 @@ shared/
 
 1. **Free Profile Analysis**: Score + witty roast + mistake identification
 2. **Match Targeting**: Choose who you want to attract (7 preset types + custom)
-3. **Full Optimization** ($19): Rewritten bio, optimized prompts, photo advice, tone adjustments
-4. **Shareable Results**: Copy roast for social sharing (viral loop)
+3. **Screenshot Upload**: Upload screenshots of dating profile instead of typing it out (uses OpenAI vision)
+4. **Full Optimization** ($19): Rewritten bio, optimized prompts, photo advice, tone adjustments
+5. **Shareable Results**: Copy roast for social sharing (viral loop)
 
 ## Key Dependencies
 

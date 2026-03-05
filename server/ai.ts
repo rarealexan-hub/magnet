@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import type { ChatCompletionContentPart } from "openai/resources/chat/completions";
 import type { ProfileInput, AnalysisResult, FullOptimizationResult } from "../shared/types.js";
 
 const openai = new OpenAI({
@@ -35,18 +36,88 @@ Three profile types:
 2. SAFE/GENERIC (Most Common): Travel photos, group shots, neutral bios — underperforms
 3. ENTERTAINMENT (Polarizing): Humor, bold statements — high match rate but divisive`;
 
-export async function analyzeProfile(input: ProfileInput): Promise<AnalysisResult> {
-  const userMessage = buildProfileMessage(input);
+function parseScreenshot(raw: string): { data: string; label: string; mimeType: string } | null {
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed.data && parsed.mimeType) return parsed;
+  } catch {}
+  return null;
+}
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-5.2",
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      {
-        role: "user",
-        content: `Analyze this dating profile and give a FREE analysis (score + roast + feedback). Be entertaining and shareable — this is the viral hook.
+function buildUserContent(input: ProfileInput, promptText: string): ChatCompletionContentPart[] {
+  const parts: ChatCompletionContentPart[] = [];
+  const hasScreenshots = input.screenshots?.length > 0;
 
-${userMessage}
+  let textContent = promptText + "\n\n";
+
+  if (hasScreenshots) {
+    textContent += "The user has uploaded screenshots of their dating profile. Analyze everything visible in the images — bio text, prompts, photos, layout, everything.\n\n";
+
+    input.screenshots.forEach((raw, i) => {
+      const s = parseScreenshot(raw);
+      if (!s) return;
+      const label = s.label ? ` (${s.label})` : "";
+      textContent += `Screenshot ${i + 1}${label}:\n`;
+    });
+    textContent += "\n";
+  }
+
+  textContent += buildProfileText(input);
+
+  parts.push({ type: "text", text: textContent });
+
+  if (hasScreenshots) {
+    input.screenshots.forEach((raw) => {
+      const s = parseScreenshot(raw);
+      if (!s) return;
+      parts.push({
+        type: "image_url",
+        image_url: {
+          url: `data:${s.mimeType};base64,${s.data}`,
+          detail: "high",
+        },
+      });
+    });
+  }
+
+  return parts;
+}
+
+function buildProfileText(input: ProfileInput): string {
+  let message = `Platform: ${input.platform}\n`;
+
+  if (input.bio) {
+    message += `\nBio:\n"${input.bio}"\n`;
+  }
+
+  if (input.prompts?.length > 0) {
+    const filled = input.prompts.filter((p) => p.trim());
+    if (filled.length > 0) {
+      message += `\nPrompts/Answers:\n`;
+      filled.forEach((p, i) => {
+        message += `${i + 1}. "${p}"\n`;
+      });
+    }
+  }
+
+  if (input.photoDescriptions?.length > 0) {
+    const filled = input.photoDescriptions.filter((p) => p.trim());
+    if (filled.length > 0) {
+      message += `\nPhoto Descriptions:\n`;
+      filled.forEach((p, i) => {
+        message += `${i + 1}. ${p}\n`;
+      });
+    }
+  }
+
+  if (input.targetType) {
+    message += `\nTarget match type: ${input.customTarget || input.targetType}\n`;
+  }
+
+  return message;
+}
+
+const ANALYZE_PROMPT = `Analyze this dating profile and give a FREE analysis (score + roast + feedback). Be entertaining and shareable — this is the viral hook.
 
 Respond in this exact JSON format:
 {
@@ -65,8 +136,16 @@ Respond in this exact JSON format:
   }
 }
 
-Remember: The roast should make someone want to share their result. Think "this bio could belong to 4.7 million people" energy.`
-      }
+Remember: The roast should make someone want to share their result. Think "this bio could belong to 4.7 million people" energy.`;
+
+export async function analyzeProfile(input: ProfileInput): Promise<AnalysisResult> {
+  const content = buildUserContent(input, ANALYZE_PROMPT);
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-5.2",
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content },
     ],
     response_format: { type: "json_object" },
     temperature: 0.8,
@@ -95,18 +174,9 @@ Remember: The roast should make someone want to share their result. Think "this 
 }
 
 export async function optimizeProfile(input: ProfileInput): Promise<FullOptimizationResult> {
-  const userMessage = buildProfileMessage(input);
   const targetDescription = input.customTarget || input.targetType;
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-5.2",
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      {
-        role: "user",
-        content: `Give a FULL profile optimization for this dating profile. The user wants to attract: "${targetDescription}"
-
-${userMessage}
+  const optimizePrompt = `Give a FULL profile optimization for this dating profile. The user wants to attract: "${targetDescription}"
 
 This is the paid tier — go deep. Rewrite everything to attract their target match type. Adjust tone, remove wrong signals, add the right ones.
 
@@ -146,8 +216,15 @@ Respond in this exact JSON format:
   "targetAlignment": "<2-3 sentences explaining how the new profile specifically attracts their target type>"
 }
 
-Make the optimized content feel natural, not AI-generated. It should sound like the person but better.`
-      }
+Make the optimized content feel natural, not AI-generated. It should sound like the person but better.`;
+
+  const content = buildUserContent(input, optimizePrompt);
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-5.2",
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content },
     ],
     response_format: { type: "json_object" },
     temperature: 0.8,
@@ -179,32 +256,4 @@ Make the optimized content feel natural, not AI-generated. It should sound like 
     targetAlignment: parsed.targetAlignment ?? "",
     isPaid: true,
   };
-}
-
-function buildProfileMessage(input: ProfileInput): string {
-  let message = `Platform: ${input.platform}\n`;
-
-  if (input.bio) {
-    message += `\nBio:\n"${input.bio}"\n`;
-  }
-
-  if (input.prompts?.length > 0) {
-    message += `\nPrompts/Answers:\n`;
-    input.prompts.forEach((p, i) => {
-      if (p.trim()) message += `${i + 1}. "${p}"\n`;
-    });
-  }
-
-  if (input.photoDescriptions?.length > 0) {
-    message += `\nPhoto Descriptions:\n`;
-    input.photoDescriptions.forEach((p, i) => {
-      if (p.trim()) message += `${i + 1}. ${p}\n`;
-    });
-  }
-
-  if (input.targetType) {
-    message += `\nTarget match type: ${input.customTarget || input.targetType}\n`;
-  }
-
-  return message;
 }

@@ -23,9 +23,15 @@ export function validateProfileInput(body: unknown): ValidationResult {
   const photoDescriptions = Array.isArray(b.photoDescriptions)
     ? b.photoDescriptions.filter((p): p is string => typeof p === "string")
     : [];
+  const screenshots = Array.isArray(b.screenshots)
+    ? b.screenshots.filter((s): s is string => typeof s === "string")
+    : [];
 
-  if (!bio.trim() && prompts.every((p) => !p.trim())) {
-    return { success: false, error: "Please provide at least a bio or one prompt" };
+  const hasTextContent = bio.trim() || prompts.some((p) => p.trim());
+  const hasScreenshots = screenshots.length > 0;
+
+  if (!hasTextContent && !hasScreenshots) {
+    return { success: false, error: "Please provide at least a bio, one prompt, or upload a screenshot" };
   }
 
   if (typeof b.targetType !== "string" || !b.targetType.trim()) {
@@ -39,6 +45,7 @@ export function validateProfileInput(body: unknown): ValidationResult {
       bio,
       prompts,
       photoDescriptions,
+      screenshots,
       targetType: b.targetType as string,
       customTarget: typeof b.customTarget === "string" ? b.customTarget : undefined,
     },

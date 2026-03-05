@@ -3,6 +3,7 @@ export interface ProfileInput {
   bio: string;
   prompts: string[];
   photoDescriptions: string[];
+  screenshots: string[];
   targetType: string;
   customTarget?: string;
 }
