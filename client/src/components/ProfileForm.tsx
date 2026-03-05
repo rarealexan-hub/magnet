@@ -28,6 +28,7 @@ const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/we
 
 export function ProfileForm({ onResult }: Props) {
   const [platform, setPlatform] = useState<ProfileInput["platform"]>("hinge");
+  const [email, setEmail] = useState("");
   const [inputMode, setInputMode] = useState<InputMode>("screenshot");
   const [bio, setBio] = useState("");
   const [prompts, setPrompts] = useState<string[]>([""]);
@@ -207,6 +208,10 @@ export function ProfileForm({ onResult }: Props) {
     const hasScreenshots = screenshots.length > 0;
     const hasPhotos = currentPhotos.length > 0;
 
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError("Please enter a valid email address.");
+      return;
+    }
     if (!hasTextContent && !hasScreenshots) {
       setError("Add at least your bio, a prompt, or upload a screenshot to get started.");
       return;
@@ -232,6 +237,7 @@ export function ProfileForm({ onResult }: Props) {
 
       const input: ProfileInput = {
         platform,
+        email: email.trim(),
         bio,
         prompts: prompts.filter((p) => p.trim()),
         photoDescriptions: photoDescriptions.filter((p) => p.trim()),
@@ -304,6 +310,19 @@ export function ProfileForm({ onResult }: Props) {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="form-section">
+            <label className="form-label">Your email</label>
+            <p className="form-hint">We'll send your results here so you don't lose them.</p>
+            <input
+              type="email"
+              className="form-input"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
 
           <div className="form-section">

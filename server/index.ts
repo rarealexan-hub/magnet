@@ -195,6 +195,10 @@ app.post("/api/checkout", async (req, res) => {
       cancel_url: `https://${process.env.REPLIT_DOMAINS?.split(",")[0]}/`,
     };
 
+    if (profileInput?.email) {
+      sessionParams.customer_email = profileInput.email;
+    }
+
     if (profileInput) {
       sessionParams.metadata = {
         profileInput: JSON.stringify(profileInput).substring(0, 500),

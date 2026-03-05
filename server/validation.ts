@@ -16,6 +16,11 @@ export function validateProfileInput(body: unknown): ValidationResult {
     return { success: false, error: "Invalid platform" };
   }
 
+  const email = typeof b.email === "string" ? b.email.trim() : "";
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { success: false, error: "Please provide a valid email address" };
+  }
+
   const bio = typeof b.bio === "string" ? b.bio : "";
   const prompts = Array.isArray(b.prompts)
     ? b.prompts.filter((p): p is string => typeof p === "string")
@@ -48,6 +53,7 @@ export function validateProfileInput(body: unknown): ValidationResult {
     success: true,
     data: {
       platform: b.platform as ProfileInput["platform"],
+      email,
       bio,
       prompts,
       photoDescriptions,

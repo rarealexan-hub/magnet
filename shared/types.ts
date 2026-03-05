@@ -1,5 +1,6 @@
 export interface ProfileInput {
   platform: "hinge" | "tinder" | "bumble" | "other";
+  email: string;
   bio: string;
   prompts: string[];
   photoDescriptions: string[];
