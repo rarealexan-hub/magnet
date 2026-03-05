@@ -26,6 +26,12 @@ export function validateProfileInput(body: unknown): ValidationResult {
   const screenshots = Array.isArray(b.screenshots)
     ? b.screenshots.filter((s): s is string => typeof s === "string")
     : [];
+  const currentPhotos = Array.isArray(b.currentPhotos)
+    ? b.currentPhotos.filter((s): s is string => typeof s === "string")
+    : [];
+  const additionalPhotos = Array.isArray(b.additionalPhotos)
+    ? b.additionalPhotos.filter((s): s is string => typeof s === "string")
+    : [];
 
   const hasTextContent = bio.trim() || prompts.some((p) => p.trim());
   const hasScreenshots = screenshots.length > 0;
@@ -46,6 +52,8 @@ export function validateProfileInput(body: unknown): ValidationResult {
       prompts,
       photoDescriptions,
       screenshots,
+      currentPhotos,
+      additionalPhotos,
       targetType: b.targetType as string,
       customTarget: typeof b.customTarget === "string" ? b.customTarget : undefined,
     },

@@ -36,7 +36,7 @@ Three profile types:
 2. SAFE/GENERIC (Most Common): Travel photos, group shots, neutral bios — underperforms
 3. ENTERTAINMENT (Polarizing): Humor, bold statements — high match rate but divisive`;
 
-function parseScreenshot(raw: string): { data: string; label: string; mimeType: string } | null {
+function parseImagePayload(raw: string): { data: string; mimeType: string; label?: string } | null {
   try {
     const parsed = JSON.parse(raw);
     if (parsed.data && parsed.mimeType) return parsed;
@@ -47,35 +47,65 @@ function parseScreenshot(raw: string): { data: string; label: string; mimeType: 
 function buildUserContent(input: ProfileInput, promptText: string): ChatCompletionContentPart[] {
   const parts: ChatCompletionContentPart[] = [];
   const hasScreenshots = input.screenshots?.length > 0;
+  const hasCurrentPhotos = input.currentPhotos?.length > 0;
+  const hasAdditionalPhotos = input.additionalPhotos?.length > 0;
 
   let textContent = promptText + "\n\n";
 
   if (hasScreenshots) {
-    textContent += "The user has uploaded screenshots of their dating profile. Analyze everything visible in the images — bio text, prompts, photos, layout, everything.\n\n";
-
-    input.screenshots.forEach((raw, i) => {
-      const s = parseScreenshot(raw);
-      if (!s) return;
-      const label = s.label ? ` (${s.label})` : "";
-      textContent += `Screenshot ${i + 1}${label}:\n`;
-    });
-    textContent += "\n";
+    textContent += "The user has uploaded screenshots of their dating profile. Analyze everything visible in the images — bio text, prompts, layout, everything.\n\n";
   }
 
   textContent += buildProfileText(input);
+
+  if (hasCurrentPhotos) {
+    textContent += `\n--- CURRENT PROFILE PHOTOS (in order, ${input.currentPhotos.length} total) ---\n`;
+    textContent += "These are the photos currently on the user's profile, in the exact order they appear. ";
+    textContent += "Evaluate each photo for: energy level, signal quality, first impression, and how it works with the other photos. ";
+    textContent += "Consider lighting, expression, setting, and what personality signal each photo sends.\n\n";
+  }
+
+  if (hasAdditionalPhotos) {
+    textContent += `\n--- ADDITIONAL CANDIDATE PHOTOS (${input.additionalPhotos.length} total) ---\n`;
+    textContent += "These are extra photos the user has. Evaluate them and recommend which ones should replace current profile photos. ";
+    textContent += "Consider: which photos are strongest, what order they should go in, and which current photos to swap out.\n\n";
+  }
 
   parts.push({ type: "text", text: textContent });
 
   if (hasScreenshots) {
     input.screenshots.forEach((raw) => {
-      const s = parseScreenshot(raw);
+      const s = parseImagePayload(raw);
       if (!s) return;
       parts.push({
         type: "image_url",
-        image_url: {
-          url: `data:${s.mimeType};base64,${s.data}`,
-          detail: "high",
-        },
+        image_url: { url: `data:${s.mimeType};base64,${s.data}`, detail: "high" },
+      });
+    });
+  }
+
+  if (hasCurrentPhotos) {
+    parts.push({ type: "text", text: "\n[Current Profile Photos — in order:]" });
+    input.currentPhotos.forEach((raw, i) => {
+      const img = parseImagePayload(raw);
+      if (!img) return;
+      parts.push({ type: "text", text: `Photo #${i + 1}:` });
+      parts.push({
+        type: "image_url",
+        image_url: { url: `data:${img.mimeType};base64,${img.data}`, detail: "high" },
+      });
+    });
+  }
+
+  if (hasAdditionalPhotos) {
+    parts.push({ type: "text", text: "\n[Additional Candidate Photos:]" });
+    input.additionalPhotos.forEach((raw, i) => {
+      const img = parseImagePayload(raw);
+      if (!img) return;
+      parts.push({ type: "text", text: `Extra Photo ${String.fromCharCode(65 + i)}:` });
+      parts.push({
+        type: "image_url",
+        image_url: { url: `data:${img.mimeType};base64,${img.data}`, detail: "high" },
       });
     });
   }
@@ -118,6 +148,8 @@ function buildProfileText(input: ProfileInput): string {
 }
 
 const ANALYZE_PROMPT = `Analyze this dating profile and give a FREE analysis (score + roast + feedback). Be entertaining and shareable — this is the viral hook.
+
+If the user uploaded photos, evaluate them as part of the analysis. Consider photo quality, order, energy, and signals.
 
 Respond in this exact JSON format:
 {
@@ -175,10 +207,23 @@ export async function analyzeProfile(input: ProfileInput): Promise<AnalysisResul
 
 export async function optimizeProfile(input: ProfileInput): Promise<FullOptimizationResult> {
   const targetDescription = input.customTarget || input.targetType;
+  const hasPhotos = (input.currentPhotos?.length > 0) || (input.additionalPhotos?.length > 0);
+
+  const photoInstructions = hasPhotos
+    ? `\nIMPORTANT — PHOTO ANALYSIS:
+The user uploaded actual photos. For photoAdvice:
+- Reference each photo by its number/letter (e.g. "Photo #1", "Extra Photo A")
+- Describe what you see in each photo
+- For current photos: evaluate order, which to keep, which to swap
+- For additional photos: recommend which to add and where to place them
+- Give specific recommended positions (1 = first/lead photo)
+- Consider: lighting, expression, energy, setting, group vs solo, what signal each sends`
+    : "";
 
   const optimizePrompt = `Give a FULL profile optimization for this dating profile. The user wants to attract: "${targetDescription}"
 
 This is the paid tier — go deep. Rewrite everything to attract their target match type. Adjust tone, remove wrong signals, add the right ones.
+${photoInstructions}
 
 Respond in this exact JSON format:
 {
@@ -205,10 +250,10 @@ Respond in this exact JSON format:
   ],
   "photoAdvice": [
     {
-      "description": "<which photo>",
-      "issue": "<what's wrong>",
-      "suggestion": "<what to do instead>",
-      "recommendedPosition": <1-6 where to place it>
+      "description": "<which photo — reference by number/letter and describe what you see>",
+      "issue": "<what's wrong or what could be better>",
+      "suggestion": "<specific recommendation — keep, remove, swap, or reposition>",
+      "recommendedPosition": <1-9 where to place it, 0 if removing>
     }
   ],
   "toneAdjustments": ["<specific tone change 1>", "<tone change 2>"],

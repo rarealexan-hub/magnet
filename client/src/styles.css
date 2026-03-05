@@ -518,6 +518,90 @@ h1 {
   opacity: 0.5;
 }
 
+.photos-section {
+  border-top: 1px solid var(--border);
+  padding-top: 28px;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.photo-card {
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  transition: transform 0.15s, opacity 0.15s, border-color 0.15s;
+}
+
+.photo-card.dragging {
+  opacity: 0.4;
+  transform: scale(0.95);
+}
+
+.photo-card.drag-over {
+  border-color: var(--accent);
+  border-style: dashed;
+}
+
+.photo-card-img {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+}
+
+.photo-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-position-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 6px;
+}
+
+.drag-handle {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: grab;
+  display: flex;
+  align-items: center;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.sortable .photo-card {
+  cursor: grab;
+}
+
+.sortable .photo-card:active {
+  cursor: grabbing;
+}
+
 .form-error {
   padding: 10px 14px;
   background: rgba(239, 68, 68, 0.1);

@@ -30,7 +30,8 @@ shared/
 1. **Free Profile Analysis**: Score + witty roast + mistake identification
 2. **Match Targeting**: Choose who you want to attract (7 preset types + custom)
 3. **Screenshot Upload**: Upload screenshots of dating profile instead of typing it out (uses OpenAI vision)
-4. **Full Optimization** ($19): Rewritten bio, optimized prompts, photo advice, tone adjustments
+4. **Photo Upload**: Upload current profile photos (drag to reorder, up to 9) + additional candidate photos (up to 10) for AI photo evaluation
+5. **Full Optimization** ($19): Rewritten bio, optimized prompts, photo advice with swap recommendations, tone adjustments
 5. **Shareable Results**: Copy roast for social sharing (viral loop)
 
 ## Key Dependencies

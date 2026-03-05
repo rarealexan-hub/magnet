@@ -4,6 +4,8 @@ export interface ProfileInput {
   prompts: string[];
   photoDescriptions: string[];
   screenshots: string[];
+  currentPhotos: string[];
+  additionalPhotos: string[];
   targetType: string;
   customTarget?: string;
 }
