@@ -10,7 +10,7 @@ export function Landing({ onStart }: Props) {
       <div className="landing-hero">
         <div className="badge">
           <Flame size={14} />
-          <span>The Dating Profile Audit</span>
+          <span>Profile Reality Check</span>
         </div>
         <h1>
           Your dating profile is
