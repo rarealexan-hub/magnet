@@ -20,9 +20,12 @@ app.post("/api/analyze", async (req, res) => {
     }
     const result = await analyzeProfile(input.data);
     res.json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Analysis error:", error);
-    res.status(500).json({ error: "Failed to analyze profile. Please try again." });
+    const msg = error?.status === 400 && error?.error?.message?.includes("image")
+      ? "One or more images couldn't be processed. Please use JPG, PNG, GIF, or WebP format."
+      : "Failed to analyze profile. Please try again.";
+    res.status(500).json({ error: msg });
   }
 });
 
@@ -35,9 +38,12 @@ app.post("/api/optimize", async (req, res) => {
     }
     const result = await optimizeProfile(input.data);
     res.json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Optimization error:", error);
-    res.status(500).json({ error: "Failed to optimize profile. Please try again." });
+    const msg = error?.status === 400 && error?.error?.message?.includes("image")
+      ? "One or more images couldn't be processed. Please use JPG, PNG, GIF, or WebP format."
+      : "Failed to optimize profile. Please try again.";
+    res.status(500).json({ error: msg });
   }
 });
 

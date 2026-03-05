@@ -24,6 +24,7 @@ const MAX_SCREENSHOTS = 6;
 const MAX_CURRENT_PHOTOS = 9;
 const MAX_ADDITIONAL_PHOTOS = 10;
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
+const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 export function ProfileForm({ onResult }: Props) {
   const [platform, setPlatform] = useState<ProfileInput["platform"]>("hinge");
@@ -80,8 +81,8 @@ export function ProfileForm({ onResult }: Props) {
       Array.from(files)
         .slice(0, remaining)
         .forEach((file) => {
-          if (!file.type.startsWith("image/")) {
-            skipped.push(`${file.name} (not an image)`);
+          if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+            skipped.push(`${file.name} (use JPG, PNG, GIF, or WebP)`);
             return;
           }
           if (file.size > MAX_FILE_SIZE) {
@@ -153,8 +154,8 @@ export function ProfileForm({ onResult }: Props) {
     Array.from(files)
       .slice(0, remaining)
       .forEach((file) => {
-        if (!file.type.startsWith("image/")) {
-          skipped.push(`${file.name} (not an image)`);
+        if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+          skipped.push(`${file.name} (use JPG, PNG, GIF, or WebP)`);
           return;
         }
         if (file.size > MAX_FILE_SIZE) {
@@ -315,7 +316,7 @@ export function ProfileForm({ onResult }: Props) {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept=".jpg,.jpeg,.png,.gif,.webp"
                 multiple
                 onChange={handleScreenshotSelect}
                 style={{ display: "none" }}
@@ -396,7 +397,7 @@ export function ProfileForm({ onResult }: Props) {
             <input
               ref={currentPhotosRef}
               type="file"
-              accept="image/*"
+              accept=".jpg,.jpeg,.png,.gif,.webp"
               multiple
               onChange={handleCurrentPhotos}
               style={{ display: "none" }}
@@ -452,7 +453,7 @@ export function ProfileForm({ onResult }: Props) {
             <input
               ref={additionalPhotosRef}
               type="file"
-              accept="image/*"
+              accept=".jpg,.jpeg,.png,.gif,.webp"
               multiple
               onChange={handleAdditionalPhotos}
               style={{ display: "none" }}
