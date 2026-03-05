@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowLeft, Copy, Check, Lock, Sparkles, AlertTriangle, Loader2, RotateCcw, Crosshair } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Copy, Check, Lock, Sparkles, AlertTriangle, Loader2, RotateCcw, Crosshair, Zap, Crown } from "lucide-react";
 import type { ProfileResult, ProfileInput, FullOptimizationResult } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 
@@ -11,10 +11,30 @@ interface Props {
   onUpgrade: (result: FullOptimizationResult) => void;
 }
 
+interface StripeProduct {
+  id: string;
+  name: string;
+  description: string;
+  metadata: { tier?: string; features?: string };
+  prices: { id: string; unit_amount: number; currency: string }[];
+}
+
 export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }: Props) {
   const [copied, setCopied] = useState(false);
   const [upgrading, setUpgrading] = useState(false);
   const [upgradeError, setUpgradeError] = useState("");
+  const [products, setProducts] = useState<StripeProduct[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+
+  useEffect(() => {
+    if (!result.isPaid) {
+      fetch("/api/products")
+        .then((r) => r.json())
+        .then((data) => setProducts(data.products || []))
+        .catch(() => {})
+        .finally(() => setLoadingProducts(false));
+    }
+  }, [result.isPaid]);
 
   const { score, feedback } = result;
 
@@ -26,18 +46,20 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleUpgrade = async () => {
+  const handleCheckout = async (priceId: string) => {
     setUpgrading(true);
     setUpgradeError("");
     try {
-      const res = await fetch("/api/optimize", {
+      const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profileInput),
+        body: JSON.stringify({ priceId, profileInput }),
       });
-      if (!res.ok) throw new Error("Optimization failed");
+      if (!res.ok) throw new Error("Checkout failed");
       const data = await res.json();
-      onUpgrade(data);
+      if (data.url) {
+        window.location.href = data.url;
+      }
     } catch {
       setUpgradeError("Something went wrong. Please try again.");
     } finally {
@@ -58,9 +80,13 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
     { key: "photoStrategy" as const, label: "Photo Strategy" },
   ];
 
-  const lowestCategory = scoreCategories.reduce((min, cat) =>
-    score[cat.key] < score[min.key] ? cat : min
-  , scoreCategories[0]);
+  const lowestCategory = scoreCategories.reduce(
+    (min, cat) => (score[cat.key] < score[min.key] ? cat : min),
+    scoreCategories[0]
+  );
+
+  const proProduct = products.find((p) => p.metadata?.tier === "pro");
+  const premiumProduct = products.find((p) => p.metadata?.tier === "premium");
 
   return (
     <div className="results-page">
@@ -83,7 +109,10 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
             <div className="score-label-wrap">
               <div
                 className="profile-type-badge"
-                style={{ background: profileTypeColor[feedback.profileType] + "20", color: profileTypeColor[feedback.profileType] }}
+                style={{
+                  background: profileTypeColor[feedback.profileType] + "20",
+                  color: profileTypeColor[feedback.profileType],
+                }}
               >
                 {feedback.profileType.replace("-", " ")} profile
               </div>
@@ -95,7 +124,10 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
             <p className="breakdown-title">Breakdown</p>
             <div className="breakdown-rows">
               {scoreCategories.map((cat) => (
-                <div key={cat.key} className={`breakdown-row ${cat.key === lowestCategory.key ? "weakest" : ""}`}>
+                <div
+                  key={cat.key}
+                  className={`breakdown-row ${cat.key === lowestCategory.key ? "weakest" : ""}`}
+                >
                   <span className="breakdown-label">{cat.label}</span>
                   <div className="breakdown-bar-wrap">
                     <div className="breakdown-bar" style={{ width: `${score[cat.key]}%` }} />
@@ -111,7 +143,8 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
             <div>
               <p className="match-killer-title">Your biggest match killer</p>
               <p className="match-killer-text">
-                {lowestCategory.label} scored {score[lowestCategory.key]}/100 — {feedback.mistakes[0] || "this is what's holding your profile back"}
+                {lowestCategory.label} scored {score[lowestCategory.key]}/100 —{" "}
+                {feedback.mistakes[0] || "this is what's holding your profile back"}
               </p>
             </div>
           </div>
@@ -144,32 +177,110 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
           <PaidResults result={result as FullOptimizationResult} />
         ) : (
           <div className="upgrade-section">
-            <div className="upgrade-card">
-              <Lock size={24} />
-              <h3>Unlock Full Profile Optimization</h3>
-              <p>Get your profile completely rewritten to attract exactly who you want.</p>
-              <ul className="upgrade-features">
-                <li><Sparkles size={14} /> Rewritten bio targeting your ideal match</li>
-                <li><Sparkles size={14} /> Optimized prompts with before/after comparisons</li>
-                <li><Sparkles size={14} /> Photo ordering and strategy advice</li>
-                <li><Sparkles size={14} /> Tone adjustments and wrong signals removed</li>
-                <li><Sparkles size={14} /> Match targeting alignment report</li>
-              </ul>
-              {upgradeError && <div className="form-error">{upgradeError}</div>}
-              <button className="upgrade-btn" onClick={handleUpgrade} disabled={upgrading}>
-                {upgrading ? (
-                  <>
-                    <Loader2 size={20} className="spin" />
-                    Optimizing your profile...
-                  </>
-                ) : (
-                  <>
-                    Get Full Optimization — $19
-                  </>
-                )}
-              </button>
-              <p className="upgrade-note">One-time payment. No subscription.</p>
+            <h3 className="pricing-title">Unlock Full Optimization</h3>
+            <p className="pricing-subtitle">
+              Get your profile completely rewritten to attract exactly who you want.
+            </p>
+
+            <div className="pricing-grid">
+              <div className="pricing-card free">
+                <div className="pricing-card-header">
+                  <Sparkles size={20} />
+                  <h4>Free</h4>
+                </div>
+                <div className="pricing-price">
+                  <span className="price-amount">$0</span>
+                </div>
+                <ul className="pricing-features">
+                  <li><Check size={14} /> Profile score + breakdown</li>
+                  <li><Check size={14} /> Witty roast</li>
+                  <li><Check size={14} /> Top 3 mistakes identified</li>
+                  <li className="disabled"><Lock size={14} /> Bio rewrite</li>
+                  <li className="disabled"><Lock size={14} /> Prompt optimization</li>
+                  <li className="disabled"><Lock size={14} /> Photo strategy</li>
+                </ul>
+                <p className="pricing-note">You're on this plan</p>
+              </div>
+
+              <div className="pricing-card pro highlighted">
+                <div className="pricing-popular-badge">Most Popular</div>
+                <div className="pricing-card-header">
+                  <Zap size={20} />
+                  <h4>Profile Optimization</h4>
+                </div>
+                <div className="pricing-price">
+                  <span className="price-amount">$19</span>
+                  <span className="price-period">one-time</span>
+                </div>
+                <ul className="pricing-features">
+                  <li><Check size={14} /> Everything in Free</li>
+                  <li><Check size={14} /> Full bio rewrite</li>
+                  <li><Check size={14} /> Optimized prompts (before/after)</li>
+                  <li><Check size={14} /> Photo ordering strategy</li>
+                  <li><Check size={14} /> Tone adjustments</li>
+                  <li><Check size={14} /> Match targeting alignment</li>
+                </ul>
+                {upgradeError && <div className="form-error">{upgradeError}</div>}
+                <button
+                  className="pricing-btn pro"
+                  onClick={() => {
+                    if (proProduct?.prices[0]?.id) {
+                      handleCheckout(proProduct.prices[0].id);
+                    } else {
+                      setUpgradeError("Unable to load pricing. Please refresh and try again.");
+                    }
+                  }}
+                  disabled={upgrading || loadingProducts}
+                >
+                  {upgrading ? (
+                    <>
+                      <Loader2 size={18} className="spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Get Full Optimization"
+                  )}
+                </button>
+              </div>
+
+              <div className="pricing-card premium">
+                <div className="pricing-card-header">
+                  <Crown size={20} />
+                  <h4>Elite Optimization</h4>
+                </div>
+                <div className="pricing-price">
+                  <span className="price-amount">$49</span>
+                  <span className="price-period">one-time</span>
+                </div>
+                <ul className="pricing-features">
+                  <li><Check size={14} /> Everything in Pro</li>
+                  <li><Check size={14} /> All dating apps covered</li>
+                  <li><Check size={14} /> Ongoing update suggestions</li>
+                  <li><Check size={14} /> Priority support</li>
+                  <li><Check size={14} /> Advanced photo analysis</li>
+                  <li><Check size={14} /> Detailed match psychology</li>
+                </ul>
+                <button
+                  className="pricing-btn premium"
+                  onClick={() => {
+                    if (premiumProduct?.prices[0]?.id) {
+                      handleCheckout(premiumProduct.prices[0].id);
+                    }
+                  }}
+                  disabled={upgrading || !premiumProduct}
+                >
+                  {upgrading ? (
+                    <>
+                      <Loader2 size={18} className="spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Go Elite"
+                  )}
+                </button>
+              </div>
             </div>
+            <p className="pricing-footer">One-time payment. No subscription. No recurring charges.</p>
           </div>
         )}
       </div>

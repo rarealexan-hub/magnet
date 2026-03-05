@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { Plus, X, Loader2, Upload, Type, Camera, GripVertical, ImagePlus } from "lucide-react";
+import { Plus, X, Loader2, Upload, Type, Camera, GripVertical, ImagePlus, Sparkles } from "lucide-react";
 import { TARGET_TYPES } from "@shared/types";
 import type { ProfileInput, ProfileResult } from "@shared/types";
 
@@ -41,6 +41,8 @@ export function ProfileForm({ onResult }: Props) {
   const [error, setError] = useState("");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  const paidSessionId = sessionStorage.getItem("paidSessionId");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentPhotosRef = useRef<HTMLInputElement>(null);
@@ -240,18 +242,32 @@ export function ProfileForm({ onResult }: Props) {
         customTarget: targetType === "custom" ? customTarget : undefined,
       };
 
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => null);
-        throw new Error(errData?.error || "Analysis failed");
+      if (paidSessionId) {
+        const res = await fetch("/api/optimize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...input, sessionId: paidSessionId }),
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || "Optimization failed");
+        }
+        const data = await res.json();
+        sessionStorage.removeItem("paidSessionId");
+        onResult(data, input);
+      } else {
+        const res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(input),
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || "Analysis failed");
+        }
+        const data = await res.json();
+        onResult(data, input);
       }
-      const data = await res.json();
-      onResult(data, input);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
@@ -263,9 +279,15 @@ export function ProfileForm({ onResult }: Props) {
     <div className="form-page">
       <div className="form-container">
         <div className="form-header">
-          <h2>Paste Your Profile</h2>
-          <p>The more you share, the better the audit. We don't store anything.</p>
+          <h2>{paidSessionId ? "Upload for Full Optimization" : "Paste Your Profile"}</h2>
+          <p>{paidSessionId ? "Upload your profile to receive your full optimization with rewritten bio, prompts, and photo strategy." : "The more you share, the better the audit. We don't store anything."}</p>
         </div>
+        {paidSessionId && (
+          <div className="paid-banner">
+            <Sparkles size={16} />
+            Full optimization unlocked — submit your profile to get your results
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="form-section">
@@ -522,7 +544,12 @@ export function ProfileForm({ onResult }: Props) {
             {loading ? (
               <>
                 <Loader2 size={20} className="spin" />
-                Analyzing your profile...
+                {paidSessionId ? "Generating your optimization..." : "Analyzing your profile..."}
+              </>
+            ) : paidSessionId ? (
+              <>
+                <Sparkles size={20} />
+                Get My Full Optimization
               </>
             ) : (
               "Get My Profile Score"
