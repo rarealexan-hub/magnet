@@ -27,7 +27,7 @@ const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
 export function ProfileForm({ onResult }: Props) {
   const [platform, setPlatform] = useState<ProfileInput["platform"]>("hinge");
-  const [inputMode, setInputMode] = useState<InputMode>("type");
+  const [inputMode, setInputMode] = useState<InputMode>("screenshot");
   const [bio, setBio] = useState("");
   const [prompts, setPrompts] = useState<string[]>([""]);
   const [photoDescriptions, setPhotoDescriptions] = useState<string[]>([""]);
@@ -288,19 +288,19 @@ export function ProfileForm({ onResult }: Props) {
             <div className="mode-toggle">
               <button
                 type="button"
-                className={`mode-btn ${inputMode === "type" ? "active" : ""}`}
-                onClick={() => setInputMode("type")}
-              >
-                <Type size={16} />
-                Type it out
-              </button>
-              <button
-                type="button"
                 className={`mode-btn ${inputMode === "screenshot" ? "active" : ""}`}
                 onClick={() => setInputMode("screenshot")}
               >
                 <Camera size={16} />
                 Upload screenshots
+              </button>
+              <button
+                type="button"
+                className={`mode-btn ${inputMode === "type" ? "active" : ""}`}
+                onClick={() => setInputMode("type")}
+              >
+                <Type size={16} />
+                Type it out
               </button>
             </div>
           </div>
