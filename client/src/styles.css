@@ -5,18 +5,18 @@
 }
 
 :root {
-  --bg: #0a0a0f;
-  --surface: #141420;
-  --surface-2: #1c1c2e;
-  --border: #2a2a3e;
-  --text: #e4e4ef;
-  --text-muted: #8888a0;
-  --accent: #7c3aed;
-  --accent-light: #a78bfa;
-  --pink: #ec4899;
-  --green: #10b981;
-  --red: #ef4444;
-  --yellow: #f59e0b;
+  --bg: #0c0a09;
+  --surface: #1a1614;
+  --surface-2: #272220;
+  --border: #3d3530;
+  --text: #f5f0eb;
+  --text-muted: #9a8e85;
+  --accent: #e85d3a;
+  --accent-light: #f0906e;
+  --pink: #e85d75;
+  --green: #2cb67d;
+  --red: #e5534b;
+  --yellow: #f2a93b;
 }
 
 body {
@@ -47,8 +47,8 @@ body {
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(236, 72, 153, 0.2));
-  border: 1px solid rgba(124, 58, 237, 0.3);
+  background: linear-gradient(135deg, rgba(232, 93, 58, 0.2), rgba(232, 93, 117, 0.2));
+  border: 1px solid rgba(232, 93, 58, 0.3);
   border-radius: 100px;
   font-size: 13px;
   font-weight: 600;
@@ -96,7 +96,7 @@ h1 {
 
 .cta-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(124, 58, 237, 0.4);
+  box-shadow: 0 8px 30px rgba(232, 93, 58, 0.4);
 }
 
 .cta-sub {
@@ -125,7 +125,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(124, 58, 237, 0.15);
+  background: rgba(232, 93, 58, 0.15);
   border-radius: 10px;
   color: var(--accent-light);
   margin-bottom: 16px;
@@ -243,7 +243,7 @@ h1 {
 }
 
 .platform-btn.active {
-  background: rgba(124, 58, 237, 0.15);
+  background: rgba(232, 93, 58, 0.15);
   border-color: var(--accent);
   color: var(--accent-light);
 }
@@ -343,7 +343,7 @@ h1 {
 }
 
 .target-card.active {
-  background: rgba(124, 58, 237, 0.12);
+  background: rgba(232, 93, 58, 0.12);
   border-color: var(--accent);
 }
 
@@ -387,13 +387,13 @@ h1 {
 }
 
 .mode-btn.active {
-  background: rgba(124, 58, 237, 0.12);
+  background: rgba(232, 93, 58, 0.12);
   border-color: var(--accent);
   color: var(--accent-light);
 }
 
 .mode-btn:hover:not(.active) {
-  border-color: rgba(124, 58, 237, 0.3);
+  border-color: rgba(232, 93, 58, 0.3);
 }
 
 .screenshot-grid {
@@ -837,8 +837,8 @@ h1 {
 }
 
 .upgrade-card {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(236, 72, 153, 0.08));
-  border: 1px solid rgba(124, 58, 237, 0.25);
+  background: linear-gradient(135deg, rgba(232, 93, 58, 0.08), rgba(232, 93, 117, 0.08));
+  border: 1px solid rgba(232, 93, 58, 0.25);
   border-radius: 20px;
   padding: 40px;
   text-align: center;
@@ -896,7 +896,7 @@ h1 {
 
 .upgrade-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(124, 58, 237, 0.4);
+  box-shadow: 0 8px 30px rgba(232, 93, 58, 0.4);
 }
 
 .upgrade-btn:disabled {
@@ -1033,7 +1033,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(124, 58, 237, 0.15);
+  background: rgba(232, 93, 58, 0.15);
   border-radius: 8px;
   font-weight: 800;
   font-size: 14px;
@@ -1086,8 +1086,8 @@ h1 {
   line-height: 1.6;
   color: var(--text);
   padding: 16px;
-  background: rgba(124, 58, 237, 0.06);
-  border: 1px solid rgba(124, 58, 237, 0.15);
+  background: rgba(232, 93, 58, 0.06);
+  border: 1px solid rgba(232, 93, 58, 0.15);
   border-radius: 10px;
 }
 
