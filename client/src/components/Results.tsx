@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Copy, Check, Lock, Sparkles, AlertTriangle, Loader2, RotateCcw } from "lucide-react";
+import { ArrowLeft, Copy, Check, Lock, Sparkles, AlertTriangle, Loader2, RotateCcw, Crosshair } from "lucide-react";
 import type { ProfileResult, ProfileInput, FullOptimizationResult } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 
@@ -20,7 +20,7 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
 
   const copyRoast = () => {
     navigator.clipboard.writeText(
-      `My dating profile scored ${score.overall}/100 🔥\n\n"${feedback.roast}"\n\nGet your profile audited too 👀`
+      `My dating profile scored ${score.overall}/100\n\n"${feedback.roast}"\n\nGet your profile audited too`
     );
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -51,6 +51,17 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
     "entertainment": "#8b5cf6",
   };
 
+  const scoreCategories = [
+    { key: "specificity" as const, label: "Specificity" },
+    { key: "conversationHooks" as const, label: "Conversation Hooks" },
+    { key: "authenticity" as const, label: "Authenticity" },
+    { key: "photoStrategy" as const, label: "Photo Strategy" },
+  ];
+
+  const lowestCategory = scoreCategories.reduce((min, cat) =>
+    score[cat.key] < score[min.key] ? cat : min
+  , scoreCategories[0]);
+
   return (
     <div className="results-page">
       <div className="results-container">
@@ -63,16 +74,46 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
           </button>
         </div>
 
-        <div className="score-hero">
-          <ScoreRing score={score.overall} size={160} />
-          <div className="score-label-wrap">
-            <div
-              className="profile-type-badge"
-              style={{ background: profileTypeColor[feedback.profileType] + "20", color: profileTypeColor[feedback.profileType] }}
-            >
-              {feedback.profileType.replace("-", " ")} profile
+        <div className="score-card">
+          <div className="score-card-header">
+            <p className="score-card-title">Dating Profile Score</p>
+          </div>
+          <div className="score-hero">
+            <ScoreRing score={score.overall} size={160} />
+            <div className="score-label-wrap">
+              <div
+                className="profile-type-badge"
+                style={{ background: profileTypeColor[feedback.profileType] + "20", color: profileTypeColor[feedback.profileType] }}
+              >
+                {feedback.profileType.replace("-", " ")} profile
+              </div>
+              <p className="type-explanation">{feedback.profileTypeExplanation}</p>
             </div>
-            <p className="type-explanation">{feedback.profileTypeExplanation}</p>
+          </div>
+
+          <div className="score-breakdown">
+            <p className="breakdown-title">Breakdown</p>
+            <div className="breakdown-rows">
+              {scoreCategories.map((cat) => (
+                <div key={cat.key} className={`breakdown-row ${cat.key === lowestCategory.key ? "weakest" : ""}`}>
+                  <span className="breakdown-label">{cat.label}</span>
+                  <div className="breakdown-bar-wrap">
+                    <div className="breakdown-bar" style={{ width: `${score[cat.key]}%` }} />
+                  </div>
+                  <span className="breakdown-value">{score[cat.key]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="match-killer">
+            <Crosshair size={16} />
+            <div>
+              <p className="match-killer-title">Your biggest match killer</p>
+              <p className="match-killer-text">
+                {lowestCategory.label} scored {score[lowestCategory.key]}/100 — {feedback.mistakes[0] || "this is what's holding your profile back"}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -84,33 +125,17 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
           </button>
         </div>
 
-        <div className="scores-grid">
-          <div className="score-item">
-            <ScoreRing score={score.specificity} size={80} strokeWidth={6} />
-            <span className="score-name">Specificity</span>
-          </div>
-          <div className="score-item">
-            <ScoreRing score={score.conversationHooks} size={80} strokeWidth={6} />
-            <span className="score-name">Conversation Hooks</span>
-          </div>
-          <div className="score-item">
-            <ScoreRing score={score.authenticity} size={80} strokeWidth={6} />
-            <span className="score-name">Authenticity</span>
-          </div>
-          <div className="score-item">
-            <ScoreRing score={score.photoStrategy} size={80} strokeWidth={6} />
-            <span className="score-name">Photo Strategy</span>
-          </div>
-        </div>
-
         <div className="mistakes-section">
           <h3>
             <AlertTriangle size={18} />
-            What's Hurting Your Matches
+            Top Fixes
           </h3>
           <ul className="mistakes-list">
             {feedback.mistakes.map((mistake, i) => (
-              <li key={i}>{mistake}</li>
+              <li key={i}>
+                <span className="fix-number">{i + 1}</span>
+                {mistake}
+              </li>
             ))}
           </ul>
         </div>
@@ -122,12 +147,13 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
             <div className="upgrade-card">
               <Lock size={24} />
               <h3>Unlock Full Profile Optimization</h3>
-              <p>Get your profile completely rewritten to attract exactly the type of person you want.</p>
+              <p>Get your profile completely rewritten to attract exactly who you want.</p>
               <ul className="upgrade-features">
                 <li><Sparkles size={14} /> Rewritten bio targeting your ideal match</li>
-                <li><Sparkles size={14} /> Optimized prompts with explanations</li>
+                <li><Sparkles size={14} /> Optimized prompts with before/after comparisons</li>
                 <li><Sparkles size={14} /> Photo ordering and strategy advice</li>
                 <li><Sparkles size={14} /> Tone adjustments and wrong signals removed</li>
+                <li><Sparkles size={14} /> Match targeting alignment report</li>
               </ul>
               {upgradeError && <div className="form-error">{upgradeError}</div>}
               <button className="upgrade-btn" onClick={handleUpgrade} disabled={upgrading}>
