@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+import { Pool } from "pg";
 import { runMigrations } from "stripe-replit-sync";
 import { analyzeProfile, optimizeProfile } from "./ai.js";
 import { validateProfileInput } from "./validation.js";
@@ -9,9 +10,26 @@ import { getStripeSync, getUncachableStripeClient, getStripePublishableKey } fro
 import { WebhookHandlers } from "./webhookHandlers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 const app = express();
 app.use(cors());
+
+async function initAuditTracking() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS free_audits (
+        id SERIAL PRIMARY KEY,
+        email TEXT NOT NULL UNIQUE,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+  } catch (err) {
+    console.error("Failed to create audit tracking table:", err);
+  }
+}
+
+await initAuditTracking();
 
 async function initStripe() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -76,7 +94,25 @@ app.post("/api/analyze", async (req, res) => {
       res.status(400).json({ error: input.error });
       return;
     }
+
+    const email = input.data.email.toLowerCase().trim();
+    const existing = await pool.query(
+      "SELECT id FROM free_audits WHERE email = $1",
+      [email]
+    );
+    if (existing.rows.length > 0) {
+      res.status(403).json({
+        error: "You've already used your free audit. Upgrade to Pro for unlimited optimizations.",
+        code: "AUDIT_LIMIT_REACHED",
+      });
+      return;
+    }
+
     const result = await analyzeProfile(input.data);
+    await pool.query(
+      "INSERT INTO free_audits (email) VALUES ($1) ON CONFLICT (email) DO NOTHING",
+      [email]
+    );
     res.json(result);
   } catch (error: any) {
     console.error("Analysis error:", error);
@@ -132,8 +168,6 @@ app.get("/api/stripe/publishable-key", async (_req, res) => {
 
 app.get("/api/products", async (_req, res) => {
   try {
-    const { Pool } = await import("pg");
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
     const result = await pool.query(`
       SELECT 
         p.id as product_id,
@@ -148,7 +182,6 @@ app.get("/api/products", async (_req, res) => {
       WHERE p.active = true
       ORDER BY pr.unit_amount ASC
     `);
-    await pool.end();
 
     const productsMap = new Map();
     for (const row of result.rows) {

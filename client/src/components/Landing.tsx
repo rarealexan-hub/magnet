@@ -24,7 +24,7 @@ export function Landing({ onStart }: Props) {
           Get My Profile Score
           <ArrowRight size={20} />
         </button>
-        <p className="cta-sub">Free analysis. No signup required.</p>
+        <p className="cta-sub">Free analysis. Just enter your email to get started.</p>
         <p className="credibility-cue">
           <Shield size={14} />
           Built using behavioral patterns from high-performing profiles
@@ -44,7 +44,7 @@ export function Landing({ onStart }: Props) {
             <Sparkles size={24} />
           </div>
           <h3>Profile Score Card</h3>
-          <p>Get scored across 4 dimensions: photo strategy, specificity, conversation hooks, and authenticity.</p>
+          <p>Get scored across 5 dimensions: photo quality, attraction signals, personality, match targeting, and first impression.</p>
         </div>
         <div className="feature-card">
           <div className="feature-icon">

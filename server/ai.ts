@@ -155,10 +155,11 @@ Respond in this exact JSON format:
 {
   "score": {
     "overall": <0-100>,
-    "specificity": <0-100 how specific and unique the profile is>,
-    "conversationHooks": <0-100 how many natural conversation starters>,
-    "authenticity": <0-100 how genuine and human it feels>,
-    "photoStrategy": <0-100 how well photos work together>
+    "photoQuality": <0-100 how good the photos are — lighting, energy, variety, attractiveness>,
+    "attractionSignals": <0-100 how many signals of desirability and lifestyle the profile sends>,
+    "personalitySignals": <0-100 how clearly the personality comes through — specificity, authenticity, humor>,
+    "matchTargeting": <0-100 how well the profile attracts the right type of person>,
+    "firstImpression": <0-100 how strong the first 3 seconds are — lead photo + opening line>
   },
   "feedback": {
     "roast": "<2-3 sentence witty roast of the profile that's entertaining but not mean — make it shareable on TikTok>",
@@ -188,10 +189,11 @@ export async function analyzeProfile(input: ProfileInput): Promise<AnalysisResul
   return {
     score: {
       overall: parsed.score?.overall ?? 50,
-      specificity: parsed.score?.specificity ?? 50,
-      conversationHooks: parsed.score?.conversationHooks ?? 50,
-      authenticity: parsed.score?.authenticity ?? 50,
-      photoStrategy: parsed.score?.photoStrategy ?? 50,
+      photoQuality: parsed.score?.photoQuality ?? 50,
+      attractionSignals: parsed.score?.attractionSignals ?? 50,
+      personalitySignals: parsed.score?.personalitySignals ?? 50,
+      matchTargeting: parsed.score?.matchTargeting ?? 50,
+      firstImpression: parsed.score?.firstImpression ?? 50,
     },
     feedback: {
       roast: parsed.feedback?.roast ?? "Your profile needs some work.",
@@ -229,10 +231,11 @@ Respond in this exact JSON format:
 {
   "score": {
     "overall": <0-100>,
-    "specificity": <0-100>,
-    "conversationHooks": <0-100>,
-    "authenticity": <0-100>,
-    "photoStrategy": <0-100>
+    "photoQuality": <0-100 how good the photos are — lighting, energy, variety, attractiveness>,
+    "attractionSignals": <0-100 how many signals of desirability and lifestyle the profile sends>,
+    "personalitySignals": <0-100 how clearly the personality comes through — specificity, authenticity, humor>,
+    "matchTargeting": <0-100 how well the profile attracts the right type of person>,
+    "firstImpression": <0-100 how strong the first 3 seconds are — lead photo + opening line>
   },
   "feedback": {
     "roast": "<witty 2-3 sentence roast>",
@@ -280,10 +283,11 @@ Make the optimized content feel natural, not AI-generated. It should sound like 
   return {
     score: {
       overall: parsed.score?.overall ?? 50,
-      specificity: parsed.score?.specificity ?? 50,
-      conversationHooks: parsed.score?.conversationHooks ?? 50,
-      authenticity: parsed.score?.authenticity ?? 50,
-      photoStrategy: parsed.score?.photoStrategy ?? 50,
+      photoQuality: parsed.score?.photoQuality ?? 50,
+      attractionSignals: parsed.score?.attractionSignals ?? 50,
+      personalitySignals: parsed.score?.personalitySignals ?? 50,
+      matchTargeting: parsed.score?.matchTargeting ?? 50,
+      firstImpression: parsed.score?.firstImpression ?? 50,
     },
     feedback: {
       roast: parsed.feedback?.roast ?? "Your profile needs some work.",

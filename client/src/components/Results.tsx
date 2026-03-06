@@ -74,10 +74,11 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
   };
 
   const scoreCategories = [
-    { key: "specificity" as const, label: "Specificity" },
-    { key: "conversationHooks" as const, label: "Conversation Hooks" },
-    { key: "authenticity" as const, label: "Authenticity" },
-    { key: "photoStrategy" as const, label: "Photo Strategy" },
+    { key: "photoQuality" as const, label: "Photo Quality" },
+    { key: "attractionSignals" as const, label: "Attraction Signals" },
+    { key: "personalitySignals" as const, label: "Personality Signals" },
+    { key: "matchTargeting" as const, label: "Match Targeting" },
+    { key: "firstImpression" as const, label: "First Impression" },
   ];
 
   const lowestCategory = scoreCategories.reduce(

@@ -269,6 +269,10 @@ export function ProfileForm({ onResult }: Props) {
         });
         if (!res.ok) {
           const errData = await res.json().catch(() => null);
+          if (errData?.code === "AUDIT_LIMIT_REACHED") {
+            setError("You've already used your free audit for this email. Upgrade to Pro to get a full profile optimization.");
+            return;
+          }
           throw new Error(errData?.error || "Analysis failed");
         }
         const data = await res.json();

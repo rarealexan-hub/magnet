@@ -13,10 +13,11 @@ export interface ProfileInput {
 
 export interface ProfileScore {
   overall: number;
-  specificity: number;
-  conversationHooks: number;
-  authenticity: number;
-  photoStrategy: number;
+  photoQuality: number;
+  attractionSignals: number;
+  personalitySignals: number;
+  matchTargeting: number;
+  firstImpression: number;
 }
 
 export interface ProfileFeedback {
