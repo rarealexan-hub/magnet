@@ -34,5 +34,8 @@
     "wouter": "^3.9.0",
     "zod": "^4.3.6",
     "zod-validation-error": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.18.0"
   }
 }
