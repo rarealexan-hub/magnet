@@ -68,8 +68,8 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
   };
 
   const profileTypeColor = {
-    "high-signal": "#2cb67d",
-    "generic": "#f2a93b",
+    "high-signal": "#22c55e",
+    "generic": "#eab308",
     "entertainment": "#8b5cf6",
   };
 

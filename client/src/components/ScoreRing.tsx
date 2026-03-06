@@ -11,10 +11,10 @@ export function ScoreRing({ score, size = 120, strokeWidth = 8 }: Props) {
   const offset = circumference - progress;
 
   const getColor = (s: number) => {
-    if (s >= 80) return "#2cb67d";
-    if (s >= 60) return "#e85d3a";
-    if (s >= 40) return "#f2a93b";
-    return "#e5534b";
+    if (s >= 80) return "#22c55e";
+    if (s >= 60) return "#3b82f6";
+    if (s >= 40) return "#eab308";
+    return "#ef4444";
   };
 
   const color = getColor(score);
