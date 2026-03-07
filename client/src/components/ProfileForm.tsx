@@ -239,31 +239,68 @@ export function ProfileForm({ onResult, userEmail }: Props) {
     });
   };
 
+  const readFileAsBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string).split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const resizeImage = (file: File, maxDim: number, quality: number): Promise<string> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
+      const objUrl = URL.createObjectURL(file);
+      const cleanup = () => URL.revokeObjectURL(objUrl);
+      const timeout = setTimeout(() => {
+        cleanup();
+        readFileAsBase64(file).then(resolve).catch(reject);
+      }, 10000);
+
       img.onload = () => {
-        let { width, height } = img;
-        if (width > maxDim || height > maxDim) {
-          if (width > height) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          } else {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
+        clearTimeout(timeout);
+        try {
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
           }
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            cleanup();
+            readFileAsBase64(file).then(resolve).catch(reject);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL("image/jpeg", quality);
+          cleanup();
+          canvas.width = 0;
+          canvas.height = 0;
+          if (dataUrl.length < 100) {
+            readFileAsBase64(file).then(resolve).catch(reject);
+            return;
+          }
+          resolve(dataUrl.split(",")[1]);
+        } catch {
+          cleanup();
+          readFileAsBase64(file).then(resolve).catch(reject);
         }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d")!;
-        ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL("image/jpeg", quality);
-        resolve(dataUrl.split(",")[1]);
-        URL.revokeObjectURL(img.src);
       };
-      img.onerror = reject;
-      img.src = URL.createObjectURL(file);
+      img.onerror = () => {
+        clearTimeout(timeout);
+        cleanup();
+        readFileAsBase64(file).then(resolve).catch(reject);
+      };
+      img.src = objUrl;
     });
   };
 
