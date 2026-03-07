@@ -18,7 +18,7 @@ export function Landing({ onStart }: Props) {
           to attract the people you want
         </h1>
         <p className="subtitle">
-          The advice your best friend should have given you.
+          Your dating app profile is sending the wrong signals.
         </p>
         <button className="cta-button" onClick={onStart}>
           Analyze My Profile
