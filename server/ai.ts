@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import sharp from "sharp";
 import type { ChatCompletionContentPart } from "openai/resources/chat/completions";
 import type { ProfileInput, ProfileResult } from "../shared/types.js";
 
@@ -6,6 +7,22 @@ const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
+
+const MAX_IMAGE_DIM = 1024;
+const JPEG_QUALITY = 70;
+
+async function compressImage(base64Data: string): Promise<string> {
+  try {
+    const buffer = Buffer.from(base64Data, "base64");
+    const compressed = await sharp(buffer)
+      .resize(MAX_IMAGE_DIM, MAX_IMAGE_DIM, { fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: JPEG_QUALITY })
+      .toBuffer();
+    return compressed.toString("base64");
+  } catch {
+    return base64Data;
+  }
+}
 
 const SYSTEM_PROMPT = `You are Magnet — the world's best dating profile analyst and advisor. Witty, slightly teasing, but genuinely helpful. You analyze profiles and give clear, actionable guidance on what to change. You don't rewrite things for people — you show them exactly what's wrong and what to do about it.
 
@@ -45,7 +62,7 @@ function parseImagePayload(raw: string): { data: string; mimeType: string; label
   return null;
 }
 
-function buildUserContent(input: ProfileInput, promptText: string): ChatCompletionContentPart[] {
+async function buildUserContent(input: ProfileInput, promptText: string): Promise<ChatCompletionContentPart[]> {
   const parts: ChatCompletionContentPart[] = [];
   const hasScreenshots = input.screenshots?.length > 0;
   const hasCurrentPhotos = input.currentPhotos?.length > 0;
@@ -75,40 +92,43 @@ function buildUserContent(input: ProfileInput, promptText: string): ChatCompleti
   parts.push({ type: "text", text: textContent });
 
   if (hasScreenshots) {
-    input.screenshots.forEach((raw) => {
+    for (const raw of input.screenshots) {
       const s = parseImagePayload(raw);
-      if (!s) return;
+      if (!s) continue;
+      const compressed = await compressImage(s.data);
       parts.push({
         type: "image_url",
-        image_url: { url: `data:${s.mimeType};base64,${s.data}`, detail: "high" },
+        image_url: { url: `data:image/jpeg;base64,${compressed}`, detail: "high" },
       });
-    });
+    }
   }
 
   if (hasCurrentPhotos) {
     parts.push({ type: "text", text: "\n[Current Profile Photos — in order:]" });
-    input.currentPhotos.forEach((raw, i) => {
-      const img = parseImagePayload(raw);
-      if (!img) return;
+    for (let i = 0; i < input.currentPhotos.length; i++) {
+      const img = parseImagePayload(input.currentPhotos[i]);
+      if (!img) continue;
+      const compressed = await compressImage(img.data);
       parts.push({ type: "text", text: `Photo #${i + 1}:` });
       parts.push({
         type: "image_url",
-        image_url: { url: `data:${img.mimeType};base64,${img.data}`, detail: "auto" },
+        image_url: { url: `data:image/jpeg;base64,${compressed}`, detail: "auto" },
       });
-    });
+    }
   }
 
   if (hasAdditionalPhotos) {
     parts.push({ type: "text", text: "\n[Additional Candidate Photos:]" });
-    input.additionalPhotos.forEach((raw, i) => {
-      const img = parseImagePayload(raw);
-      if (!img) return;
+    for (let i = 0; i < input.additionalPhotos.length; i++) {
+      const img = parseImagePayload(input.additionalPhotos[i]);
+      if (!img) continue;
+      const compressed = await compressImage(img.data);
       parts.push({ type: "text", text: `Extra Photo ${String.fromCharCode(65 + i)}:` });
       parts.push({
         type: "image_url",
-        image_url: { url: `data:${img.mimeType};base64,${img.data}`, detail: "auto" },
+        image_url: { url: `data:image/jpeg;base64,${compressed}`, detail: "auto" },
       });
-    });
+    }
   }
 
   return parts;
@@ -175,7 +195,7 @@ IMPORTANT: Format the "mistakes" as short, punchy issue labels (e.g. "Weak first
 Remember: The roast should make someone want to share their Magnet Score. Think "this bio could belong to 4.7 million people" energy.`;
 
 export async function analyzeProfile(input: ProfileInput): Promise<ProfileResult> {
-  const content = buildUserContent(input, ANALYZE_PROMPT);
+  const content = await buildUserContent(input, ANALYZE_PROMPT);
 
   const response = await openai.chat.completions.create({
     model: "gpt-5.2",
