@@ -1,12 +1,13 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
+import multer from "multer";
 import { fileURLToPath } from "url";
 import { Pool } from "pg";
 import { analyzeProfile } from "./ai.js";
-import { validateProfileInput } from "./validation.js";
 import { hashPassword, comparePassword, generateToken, verifyToken } from "./auth.js";
 import type { Request, Response, NextFunction } from "express";
+import type { ProfileInput } from "../shared/types.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -54,18 +55,35 @@ await initAuditTracking();
 
 app.use(express.json({ limit: "50mb" }));
 
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/heic", "image/heif"];
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024, files: 25 },
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_MIME_TYPES.includes(file.mimetype) || file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files are allowed"));
+    }
+  },
+});
+
+const analyzeUpload = upload.fields([
+  { name: "screenshots", maxCount: 6 },
+  { name: "currentPhotos", maxCount: 9 },
+  { name: "additionalPhotos", maxCount: 10 },
+]);
+
 interface AuthRequest extends Request {
   user?: { userId: number; email: string };
 }
 
-function authenticateOptional(req: AuthRequest, _res: Response, next: NextFunction) {
+function authenticateOptional(req: AuthRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   if (authHeader?.startsWith("Bearer ")) {
-    const token = authHeader.slice(7);
-    const payload = verifyToken(token);
-    if (payload) {
-      req.user = payload;
-    }
+    const payload = verifyToken(authHeader.slice(7));
+    if (payload) req.user = payload;
   }
   next();
 }
@@ -74,33 +92,29 @@ app.post("/api/auth/register", async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      res.status(400).json({ error: "Email and password are required" });
+      res.status(400).json({ error: "Email and password required" });
       return;
     }
-    const normalizedEmail = email.toLowerCase().trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      res.status(400).json({ error: "Please provide a valid email address" });
+    if (password.length < 8) {
+      res.status(400).json({ error: "Password must be at least 8 characters" });
       return;
     }
-    if (password.length < 6) {
-      res.status(400).json({ error: "Password must be at least 6 characters" });
-      return;
-    }
-
-    const existing = await pool.query("SELECT id FROM users WHERE email = $1", [normalizedEmail]);
+    const existing = await pool.query("SELECT id FROM users WHERE email = $1", [
+      email.toLowerCase().trim(),
+    ]);
     if (existing.rows.length > 0) {
-      res.status(409).json({ error: "An account with this email already exists" });
+      res.status(400).json({ error: "An account with this email already exists" });
       return;
     }
 
     const passwordHash = await hashPassword(password);
     const result = await pool.query(
-      "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email, created_at",
-      [normalizedEmail, passwordHash]
+      "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email",
+      [email.toLowerCase().trim(), passwordHash]
     );
     const user = result.rows[0];
     const token = generateToken({ userId: user.id, email: user.email });
-    res.status(201).json({ token, user: { id: user.id, email: user.email } });
+    res.json({ token, user: { id: user.id, email: user.email } });
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({ error: "Registration failed. Please try again." });
@@ -111,17 +125,16 @@ app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      res.status(400).json({ error: "Email and password are required" });
+      res.status(400).json({ error: "Email and password required" });
       return;
     }
-    const normalizedEmail = email.toLowerCase().trim();
-
-    const result = await pool.query("SELECT id, email, password_hash FROM users WHERE email = $1", [normalizedEmail]);
+    const result = await pool.query("SELECT id, email, password_hash FROM users WHERE email = $1", [
+      email.toLowerCase().trim(),
+    ]);
     if (result.rows.length === 0) {
       res.status(401).json({ error: "Invalid email or password" });
       return;
     }
-
     const user = result.rows[0];
     const valid = await comparePassword(password, user.password_hash);
     if (!valid) {
@@ -151,16 +164,74 @@ app.get("/api/auth/me", async (req: AuthRequest, res) => {
   res.json({ user: { id: payload.userId, email: payload.email } });
 });
 
-app.post("/api/analyze", authenticateOptional, async (req: AuthRequest, res) => {
+function filesToBase64Strings(files: Express.Multer.File[]): string[] {
+  return files.map((f) => {
+    const data = f.buffer.toString("base64");
+    const mimeType = f.mimetype || "image/jpeg";
+    return JSON.stringify({ data, mimeType });
+  });
+}
+
+app.post("/api/analyze", authenticateOptional, analyzeUpload, async (req: AuthRequest, res) => {
   try {
-    const input = validateProfileInput(req.body);
-    if (!input.success) {
-      res.status(400).json({ error: input.error });
+    const files = req.files as Record<string, Express.Multer.File[]> | undefined;
+    const body = req.body;
+
+    const platform = body.platform;
+    const email = (req.user?.email || body.email || "").toLowerCase().trim();
+    const bio = body.bio || "";
+    const prompts = body.prompts ? (Array.isArray(body.prompts) ? body.prompts : [body.prompts]) : [];
+    const photoDescriptions = body.photoDescriptions ? (Array.isArray(body.photoDescriptions) ? body.photoDescriptions : [body.photoDescriptions]) : [];
+    const targetType = body.targetType || "";
+    const customTarget = body.customTarget;
+    const screenshotLabels = body.screenshotLabels ? (Array.isArray(body.screenshotLabels) ? body.screenshotLabels : [body.screenshotLabels]) : [];
+
+    const validPlatforms = ["hinge", "tinder", "bumble", "other"];
+    if (!platform || !validPlatforms.includes(platform)) {
+      res.status(400).json({ error: "Invalid platform" });
+      return;
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      res.status(400).json({ error: "Please provide a valid email address" });
+      return;
+    }
+    if (!targetType.trim()) {
+      res.status(400).json({ error: "Please select a target match type" });
       return;
     }
 
-    const email = (req.user?.email || input.data.email).toLowerCase().trim();
-    const platform = input.data.platform;
+    const screenshotFiles = files?.screenshots || [];
+    const currentPhotoFiles = files?.currentPhotos || [];
+    const additionalPhotoFiles = files?.additionalPhotos || [];
+
+    const hasTextContent = bio.trim() || prompts.some((p: string) => p.trim());
+    const hasScreenshots = screenshotFiles.length > 0;
+
+    if (!hasTextContent && !hasScreenshots) {
+      res.status(400).json({ error: "Please provide at least a bio, one prompt, or upload a screenshot" });
+      return;
+    }
+
+    const screenshotStrings = screenshotFiles.map((f, i) => {
+      const data = f.buffer.toString("base64");
+      const mimeType = f.mimetype || "image/jpeg";
+      const label = screenshotLabels[i] || "";
+      return JSON.stringify({ data, mimeType, label });
+    });
+
+    const profileInput: ProfileInput = {
+      platform: platform as ProfileInput["platform"],
+      email,
+      bio,
+      prompts: prompts.filter((p: string) => typeof p === "string"),
+      photoDescriptions: photoDescriptions.filter((p: string) => typeof p === "string"),
+      screenshots: screenshotStrings,
+      currentPhotos: filesToBase64Strings(currentPhotoFiles),
+      additionalPhotos: filesToBase64Strings(additionalPhotoFiles),
+      targetType,
+      customTarget,
+    };
+
     const existing = await pool.query(
       "SELECT platform FROM free_audits WHERE email = $1",
       [email]
@@ -181,7 +252,7 @@ app.post("/api/analyze", authenticateOptional, async (req: AuthRequest, res) => 
       return;
     }
 
-    const result = await analyzeProfile(input.data);
+    const result = await analyzeProfile(profileInput);
     await pool.query(
       "INSERT INTO free_audits (email, platform) VALUES ($1, $2) ON CONFLICT (email, platform) DO NOTHING",
       [email, platform]
@@ -197,6 +268,26 @@ app.post("/api/analyze", authenticateOptional, async (req: AuthRequest, res) => 
           : "Failed to analyze profile. Please try again.";
     res.status(500).json({ error: msg });
   }
+});
+
+app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      res.status(413).json({ error: "One or more files are too large. Maximum 20MB per file." });
+      return;
+    }
+    if (err.code === "LIMIT_FILE_COUNT") {
+      res.status(400).json({ error: "Too many files uploaded." });
+      return;
+    }
+    res.status(400).json({ error: "File upload error. Please try again." });
+    return;
+  }
+  if (err?.message === "Only image files are allowed") {
+    res.status(400).json({ error: "Only image files (JPG, PNG, GIF, WebP, HEIC) are allowed." });
+    return;
+  }
+  next(err);
 });
 
 const distPath = path.resolve(__dirname, "../dist/public");

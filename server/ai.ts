@@ -11,16 +11,16 @@ const openai = new OpenAI({
 const MAX_IMAGE_DIM = 1024;
 const JPEG_QUALITY = 70;
 
-async function compressImage(base64Data: string): Promise<string> {
+async function compressImage(base64Data: string): Promise<{ data: string; mimeType: string }> {
   try {
     const buffer = Buffer.from(base64Data, "base64");
     const compressed = await sharp(buffer)
       .resize(MAX_IMAGE_DIM, MAX_IMAGE_DIM, { fit: "inside", withoutEnlargement: true })
       .jpeg({ quality: JPEG_QUALITY })
       .toBuffer();
-    return compressed.toString("base64");
+    return { data: compressed.toString("base64"), mimeType: "image/jpeg" };
   } catch {
-    return base64Data;
+    return { data: base64Data, mimeType: "image/jpeg" };
   }
 }
 
@@ -95,10 +95,10 @@ async function buildUserContent(input: ProfileInput, promptText: string): Promis
     for (const raw of input.screenshots) {
       const s = parseImagePayload(raw);
       if (!s) continue;
-      const compressed = await compressImage(s.data);
+      const img = await compressImage(s.data);
       parts.push({
         type: "image_url",
-        image_url: { url: `data:image/jpeg;base64,${compressed}`, detail: "high" },
+        image_url: { url: `data:${img.mimeType};base64,${img.data}`, detail: "high" },
       });
     }
   }
@@ -106,13 +106,13 @@ async function buildUserContent(input: ProfileInput, promptText: string): Promis
   if (hasCurrentPhotos) {
     parts.push({ type: "text", text: "\n[Current Profile Photos — in order:]" });
     for (let i = 0; i < input.currentPhotos.length; i++) {
-      const img = parseImagePayload(input.currentPhotos[i]);
-      if (!img) continue;
-      const compressed = await compressImage(img.data);
+      const raw = parseImagePayload(input.currentPhotos[i]);
+      if (!raw) continue;
+      const img = await compressImage(raw.data);
       parts.push({ type: "text", text: `Photo #${i + 1}:` });
       parts.push({
         type: "image_url",
-        image_url: { url: `data:image/jpeg;base64,${compressed}`, detail: "auto" },
+        image_url: { url: `data:${img.mimeType};base64,${img.data}`, detail: "auto" },
       });
     }
   }
@@ -120,13 +120,13 @@ async function buildUserContent(input: ProfileInput, promptText: string): Promis
   if (hasAdditionalPhotos) {
     parts.push({ type: "text", text: "\n[Additional Candidate Photos:]" });
     for (let i = 0; i < input.additionalPhotos.length; i++) {
-      const img = parseImagePayload(input.additionalPhotos[i]);
-      if (!img) continue;
-      const compressed = await compressImage(img.data);
+      const raw = parseImagePayload(input.additionalPhotos[i]);
+      if (!raw) continue;
+      const img = await compressImage(raw.data);
       parts.push({ type: "text", text: `Extra Photo ${String.fromCharCode(65 + i)}:` });
       parts.push({
         type: "image_url",
-        image_url: { url: `data:image/jpeg;base64,${compressed}`, detail: "auto" },
+        image_url: { url: `data:${img.mimeType};base64,${img.data}`, detail: "auto" },
       });
     }
   }

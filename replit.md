@@ -70,11 +70,19 @@ shared/
 - Logged-in users get email auto-filled and read-only in ProfileForm
 - Auth is optional — app works fully without an account
 
+## Upload Architecture
+
+- Client sends photos as `FormData` (multipart upload) — no base64-in-JSON, works reliably on mobile
+- Server uses `multer` for multipart parsing (memory storage, 20MB per file, 25 files max)
+- Server uses `sharp` to compress all images to 1024px max / JPEG 70% quality before sending to OpenAI
+- HEIC/HEIF files converted client-side via `heic2any` before upload
+
 ## Key Dependencies
 
 - openai (via Replit AI Integrations - no API key needed)
 - pg, @types/pg (PostgreSQL client)
-- express, cors
+- express, cors, multer (multipart file uploads)
+- sharp (server-side image compression)
 - react, react-dom, vite
 - lucide-react (icons)
 - heic2any (HEIC/HEIF to JPEG conversion for iPhone photos)

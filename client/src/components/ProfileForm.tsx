@@ -239,86 +239,10 @@ export function ProfileForm({ onResult, userEmail }: Props) {
     });
   };
 
-  const readFileAsBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve((reader.result as string).split(",")[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const resizeImage = (file: File, maxDim: number, quality: number): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const objUrl = URL.createObjectURL(file);
-      const cleanup = () => URL.revokeObjectURL(objUrl);
-      const timeout = setTimeout(() => {
-        cleanup();
-        readFileAsBase64(file).then(resolve).catch(reject);
-      }, 10000);
-
-      img.onload = () => {
-        clearTimeout(timeout);
-        try {
-          let { width, height } = img;
-          if (width > maxDim || height > maxDim) {
-            if (width > height) {
-              height = Math.round((height * maxDim) / width);
-              width = maxDim;
-            } else {
-              width = Math.round((width * maxDim) / height);
-              height = maxDim;
-            }
-          }
-          const canvas = document.createElement("canvas");
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          if (!ctx) {
-            cleanup();
-            readFileAsBase64(file).then(resolve).catch(reject);
-            return;
-          }
-          ctx.drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL("image/jpeg", quality);
-          cleanup();
-          canvas.width = 0;
-          canvas.height = 0;
-          if (dataUrl.length < 100) {
-            readFileAsBase64(file).then(resolve).catch(reject);
-            return;
-          }
-          resolve(dataUrl.split(",")[1]);
-        } catch {
-          cleanup();
-          readFileAsBase64(file).then(resolve).catch(reject);
-        }
-      };
-      img.onerror = () => {
-        clearTimeout(timeout);
-        cleanup();
-        readFileAsBase64(file).then(resolve).catch(reject);
-      };
-      img.src = objUrl;
-    });
-  };
-
-  const fileToBase64 = (file: File): Promise<string> => {
-    return resizeImage(file, 1024, 0.7);
-  };
-
-  const photosToPayload = async (photos: UploadedPhoto[]) => {
-    return Promise.all(
-      photos.map(async (p) => JSON.stringify({ data: await fileToBase64(p.file), mimeType: "image/jpeg" }))
-    );
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const hasTextContent = bio.trim() || prompts.some((p) => p.trim());
     const hasScreenshots = screenshots.length > 0;
-    const hasPhotos = currentPhotos.length > 0;
 
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setError("Please enter a valid email address.");
@@ -337,37 +261,32 @@ export function ProfileForm({ onResult, userEmail }: Props) {
     setError("");
 
     try {
-      const [screenshotPayload, currentPhotoPayload, additionalPhotoPayload] = await Promise.all([
-        Promise.all(
-          screenshots.map(async (s) =>
-            JSON.stringify({ data: await fileToBase64(s.file), label: s.label, mimeType: "image/jpeg" })
-          )
-        ),
-        photosToPayload(currentPhotos),
-        photosToPayload(additionalPhotos),
-      ]);
+      const formData = new FormData();
+      formData.append("platform", platform);
+      formData.append("email", email.trim());
+      formData.append("bio", bio);
+      formData.append("targetType", targetType);
+      if (targetType === "custom" && customTarget) {
+        formData.append("customTarget", customTarget);
+      }
+      prompts.filter((p) => p.trim()).forEach((p) => formData.append("prompts", p));
+      photoDescriptions.filter((p) => p.trim()).forEach((p) => formData.append("photoDescriptions", p));
 
-      const input: ProfileInput = {
-        platform,
-        email: email.trim(),
-        bio,
-        prompts: prompts.filter((p) => p.trim()),
-        photoDescriptions: photoDescriptions.filter((p) => p.trim()),
-        screenshots: screenshotPayload,
-        currentPhotos: currentPhotoPayload,
-        additionalPhotos: additionalPhotoPayload,
-        targetType,
-        customTarget: targetType === "custom" ? customTarget : undefined,
-      };
+      screenshots.forEach((s) => {
+        formData.append("screenshots", s.file);
+        formData.append("screenshotLabels", s.label || "");
+      });
+      currentPhotos.forEach((p) => formData.append("currentPhotos", p.file));
+      additionalPhotos.forEach((p) => formData.append("additionalPhotos", p.file));
 
       const authToken = localStorage.getItem("magnet_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const headers: Record<string, string> = {};
       if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
 
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers,
-        body: JSON.stringify(input),
+        body: formData,
       });
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
@@ -378,6 +297,18 @@ export function ProfileForm({ onResult, userEmail }: Props) {
         throw new Error(errData?.error || "Analysis failed");
       }
       const data = await res.json();
+      const input: ProfileInput = {
+        platform,
+        email: email.trim(),
+        bio,
+        prompts: prompts.filter((p) => p.trim()),
+        photoDescriptions: photoDescriptions.filter((p) => p.trim()),
+        screenshots: [],
+        currentPhotos: [],
+        additionalPhotos: [],
+        targetType,
+        customTarget: targetType === "custom" ? customTarget : undefined,
+      };
       onResult(data, input);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
