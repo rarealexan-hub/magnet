@@ -41,6 +41,54 @@ async function convertHeicToJpeg(file: File): Promise<File> {
   return new File([blob], name, { type: "image/jpeg" });
 }
 
+function compressImage(file: File, maxDim = 1600, quality = 0.75): Promise<File> {
+  return new Promise((resolve) => {
+    if (file.size < 500 * 1024) {
+      resolve(file);
+      return;
+    }
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      try {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { resolve(file); URL.revokeObjectURL(url); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            URL.revokeObjectURL(url);
+            canvas.width = 0;
+            canvas.height = 0;
+            if (!blob || blob.size < 100) { resolve(file); return; }
+            const name = file.name.replace(/\.[^.]+$/, ".jpg");
+            resolve(new File([blob], name, { type: "image/jpeg" }));
+          },
+          "image/jpeg",
+          quality
+        );
+      } catch {
+        URL.revokeObjectURL(url);
+        resolve(file);
+      }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
 export function ProfileForm({ onResult, userEmail }: Props) {
   const [platform, setPlatform] = useState<ProfileInput["platform"]>("hinge");
   const [email, setEmail] = useState(userEmail || "");
@@ -101,28 +149,26 @@ export function ProfileForm({ onResult, userEmail }: Props) {
 
       const filesToProcess = Array.from(files).slice(0, remaining);
       for (const file of filesToProcess) {
+        let processed: File;
         if (isHeic(file)) {
           try {
-            const converted = await convertHeicToJpeg(file);
-            if (converted.size > MAX_FILE_SIZE) {
-              skipped.push(`${file.name} (over 20MB after conversion)`);
-              continue;
-            }
-            newPhotos.push({ file: converted, preview: URL.createObjectURL(converted) });
+            processed = await convertHeicToJpeg(file);
           } catch {
             skipped.push(`${file.name} (failed to convert HEIC)`);
+            continue;
           }
-          continue;
-        }
-        if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+        } else if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
           skipped.push(`${file.name} (use JPG, PNG, GIF, WebP, or HEIC)`);
           continue;
+        } else {
+          processed = file;
         }
-        if (file.size > MAX_FILE_SIZE) {
+        if (processed.size > MAX_FILE_SIZE) {
           skipped.push(`${file.name} (over 20MB)`);
           continue;
         }
-        newPhotos.push({ file, preview: URL.createObjectURL(file) });
+        processed = await compressImage(processed);
+        newPhotos.push({ file: processed, preview: URL.createObjectURL(processed) });
       }
 
       if (skipped.length > 0) setError(`Skipped: ${skipped.join(", ")}`);
@@ -196,28 +242,26 @@ export function ProfileForm({ onResult, userEmail }: Props) {
     const skipped: string[] = [];
     const filesToProcess = Array.from(files).slice(0, remaining);
     for (const file of filesToProcess) {
+      let processed: File;
       if (isHeic(file)) {
         try {
-          const converted = await convertHeicToJpeg(file);
-          if (converted.size > MAX_FILE_SIZE) {
-            skipped.push(`${file.name} (over 20MB)`);
-            continue;
-          }
-          newScreenshots.push({ file: converted, preview: URL.createObjectURL(converted), label: "" });
+          processed = await convertHeicToJpeg(file);
         } catch {
           skipped.push(`${file.name} (couldn't process this image)`);
+          continue;
         }
-        continue;
-      }
-      if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+      } else if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
         skipped.push(`${file.name} (unsupported format)`);
         continue;
+      } else {
+        processed = file;
       }
-      if (file.size > MAX_FILE_SIZE) {
+      if (processed.size > MAX_FILE_SIZE) {
         skipped.push(`${file.name} (over 20MB)`);
         continue;
       }
-      newScreenshots.push({ file, preview: URL.createObjectURL(file), label: "" });
+      processed = await compressImage(processed);
+      newScreenshots.push({ file: processed, preview: URL.createObjectURL(processed), label: "" });
     }
     if (skipped.length > 0) setError(`Skipped: ${skipped.join(", ")}`);
     setScreenshots((prev) => [...prev, ...newScreenshots]);
