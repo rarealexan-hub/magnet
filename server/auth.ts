@@ -1,10 +1,10 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-if (!process.env.JWT_SECRET) {
-  throw new Error("JWT_SECRET environment variable is required");
+const JWT_SECRET: string = process.env.JWT_SECRET || process.env.SESSION_SECRET || "";
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET or SESSION_SECRET environment variable is required");
 }
-const JWT_SECRET: string = process.env.JWT_SECRET;
 const TOKEN_EXPIRY = "30d";
 
 export interface TokenPayload {
