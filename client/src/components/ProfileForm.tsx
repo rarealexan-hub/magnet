@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Plus, X, Loader2, Upload, Type, Camera, GripVertical, ImagePlus, Sparkles, ChevronUp, ChevronDown } from "lucide-react";
 import heic2any from "heic2any";
 import { TARGET_TYPES } from "@shared/types";
@@ -6,6 +6,7 @@ import type { ProfileInput, ProfileResult } from "@shared/types";
 
 interface Props {
   onResult: (data: ProfileResult, input: ProfileInput) => void;
+  userEmail?: string;
 }
 
 type InputMode = "type" | "screenshot";
@@ -40,9 +41,9 @@ async function convertHeicToJpeg(file: File): Promise<File> {
   return new File([blob], name, { type: "image/jpeg" });
 }
 
-export function ProfileForm({ onResult }: Props) {
+export function ProfileForm({ onResult, userEmail }: Props) {
   const [platform, setPlatform] = useState<ProfileInput["platform"]>("hinge");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(userEmail || "");
   const [inputMode, setInputMode] = useState<InputMode>("screenshot");
   const [bio, setBio] = useState("");
   const [prompts, setPrompts] = useState<string[]>([""]);
@@ -57,6 +58,10 @@ export function ProfileForm({ onResult }: Props) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+
+  useEffect(() => {
+    if (userEmail) setEmail(userEmail);
+  }, [userEmail]);
 
   const paidSessionId = sessionStorage.getItem("paidSessionId");
 
@@ -297,10 +302,14 @@ export function ProfileForm({ onResult }: Props) {
         customTarget: targetType === "custom" ? customTarget : undefined,
       };
 
+      const authToken = localStorage.getItem("magnet_token");
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+
       if (paidSessionId) {
         const res = await fetch("/api/optimize", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({ ...input, sessionId: paidSessionId }),
         });
         if (!res.ok) {
@@ -313,7 +322,7 @@ export function ProfileForm({ onResult }: Props) {
       } else {
         const res = await fetch("/api/analyze", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify(input),
         });
         if (!res.ok) {
@@ -367,7 +376,7 @@ export function ProfileForm({ onResult }: Props) {
 
           <div className="form-section">
             <label className="form-label">Your email</label>
-            <p className="form-hint">We'll send your results here so you don't lose them.</p>
+            <p className="form-hint">{userEmail ? "Signed in — using your account email." : "We'll send your results here so you don't lose them."}</p>
             <input
               type="email"
               className="form-input"
@@ -375,6 +384,8 @@ export function ProfileForm({ onResult }: Props) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              readOnly={!!userEmail}
+              style={userEmail ? { opacity: 0.7, cursor: "default" } : undefined}
             />
           </div>
 

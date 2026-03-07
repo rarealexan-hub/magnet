@@ -50,6 +50,7 @@ shared/
 
 ## Database Tables
 
+- `users` — user accounts (id SERIAL PK, email TEXT UNIQUE, password_hash TEXT, created_at)
 - `free_audits` — tracks which emails have used their free Magnet analysis per platform (id, email, platform, created_at; UNIQUE on email+platform)
 - `used_sessions` — tracks consumed Stripe checkout session IDs to prevent replay (session_id TEXT PRIMARY KEY, used_at)
 - `stripe.*` — managed by stripe-replit-sync (products, prices, sessions, etc.)
@@ -67,6 +68,17 @@ shared/
 - Mode toggle (type/screenshot) stacks vertically on mobile
 - Score breakdown, roast cards, pricing cards, photo advice all reduce padding on mobile
 
+## Authentication
+
+- Email + password auth with bcrypt hashing (12 rounds) and JWT tokens (30-day expiry)
+- JWT secret stored in `JWT_SECRET` env var
+- Server routes: POST `/api/auth/register`, POST `/api/auth/login`, GET `/api/auth/me`
+- `authenticateOptional` middleware on analyze/optimize routes extracts user from JWT if present
+- Client: `useAuth` hook manages state via localStorage (`magnet_token`), checks `/api/auth/me` on mount
+- UI: `AuthModal` (login/register tabs) + `UserMenu` (avatar dropdown with sign out) in fixed header
+- Logged-in users get email auto-filled and read-only in ProfileForm
+- Auth is optional — app works fully without an account
+
 ## Key Dependencies
 
 - openai (via Replit AI Integrations - no API key needed)
@@ -76,6 +88,7 @@ shared/
 - react, react-dom, vite
 - lucide-react (icons)
 - heic2any (HEIC/HEIF to JPEG conversion for iPhone photos)
+- bcryptjs, jsonwebtoken (auth)
 - concurrently (dev server)
 
 ## Stripe Setup

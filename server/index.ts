@@ -8,6 +8,8 @@ import { analyzeProfile, optimizeProfile } from "./ai.js";
 import { validateProfileInput } from "./validation.js";
 import { getStripeSync, getUncachableStripeClient, getStripePublishableKey } from "./stripeClient.js";
 import { WebhookHandlers } from "./webhookHandlers.js";
+import { hashPassword, comparePassword, generateToken, verifyToken } from "./auth.js";
+import type { Request, Response, NextFunction } from "express";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -42,6 +44,14 @@ async function initAuditTracking() {
       CREATE TABLE IF NOT EXISTS used_sessions (
         session_id TEXT PRIMARY KEY,
         used_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
       )
     `);
   } catch (err) {
@@ -107,7 +117,104 @@ app.post(
 
 app.use(express.json({ limit: "50mb" }));
 
-app.post("/api/analyze", async (req, res) => {
+interface AuthRequest extends Request {
+  user?: { userId: number; email: string };
+}
+
+function authenticateOptional(req: AuthRequest, _res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.slice(7);
+    const payload = verifyToken(token);
+    if (payload) {
+      req.user = payload;
+    }
+  }
+  next();
+}
+
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      res.status(400).json({ error: "Email and password are required" });
+      return;
+    }
+    const normalizedEmail = email.toLowerCase().trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      res.status(400).json({ error: "Please provide a valid email address" });
+      return;
+    }
+    if (password.length < 6) {
+      res.status(400).json({ error: "Password must be at least 6 characters" });
+      return;
+    }
+
+    const existing = await pool.query("SELECT id FROM users WHERE email = $1", [normalizedEmail]);
+    if (existing.rows.length > 0) {
+      res.status(409).json({ error: "An account with this email already exists" });
+      return;
+    }
+
+    const passwordHash = await hashPassword(password);
+    const result = await pool.query(
+      "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email, created_at",
+      [normalizedEmail, passwordHash]
+    );
+    const user = result.rows[0];
+    const token = generateToken({ userId: user.id, email: user.email });
+    res.status(201).json({ token, user: { id: user.id, email: user.email } });
+  } catch (error) {
+    console.error("Registration error:", error);
+    res.status(500).json({ error: "Registration failed. Please try again." });
+  }
+});
+
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      res.status(400).json({ error: "Email and password are required" });
+      return;
+    }
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const result = await pool.query("SELECT id, email, password_hash FROM users WHERE email = $1", [normalizedEmail]);
+    if (result.rows.length === 0) {
+      res.status(401).json({ error: "Invalid email or password" });
+      return;
+    }
+
+    const user = result.rows[0];
+    const valid = await comparePassword(password, user.password_hash);
+    if (!valid) {
+      res.status(401).json({ error: "Invalid email or password" });
+      return;
+    }
+
+    const token = generateToken({ userId: user.id, email: user.email });
+    res.json({ token, user: { id: user.id, email: user.email } });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ error: "Login failed. Please try again." });
+  }
+});
+
+app.get("/api/auth/me", async (req: AuthRequest, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    res.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  const payload = verifyToken(authHeader.slice(7));
+  if (!payload) {
+    res.status(401).json({ error: "Invalid or expired token" });
+    return;
+  }
+  res.json({ user: { id: payload.userId, email: payload.email } });
+});
+
+app.post("/api/analyze", authenticateOptional, async (req: AuthRequest, res) => {
   try {
     const input = validateProfileInput(req.body);
     if (!input.success) {
@@ -115,7 +222,7 @@ app.post("/api/analyze", async (req, res) => {
       return;
     }
 
-    const email = input.data.email.toLowerCase().trim();
+    const email = (req.user?.email || input.data.email).toLowerCase().trim();
     const platform = input.data.platform;
     const existing = await pool.query(
       "SELECT platform FROM free_audits WHERE email = $1",
@@ -153,7 +260,7 @@ app.post("/api/analyze", async (req, res) => {
   }
 });
 
-app.post("/api/optimize", async (req, res) => {
+app.post("/api/optimize", authenticateOptional, async (req: AuthRequest, res) => {
   try {
     const { sessionId, ...profileData } = req.body;
     if (!sessionId) {
