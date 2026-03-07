@@ -1,15 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { User } from "lucide-react";
 import { Landing } from "./components/Landing";
 import { ProfileForm } from "./components/ProfileForm";
 import { Results } from "./components/Results";
-import { Success } from "./components/Success";
 import { AuthModal } from "./components/AuthModal";
 import { UserMenu } from "./components/UserMenu";
 import { useAuth } from "./hooks/useAuth";
 import type { ProfileInput, ProfileResult } from "@shared/types";
 
-type View = "landing" | "form" | "results" | "success";
+type View = "landing" | "form" | "results";
 
 export default function App() {
   const [view, setView] = useState<View>("landing");
@@ -17,12 +16,6 @@ export default function App() {
   const [profileInput, setProfileInput] = useState<ProfileInput | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const { user, loading, login, register, logout } = useAuth();
-
-  useEffect(() => {
-    if (window.location.pathname === "/success") {
-      setView("success");
-    }
-  }, []);
 
   const handleStartAudit = () => setView("form");
 
@@ -72,10 +65,8 @@ export default function App() {
           profileInput={profileInput}
           onBack={handleBack}
           onStartOver={handleStartOver}
-          onUpgrade={(upgraded) => setResult(upgraded)}
         />
       )}
-      {view === "success" && <Success onStartOver={handleStartOver} />}
 
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} onAuth={handleAuth} />}
     </div>

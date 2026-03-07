@@ -7,27 +7,25 @@ A web app that analyzes and optimizes dating profiles for apps like Hinge, Tinde
 - **Frontend**: React + Vite (port 5000)
 - **Backend**: Express + TypeScript (port 3001, proxied via Vite)
 - **AI**: OpenAI via Replit AI Integrations (gpt-5.2, with vision for screenshots)
-- **Payments**: Stripe via Replit Connectors (stripe-replit-sync for webhooks/DB sync)
-- **Database**: PostgreSQL (Replit built-in, used for Stripe data sync + free analysis tracking)
+- **Database**: PostgreSQL (Replit built-in, used for free analysis tracking + user accounts)
 
 ## Project Structure
 
 ```
 client/           - React frontend
   src/
-    components/   - Landing, ProfileForm, Results, ScoreRing, Success
-    App.tsx       - Main app with view routing (landing/form/results/success)
+    components/   - Landing, ProfileForm, Results, ScoreRing, AuthModal, UserMenu
+    hooks/        - useAuth (JWT auth state management)
+    App.tsx       - Main app with view routing (landing/form/results)
     styles.css    - Full app styles
   index.html
   public/
     favicon.svg
 server/
-  index.ts        - Express server (Stripe init, webhook, API routes, audit tracking)
+  index.ts        - Express server (API routes, audit tracking, auth)
   ai.ts           - OpenAI integration with vision support
   validation.ts   - Input validation (email required)
-  stripeClient.ts - Stripe client via Replit Connectors
-  webhookHandlers.ts - Stripe webhook processing
-  seedProducts.ts - Script to create Stripe products/prices
+  auth.ts         - JWT + bcrypt authentication utilities
 shared/
   types.ts        - Shared TypeScript types
 ```
@@ -35,25 +33,18 @@ shared/
 ## Features
 
 1. **Free Magnet Analysis**: Magnet Score with 5-category breakdown (Photo Quality, Attraction Signals, Personality Signals, Match Targeting, First Impression) + witty roast + issues detected with "biggest match killer" callout
-2. **One Free Analysis Per Email (Per Platform)**: Server-side enforcement via `free_audits` table — each email gets one free analysis for one dating platform, then must upgrade
+2. **One Free Analysis Per Email (Per Platform)**: Server-side enforcement via `free_audits` table — each email gets one free analysis for one dating platform
 3. **Match Targeting**: Choose who you want to attract (7 preset types + custom)
 4. **Screenshot Upload**: Upload screenshots of dating profile instead of typing it out (uses OpenAI vision)
 5. **Photo Upload**: Upload current profile photos (drag to reorder, up to 9) + additional candidate photos (up to 10) for AI photo evaluation
-6. **Email Collection**: Required email field on form, passed to Stripe checkout as customer_email
-7. **Pricing Tiers** (Stripe):
-   - Free Analysis: Magnet Score + roast + issues detected (one per email per platform)
-   - Magnet Pro ($19, one-time): Full guidance — bio advice, prompt optimization, photo strategy, tone adjustments, match targeting
-   - Magnet Elite ($49/mo, subscription): Everything in Pro + Magnet Dashboard, algorithm updates, all apps, ongoing suggestions, priority support
-8. **Shareable Results**: Copy Magnet Score roast for social sharing (viral loop)
-9. **Before/After Examples**: Landing page shows transformation case study
-10. **Success Page**: Post-payment confirmation with Stripe session verification
+6. **Email Collection**: Required email field on form
+7. **Shareable Results**: Copy Magnet Score roast for social sharing (viral loop)
+8. **Before/After Examples**: Landing page shows transformation case study
 
 ## Database Tables
 
 - `users` — user accounts (id SERIAL PK, email TEXT UNIQUE, password_hash TEXT, created_at)
 - `free_audits` — tracks which emails have used their free Magnet analysis per platform (id, email, platform, created_at; UNIQUE on email+platform)
-- `used_sessions` — tracks consumed Stripe checkout session IDs to prevent replay (session_id TEXT PRIMARY KEY, used_at)
-- `stripe.*` — managed by stripe-replit-sync (products, prices, sessions, etc.)
 
 ## Mobile Responsiveness
 
@@ -61,19 +52,19 @@ shared/
 - iOS zoom prevention: all text inputs at 16px minimum font size
 - 44px minimum tap targets on all interactive controls (buttons, remove icons, reorder arrows)
 - Touch-friendly global CSS: `-webkit-tap-highlight-color: transparent`, `touch-action: manipulation`, `-webkit-appearance: none`
-- Mobile breakpoint at 640px with adapted layouts for all pages (landing, form, results, pricing)
+- Mobile breakpoint at 640px with adapted layouts for all pages (landing, form, results)
 - Photo reorder: desktop uses HTML5 drag-and-drop, mobile uses up/down arrow buttons (drag disabled on touch devices via `pointer: coarse` media query)
-- Responsive grids: features auto-fit, pricing stacks at 800px, photos 3-col on mobile, screenshots 2-col on mobile
+- Responsive grids: features auto-fit, photos 3-col on mobile, screenshots 2-col on mobile
 - CTA button goes full-width on mobile
 - Mode toggle (type/screenshot) stacks vertically on mobile
-- Score breakdown, roast cards, pricing cards, photo advice all reduce padding on mobile
+- Score breakdown, roast cards all reduce padding on mobile
 
 ## Authentication
 
 - Email + password auth with bcrypt hashing (12 rounds) and JWT tokens (30-day expiry)
 - JWT secret stored in `JWT_SECRET` env var
 - Server routes: POST `/api/auth/register`, POST `/api/auth/login`, GET `/api/auth/me`
-- `authenticateOptional` middleware on analyze/optimize routes extracts user from JWT if present
+- `authenticateOptional` middleware on analyze route extracts user from JWT if present
 - Client: `useAuth` hook manages state via localStorage (`magnet_token`), checks `/api/auth/me` on mount
 - UI: `AuthModal` (login/register tabs) + `UserMenu` (avatar dropdown with sign out) in fixed header
 - Logged-in users get email auto-filled and read-only in ProfileForm
@@ -82,7 +73,6 @@ shared/
 ## Key Dependencies
 
 - openai (via Replit AI Integrations - no API key needed)
-- stripe, stripe-replit-sync (via Replit Connectors)
 - pg, @types/pg (PostgreSQL client)
 - express, cors
 - react, react-dom, vite
@@ -90,13 +80,6 @@ shared/
 - heic2any (HEIC/HEIF to JPEG conversion for iPhone photos)
 - bcryptjs, jsonwebtoken (auth)
 - concurrently (dev server)
-
-## Stripe Setup
-
-- Products created via `npx tsx server/seedProducts.ts`
-- Stripe schema auto-managed by stripe-replit-sync (DO NOT manually modify stripe.* tables)
-- Webhook route registered BEFORE express.json() middleware
-- Products fetched from stripe.products/stripe.prices tables via /api/products endpoint
 
 ## Running
 

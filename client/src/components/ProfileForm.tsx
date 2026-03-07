@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Plus, X, Loader2, Upload, Type, Camera, GripVertical, ImagePlus, Sparkles, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, X, Loader2, Upload, Type, Camera, GripVertical, ImagePlus, ChevronUp, ChevronDown } from "lucide-react";
 import heic2any from "heic2any";
 import { TARGET_TYPES } from "@shared/types";
 import type { ProfileInput, ProfileResult } from "@shared/types";
@@ -62,8 +62,6 @@ export function ProfileForm({ onResult, userEmail }: Props) {
   useEffect(() => {
     if (userEmail) setEmail(userEmail);
   }, [userEmail]);
-
-  const paidSessionId = sessionStorage.getItem("paidSessionId");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentPhotosRef = useRef<HTMLInputElement>(null);
@@ -306,36 +304,21 @@ export function ProfileForm({ onResult, userEmail }: Props) {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
 
-      if (paidSessionId) {
-        const res = await fetch("/api/optimize", {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ ...input, sessionId: paidSessionId }),
-        });
-        if (!res.ok) {
-          const errData = await res.json().catch(() => null);
-          throw new Error(errData?.error || "Optimization failed");
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        if (errData?.code === "AUDIT_LIMIT_REACHED") {
+          setError(errData.error || "You've already used your free Magnet analysis.");
+          return;
         }
-        const data = await res.json();
-        sessionStorage.removeItem("paidSessionId");
-        onResult(data, input);
-      } else {
-        const res = await fetch("/api/analyze", {
-          method: "POST",
-          headers,
-          body: JSON.stringify(input),
-        });
-        if (!res.ok) {
-          const errData = await res.json().catch(() => null);
-          if (errData?.code === "AUDIT_LIMIT_REACHED") {
-            setError(errData.error || "You've already used your free Magnet analysis. Upgrade to Pro for full guidance.");
-            return;
-          }
-          throw new Error(errData?.error || "Analysis failed");
-        }
-        const data = await res.json();
-        onResult(data, input);
+        throw new Error(errData?.error || "Analysis failed");
       }
+      const data = await res.json();
+      onResult(data, input);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
@@ -347,15 +330,9 @@ export function ProfileForm({ onResult, userEmail }: Props) {
     <div className="form-page">
       <div className="form-container">
         <div className="form-header">
-          <h2>{paidSessionId ? "Upload for Full Guidance" : "Paste Your Profile"}</h2>
-          <p>{paidSessionId ? "Upload your profile to receive your full Magnet guidance with bio advice, prompt suggestions, and photo strategy." : "The more you share, the better the analysis. We don't store anything."}</p>
+          <h2>Paste Your Profile</h2>
+          <p>The more you share, the better the analysis. We don't store anything.</p>
         </div>
-        {paidSessionId && (
-          <div className="paid-banner">
-            <Sparkles size={16} />
-            Full Magnet guidance unlocked — submit your profile to get your results
-          </div>
-        )}
 
         <form onSubmit={handleSubmit}>
           <div className="form-section">
@@ -639,12 +616,7 @@ export function ProfileForm({ onResult, userEmail }: Props) {
             {loading ? (
               <>
                 <Loader2 size={20} className="spin" />
-                {paidSessionId ? "Generating your guidance..." : "Analyzing your profile..."}
-              </>
-            ) : paidSessionId ? (
-              <>
-                <Sparkles size={20} />
-                Get My Full Guidance
+                Analyzing your profile...
               </>
             ) : (
               "Analyze My Profile"

@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { ArrowLeft, Copy, Check, Lock, Sparkles, AlertTriangle, Loader2, RotateCcw, Crosshair, Zap, Crown } from "lucide-react";
-import type { ProfileResult, ProfileInput, FullOptimizationResult } from "@shared/types";
+import { useState } from "react";
+import { ArrowLeft, Copy, Check, AlertTriangle, RotateCcw, Crosshair } from "lucide-react";
+import type { ProfileResult, ProfileInput } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 
 interface Props {
@@ -8,33 +8,10 @@ interface Props {
   profileInput: ProfileInput;
   onBack: () => void;
   onStartOver: () => void;
-  onUpgrade: (result: FullOptimizationResult) => void;
 }
 
-interface StripeProduct {
-  id: string;
-  name: string;
-  description: string;
-  metadata: { tier?: string; features?: string };
-  prices: { id: string; unit_amount: number; currency: string }[];
-}
-
-export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }: Props) {
+export function Results({ result, profileInput, onBack, onStartOver }: Props) {
   const [copied, setCopied] = useState(false);
-  const [upgrading, setUpgrading] = useState(false);
-  const [upgradeError, setUpgradeError] = useState("");
-  const [products, setProducts] = useState<StripeProduct[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
-
-  useEffect(() => {
-    if (!result.isPaid) {
-      fetch("/api/products")
-        .then((r) => r.json())
-        .then((data) => setProducts(data.products || []))
-        .catch(() => {})
-        .finally(() => setLoadingProducts(false));
-    }
-  }, [result.isPaid]);
 
   const { score, feedback } = result;
 
@@ -44,27 +21,6 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
     );
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleCheckout = async (priceId: string) => {
-    setUpgrading(true);
-    setUpgradeError("");
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId, profileInput }),
-      });
-      if (!res.ok) throw new Error("Checkout failed");
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch {
-      setUpgradeError("Something went wrong. Please try again.");
-    } finally {
-      setUpgrading(false);
-    }
   };
 
   const profileTypeColor = {
@@ -85,9 +41,6 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
     (min, cat) => (score[cat.key] < score[min.key] ? cat : min),
     scoreCategories[0]
   );
-
-  const proProduct = products.find((p) => p.metadata?.tier === "pro");
-  const premiumProduct = products.find((p) => p.metadata?.tier === "premium");
 
   return (
     <div className="results-page">
@@ -174,217 +127,7 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
           </ul>
         </div>
 
-        {result.isPaid ? (
-          <PaidResults result={result as FullOptimizationResult} />
-        ) : (
-          <div className="upgrade-section">
-            <h3 className="pricing-title">Unlock Full Magnet Guidance</h3>
-            <p className="pricing-subtitle">
-              Get expert guidance on exactly what to change to attract who you want.
-            </p>
-
-            <div className="pricing-grid">
-              <div className="pricing-card free">
-                <div className="pricing-card-header">
-                  <Sparkles size={20} />
-                  <h4>Free Analysis</h4>
-                </div>
-                <div className="pricing-price">
-                  <span className="price-amount">$0</span>
-                </div>
-                <ul className="pricing-features">
-                  <li><Check size={14} /> Magnet Score + breakdown</li>
-                  <li><Check size={14} /> Honest profile roast</li>
-                  <li><Check size={14} /> Issues detected</li>
-                  <li className="disabled"><Lock size={14} /> Bio guidance</li>
-                  <li className="disabled"><Lock size={14} /> Prompt advice</li>
-                  <li className="disabled"><Lock size={14} /> Photo strategy</li>
-                </ul>
-                <p className="pricing-note">You're on this plan</p>
-              </div>
-
-              <div className="pricing-card pro highlighted">
-                <div className="pricing-popular-badge">Most Popular</div>
-                <div className="pricing-card-header">
-                  <Zap size={20} />
-                  <h4>Magnet Pro</h4>
-                </div>
-                <div className="pricing-price">
-                  <span className="price-amount">$19</span>
-                  <span className="price-period">one-time</span>
-                </div>
-                <ul className="pricing-features">
-                  <li><Check size={14} /> Everything in Free</li>
-                  <li><Check size={14} /> Full bio rewrite guidance</li>
-                  <li><Check size={14} /> Prompt optimization advice</li>
-                  <li><Check size={14} /> Photo ordering strategy</li>
-                  <li><Check size={14} /> Tone adjustments</li>
-                  <li><Check size={14} /> Match targeting alignment</li>
-                </ul>
-                {upgradeError && <div className="form-error">{upgradeError}</div>}
-                <button
-                  className="pricing-btn pro"
-                  onClick={() => {
-                    if (proProduct?.prices[0]?.id) {
-                      handleCheckout(proProduct.prices[0].id);
-                    } else {
-                      setUpgradeError("Unable to load pricing. Please refresh and try again.");
-                    }
-                  }}
-                  disabled={upgrading || loadingProducts}
-                >
-                  {upgrading ? (
-                    <>
-                      <Loader2 size={18} className="spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Get Full Guidance"
-                  )}
-                </button>
-              </div>
-
-              <div className="pricing-card premium">
-                <div className="pricing-card-header">
-                  <Crown size={20} />
-                  <h4>Magnet Elite</h4>
-                </div>
-                <div className="pricing-price">
-                  <span className="price-amount">$49</span>
-                  <span className="price-period">/month</span>
-                </div>
-                <ul className="pricing-features">
-                  <li><Check size={14} /> Everything in Pro</li>
-                  <li><Check size={14} /> Magnet Dashboard access</li>
-                  <li><Check size={14} /> Algorithm change updates</li>
-                  <li><Check size={14} /> All dating apps covered</li>
-                  <li><Check size={14} /> Ongoing profile suggestions</li>
-                  <li><Check size={14} /> Priority support</li>
-                </ul>
-                <p className="pricing-dashboard-note">Subscribe for your personal Magnet Dashboard — stay ahead of ever-changing dating app algorithms</p>
-                <button
-                  className="pricing-btn premium"
-                  onClick={() => {
-                    if (premiumProduct?.prices[0]?.id) {
-                      handleCheckout(premiumProduct.prices[0].id);
-                    }
-                  }}
-                  disabled={upgrading || !premiumProduct}
-                >
-                  {upgrading ? (
-                    <>
-                      <Loader2 size={18} className="spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Get Magnet Elite"
-                  )}
-                </button>
-              </div>
-            </div>
-            <p className="pricing-footer">Pro is a one-time payment. Elite is a monthly subscription you can cancel anytime.</p>
-          </div>
-        )}
       </div>
-    </div>
-  );
-}
-
-function PaidResults({ result }: { result: FullOptimizationResult }) {
-  const [copiedBio, setCopiedBio] = useState(false);
-
-  const copyBio = () => {
-    navigator.clipboard.writeText(result.optimizedBio);
-    setCopiedBio(true);
-    setTimeout(() => setCopiedBio(false), 2000);
-  };
-
-  return (
-    <div className="paid-results">
-      <div className="optimization-section">
-        <h3>
-          <Sparkles size={18} />
-          Bio Guidance
-        </h3>
-        <div className="optimized-bio">
-          <p>{result.optimizedBio}</p>
-          <button className="copy-btn small" onClick={copyBio}>
-            {copiedBio ? <Check size={14} /> : <Copy size={14} />}
-            {copiedBio ? "Copied!" : "Copy"}
-          </button>
-        </div>
-      </div>
-
-      {result.optimizedPrompts?.length > 0 && (
-        <div className="optimization-section">
-          <h3>
-            <Sparkles size={18} />
-            Prompt Guidance
-          </h3>
-          {result.optimizedPrompts.map((prompt, i) => (
-            <div key={i} className="prompt-compare">
-              <div className="prompt-before">
-                <span className="prompt-tag before">Before</span>
-                <p>{prompt.original}</p>
-              </div>
-              <div className="prompt-after">
-                <span className="prompt-tag after">After</span>
-                <p>{prompt.improved}</p>
-              </div>
-              <p className="prompt-reason">{prompt.reason}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {result.photoAdvice?.length > 0 && (
-        <div className="optimization-section">
-          <h3>Photo Strategy</h3>
-          {result.photoAdvice.map((photo, i) => (
-            <div key={i} className="photo-advice-card">
-              <div className="photo-position">#{photo.recommendedPosition}</div>
-              <div>
-                <p className="photo-desc">{photo.description}</p>
-                <p className="photo-issue">{photo.issue}</p>
-                <p className="photo-suggestion">{photo.suggestion}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {result.signalsToRemove?.length > 0 && (
-        <div className="optimization-section">
-          <h3>
-            <AlertTriangle size={18} />
-            Signals to Remove
-          </h3>
-          <p className="section-subtitle">These are attracting the wrong people:</p>
-          <ul className="signals-list">
-            {result.signalsToRemove.map((signal, i) => (
-              <li key={i}>{signal}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {result.toneAdjustments?.length > 0 && (
-        <div className="optimization-section">
-          <h3>Tone Adjustments</h3>
-          <ul className="tone-list">
-            {result.toneAdjustments.map((adj, i) => (
-              <li key={i}>{adj}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {result.targetAlignment && (
-        <div className="optimization-section">
-          <h3>Target Alignment</h3>
-          <p className="alignment-text">{result.targetAlignment}</p>
-        </div>
-      )}
     </div>
   );
 }

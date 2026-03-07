@@ -27,38 +27,10 @@ export interface ProfileFeedback {
   profileTypeExplanation: string;
 }
 
-export interface OptimizedPrompt {
-  original: string;
-  improved: string;
-  reason: string;
-}
-
-export interface PhotoAdvice {
-  description: string;
-  issue: string;
-  suggestion: string;
-  recommendedPosition: number;
-}
-
-export interface AnalysisResult {
+export interface ProfileResult {
   score: ProfileScore;
   feedback: ProfileFeedback;
-  isPaid: false;
 }
-
-export interface FullOptimizationResult {
-  score: ProfileScore;
-  feedback: ProfileFeedback;
-  optimizedBio: string;
-  optimizedPrompts: OptimizedPrompt[];
-  photoAdvice: PhotoAdvice[];
-  toneAdjustments: string[];
-  signalsToRemove: string[];
-  targetAlignment: string;
-  isPaid: true;
-}
-
-export type ProfileResult = AnalysisResult | FullOptimizationResult;
 
 export const TARGET_TYPES = [
   { id: "ambitious-professionals", label: "Ambitious Professionals", description: "Career-driven, motivated, goal-oriented" },

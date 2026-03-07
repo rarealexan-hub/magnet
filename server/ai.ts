@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import type { ChatCompletionContentPart } from "openai/resources/chat/completions";
-import type { ProfileInput, AnalysisResult, FullOptimizationResult } from "../shared/types.js";
+import type { ProfileInput, ProfileResult } from "../shared/types.js";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -174,7 +174,7 @@ IMPORTANT: Format the "mistakes" as short, punchy issue labels (e.g. "Weak first
 
 Remember: The roast should make someone want to share their Magnet Score. Think "this bio could belong to 4.7 million people" energy.`;
 
-export async function analyzeProfile(input: ProfileInput): Promise<AnalysisResult> {
+export async function analyzeProfile(input: ProfileInput): Promise<ProfileResult> {
   const content = buildUserContent(input, ANALYZE_PROMPT);
 
   const response = await openai.chat.completions.create({
@@ -206,106 +206,5 @@ export async function analyzeProfile(input: ProfileInput): Promise<AnalysisResul
         : "generic",
       profileTypeExplanation: parsed.feedback?.profileTypeExplanation ?? "",
     },
-    isPaid: false,
-  };
-}
-
-export async function optimizeProfile(input: ProfileInput): Promise<FullOptimizationResult> {
-  const targetDescription = input.customTarget || input.targetType;
-  const hasPhotos = (input.currentPhotos?.length > 0) || (input.additionalPhotos?.length > 0);
-
-  const photoInstructions = hasPhotos
-    ? `\nIMPORTANT — PHOTO ANALYSIS:
-The user uploaded actual photos. For photoAdvice:
-- Reference each photo by its number/letter (e.g. "Photo #1", "Extra Photo A")
-- Describe what you see in each photo
-- For current photos: evaluate order, which to keep, which to swap
-- For additional photos: recommend which to add and where to place them
-- Give specific recommended positions (1 = first/lead photo)
-- Consider: lighting, expression, energy, setting, group vs solo, what signal each sends`
-    : "";
-
-  const optimizePrompt = `Give FULL Magnet guidance for this dating profile. The user wants to attract: "${targetDescription}"
-
-This is the paid tier — go deep. Analyze everything and provide expert guidance on what to change and why. Show them exactly what's wrong and give them clear direction on how to fix it. Include example rewrites to illustrate your advice, but frame everything as guidance — you're their expert advisor, not an automation tool.
-${photoInstructions}
-
-Respond in this exact JSON format:
-{
-  "score": {
-    "overall": <0-100>,
-    "photoQuality": <0-100 how good the photos are — lighting, energy, variety, attractiveness>,
-    "attractionSignals": <0-100 how many signals of desirability and lifestyle the profile sends>,
-    "personalitySignals": <0-100 how clearly the personality comes through — specificity, authenticity, humor>,
-    "matchTargeting": <0-100 how well the profile attracts the right type of person>,
-    "firstImpression": <0-100 how strong the first 3 seconds are — lead photo + opening line>
-  },
-  "feedback": {
-    "roast": "<witty 2-3 sentence roast>",
-    "mistakes": ["<issue 1>", "<issue 2>", "<issue 3>"],
-    "profileType": "<high-signal | generic | entertainment>",
-    "profileTypeExplanation": "<explanation>"
-  },
-  "optimizedBio": "<example rewritten bio showing what a high-signal version could look like — give them a starting point to work from>",
-  "optimizedPrompts": [
-    {
-      "original": "<their original prompt>",
-      "improved": "<example of a stronger version targeting their desired match type>",
-      "reason": "<why this direction works better for attracting their target>"
-    }
-  ],
-  "photoAdvice": [
-    {
-      "description": "<which photo — reference by number/letter and describe what you see>",
-      "issue": "<what's wrong or what could be better>",
-      "suggestion": "<specific guidance — keep, remove, swap, or reposition>",
-      "recommendedPosition": <1-9 where to place it, 0 if removing>
-    }
-  ],
-  "toneAdjustments": ["<specific tone guidance 1>", "<tone guidance 2>"],
-  "signalsToRemove": ["<signal that attracts wrong people 1>", "<signal 2>"],
-  "targetAlignment": "<2-3 sentences explaining how these changes specifically attract their target type>"
-}
-
-Make example rewrites feel natural and personal. They should sound like the person but better — a starting point they can make their own.`;
-
-  const content = buildUserContent(input, optimizePrompt);
-
-  const response = await openai.chat.completions.create({
-    model: "gpt-5.2",
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content },
-    ],
-    response_format: { type: "json_object" },
-    temperature: 0.8,
-  });
-
-  const raw = response.choices[0]?.message?.content || "{}";
-  const parsed = JSON.parse(raw);
-  return {
-    score: {
-      overall: parsed.score?.overall ?? 50,
-      photoQuality: parsed.score?.photoQuality ?? 50,
-      attractionSignals: parsed.score?.attractionSignals ?? 50,
-      personalitySignals: parsed.score?.personalitySignals ?? 50,
-      matchTargeting: parsed.score?.matchTargeting ?? 50,
-      firstImpression: parsed.score?.firstImpression ?? 50,
-    },
-    feedback: {
-      roast: parsed.feedback?.roast ?? "Your profile needs some work.",
-      mistakes: Array.isArray(parsed.feedback?.mistakes) ? parsed.feedback.mistakes : [],
-      profileType: ["high-signal", "generic", "entertainment"].includes(parsed.feedback?.profileType)
-        ? parsed.feedback.profileType
-        : "generic",
-      profileTypeExplanation: parsed.feedback?.profileTypeExplanation ?? "",
-    },
-    optimizedBio: parsed.optimizedBio ?? "",
-    optimizedPrompts: Array.isArray(parsed.optimizedPrompts) ? parsed.optimizedPrompts : [],
-    photoAdvice: Array.isArray(parsed.photoAdvice) ? parsed.photoAdvice : [],
-    toneAdjustments: Array.isArray(parsed.toneAdjustments) ? parsed.toneAdjustments : [],
-    signalsToRemove: Array.isArray(parsed.signalsToRemove) ? parsed.signalsToRemove : [],
-    targetAlignment: parsed.targetAlignment ?? "",
-    isPaid: true,
   };
 }
