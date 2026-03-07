@@ -308,7 +308,7 @@ export function ProfileForm({ onResult }: Props) {
         if (!res.ok) {
           const errData = await res.json().catch(() => null);
           if (errData?.code === "AUDIT_LIMIT_REACHED") {
-            setError(errData.error || "You've already used your free audit. Upgrade to Pro for unlimited optimizations.");
+            setError(errData.error || "You've already used your free Magnet analysis. Upgrade to Pro for full guidance.");
             return;
           }
           throw new Error(errData?.error || "Analysis failed");
@@ -327,13 +327,13 @@ export function ProfileForm({ onResult }: Props) {
     <div className="form-page">
       <div className="form-container">
         <div className="form-header">
-          <h2>{paidSessionId ? "Upload for Full Optimization" : "Paste Your Profile"}</h2>
-          <p>{paidSessionId ? "Upload your profile to receive your full optimization with rewritten bio, prompts, and photo strategy." : "The more you share, the better the audit. We don't store anything."}</p>
+          <h2>{paidSessionId ? "Upload for Full Guidance" : "Paste Your Profile"}</h2>
+          <p>{paidSessionId ? "Upload your profile to receive your full Magnet guidance with bio advice, prompt suggestions, and photo strategy." : "The more you share, the better the analysis. We don't store anything."}</p>
         </div>
         {paidSessionId && (
           <div className="paid-banner">
             <Sparkles size={16} />
-            Full optimization unlocked — submit your profile to get your results
+            Full Magnet guidance unlocked — submit your profile to get your results
           </div>
         )}
 
@@ -605,15 +605,15 @@ export function ProfileForm({ onResult }: Props) {
             {loading ? (
               <>
                 <Loader2 size={20} className="spin" />
-                {paidSessionId ? "Generating your optimization..." : "Analyzing your profile..."}
+                {paidSessionId ? "Generating your guidance..." : "Analyzing your profile..."}
               </>
             ) : paidSessionId ? (
               <>
                 <Sparkles size={20} />
-                Get My Full Optimization
+                Get My Full Guidance
               </>
             ) : (
-              "Get My Profile Score"
+              "Analyze My Profile"
             )}
           </button>
         </form>

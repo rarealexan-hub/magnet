@@ -1,4 +1,4 @@
-import { ArrowRight, Flame, Target, Sparkles, TrendingUp, Zap, Shield } from "lucide-react";
+import { ArrowRight, Magnet as MagnetIcon, Target, Sparkles, TrendingUp, Zap, Shield } from "lucide-react";
 
 interface Props {
   onStart: () => void;
@@ -9,19 +9,19 @@ export function Landing({ onStart }: Props) {
     <div className="landing">
       <div className="landing-hero">
         <div className="badge">
-          <Flame size={14} />
-          <span>Profile Reality Check</span>
+          <MagnetIcon size={14} />
+          <span>Magnet</span>
         </div>
         <h1>
-          Your dating profile is
-          <span className="gradient-text"> sending the wrong signals </span>
+          Magnet analyzes your dating profile and shows you
+          <span className="gradient-text"> what to change </span>
+          to attract the people you want
         </h1>
         <p className="subtitle">
-          Dating apps reward certain signals. Most profiles accidentally send the wrong ones.
-          Get a brutally honest score and fix what's killing your matches.
+          The advice your best friend should have given you.
         </p>
         <button className="cta-button" onClick={onStart}>
-          Get My Profile Score
+          Analyze My Profile
           <ArrowRight size={20} />
         </button>
         <p className="cta-sub">Free analysis. Just enter your email to get started.</p>
@@ -37,26 +37,26 @@ export function Landing({ onStart }: Props) {
             <Target size={24} />
           </div>
           <h3>Match Targeting</h3>
-          <p>Tell us who you want to attract. We'll show you exactly what signals to send.</p>
+          <p>Tell us who you want to attract. Magnet shows you exactly what signals to send.</p>
         </div>
         <div className="feature-card">
           <div className="feature-icon">
             <Sparkles size={24} />
           </div>
-          <h3>Profile Score Card</h3>
+          <h3>Magnet Score</h3>
           <p>Get scored across 5 dimensions: photo quality, attraction signals, personality, match targeting, and first impression.</p>
         </div>
         <div className="feature-card">
           <div className="feature-icon">
             <TrendingUp size={24} />
           </div>
-          <h3>Full Optimization</h3>
-          <p>Rewritten bio, better prompts, photo ordering, and tone adjustments. The whole package.</p>
+          <h3>Guided Optimization</h3>
+          <p>Expert guidance on your bio, prompts, photo ordering, and tone. Know exactly what to change and why.</p>
         </div>
       </div>
 
       <div className="before-after-section">
-        <h2 className="section-title">What a profile audit looks like</h2>
+        <h2 className="section-title">What a Magnet analysis looks like</h2>
         <div className="before-after-grid">
           <div className="ba-card">
             <div className="ba-header before">
@@ -65,7 +65,7 @@ export function Landing({ onStart }: Props) {
             </div>
             <div className="ba-content">
               <div className="ba-score-row">
-                <span className="ba-score bad">Score: 34/100</span>
+                <span className="ba-score bad">Magnet Score: 34/100</span>
                 <span className="ba-type-tag generic">Generic Profile</span>
               </div>
               <p className="ba-bio">"Love traveling, good food, and adventures. Looking for my partner in crime. Dog dad. 6'1 if that matters."</p>
@@ -82,16 +82,16 @@ export function Landing({ onStart }: Props) {
           <div className="ba-card">
             <div className="ba-header after">
               <Sparkles size={16} />
-              After Optimization
+              After Magnet
             </div>
             <div className="ba-content">
               <div className="ba-score-row">
-                <span className="ba-score good">Score: 82/100</span>
+                <span className="ba-score good">Magnet Score: 82/100</span>
                 <span className="ba-type-tag high-signal">High-Signal Profile</span>
               </div>
               <p className="ba-bio">"I make a mean shakshuka at 2am and argue about architecture nobody asked about. Currently training for a half marathon I'll probably regret."</p>
               <div className="ba-fixes">
-                <p className="ba-issue-title">What changed:</p>
+                <p className="ba-issue-title">What Magnet identified:</p>
                 <ul>
                   <li>Replaced generic interests with specific personality signals</li>
                   <li>Lead photo swapped to candid with natural expression</li>

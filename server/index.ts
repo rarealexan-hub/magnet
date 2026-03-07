@@ -125,13 +125,13 @@ app.post("/api/analyze", async (req, res) => {
       const usedPlatform = existing.rows[0].platform;
       if (existing.rows.some((r: { platform: string }) => r.platform === platform)) {
         res.status(403).json({
-          error: `You've already used your free audit for ${platform}. Upgrade to Pro for unlimited optimizations across all apps.`,
+          error: `You've already used your free Magnet analysis for ${platform}. Upgrade to Pro for full guidance across all apps.`,
           code: "AUDIT_LIMIT_REACHED",
         });
         return;
       }
       res.status(403).json({
-        error: `Your free audit was used for ${usedPlatform}. Upgrade to Pro to audit your ${platform} profile and get unlimited optimizations.`,
+        error: `Your free analysis was used for ${usedPlatform}. Upgrade to Magnet Pro to analyze your ${platform} profile and get full guidance.`,
         code: "AUDIT_LIMIT_REACHED",
       });
       return;

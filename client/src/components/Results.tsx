@@ -40,7 +40,7 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
 
   const copyRoast = () => {
     navigator.clipboard.writeText(
-      `My dating profile scored ${score.overall}/100\n\n"${feedback.roast}"\n\nGet your profile audited too`
+      `MAGNET SCORE: ${score.overall}/100\n\n"${feedback.roast}"\n\nGet your Magnet score at magnet.app`
     );
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -103,7 +103,7 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
 
         <div className="score-card">
           <div className="score-card-header">
-            <p className="score-card-title">Dating Profile Score</p>
+            <p className="score-card-title">MAGNET SCORE</p>
           </div>
           <div className="score-hero">
             <ScoreRing score={score.overall} size={160} />
@@ -162,7 +162,7 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
         <div className="mistakes-section">
           <h3>
             <AlertTriangle size={18} />
-            Top Fixes
+            Issues Detected
           </h3>
           <ul className="mistakes-list">
             {feedback.mistakes.map((mistake, i) => (
@@ -178,26 +178,26 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
           <PaidResults result={result as FullOptimizationResult} />
         ) : (
           <div className="upgrade-section">
-            <h3 className="pricing-title">Unlock Full Optimization</h3>
+            <h3 className="pricing-title">Unlock Full Magnet Guidance</h3>
             <p className="pricing-subtitle">
-              Get your profile completely rewritten to attract exactly who you want.
+              Get expert guidance on exactly what to change to attract who you want.
             </p>
 
             <div className="pricing-grid">
               <div className="pricing-card free">
                 <div className="pricing-card-header">
                   <Sparkles size={20} />
-                  <h4>Free</h4>
+                  <h4>Free Analysis</h4>
                 </div>
                 <div className="pricing-price">
                   <span className="price-amount">$0</span>
                 </div>
                 <ul className="pricing-features">
-                  <li><Check size={14} /> Profile score + breakdown</li>
-                  <li><Check size={14} /> Witty roast</li>
-                  <li><Check size={14} /> Top 3 mistakes identified</li>
-                  <li className="disabled"><Lock size={14} /> Bio rewrite</li>
-                  <li className="disabled"><Lock size={14} /> Prompt optimization</li>
+                  <li><Check size={14} /> Magnet Score + breakdown</li>
+                  <li><Check size={14} /> Honest profile roast</li>
+                  <li><Check size={14} /> Issues detected</li>
+                  <li className="disabled"><Lock size={14} /> Bio guidance</li>
+                  <li className="disabled"><Lock size={14} /> Prompt advice</li>
                   <li className="disabled"><Lock size={14} /> Photo strategy</li>
                 </ul>
                 <p className="pricing-note">You're on this plan</p>
@@ -207,7 +207,7 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
                 <div className="pricing-popular-badge">Most Popular</div>
                 <div className="pricing-card-header">
                   <Zap size={20} />
-                  <h4>Profile Optimization</h4>
+                  <h4>Magnet Pro</h4>
                 </div>
                 <div className="pricing-price">
                   <span className="price-amount">$19</span>
@@ -215,8 +215,8 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
                 </div>
                 <ul className="pricing-features">
                   <li><Check size={14} /> Everything in Free</li>
-                  <li><Check size={14} /> Full bio rewrite</li>
-                  <li><Check size={14} /> Optimized prompts (before/after)</li>
+                  <li><Check size={14} /> Full bio rewrite guidance</li>
+                  <li><Check size={14} /> Prompt optimization advice</li>
                   <li><Check size={14} /> Photo ordering strategy</li>
                   <li><Check size={14} /> Tone adjustments</li>
                   <li><Check size={14} /> Match targeting alignment</li>
@@ -239,7 +239,7 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
                       Processing...
                     </>
                   ) : (
-                    "Get Full Optimization"
+                    "Get Full Guidance"
                   )}
                 </button>
               </div>
@@ -247,20 +247,21 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
               <div className="pricing-card premium">
                 <div className="pricing-card-header">
                   <Crown size={20} />
-                  <h4>Elite Optimization</h4>
+                  <h4>Magnet Elite</h4>
                 </div>
                 <div className="pricing-price">
                   <span className="price-amount">$49</span>
-                  <span className="price-period">one-time</span>
+                  <span className="price-period">/month</span>
                 </div>
                 <ul className="pricing-features">
                   <li><Check size={14} /> Everything in Pro</li>
+                  <li><Check size={14} /> Magnet Dashboard access</li>
+                  <li><Check size={14} /> Algorithm change updates</li>
                   <li><Check size={14} /> All dating apps covered</li>
-                  <li><Check size={14} /> Ongoing update suggestions</li>
+                  <li><Check size={14} /> Ongoing profile suggestions</li>
                   <li><Check size={14} /> Priority support</li>
-                  <li><Check size={14} /> Advanced photo analysis</li>
-                  <li><Check size={14} /> Detailed match psychology</li>
                 </ul>
+                <p className="pricing-dashboard-note">Subscribe for your personal Magnet Dashboard — stay ahead of ever-changing dating app algorithms</p>
                 <button
                   className="pricing-btn premium"
                   onClick={() => {
@@ -276,12 +277,12 @@ export function Results({ result, profileInput, onBack, onStartOver, onUpgrade }
                       Processing...
                     </>
                   ) : (
-                    "Go Elite"
+                    "Get Magnet Elite"
                   )}
                 </button>
               </div>
             </div>
-            <p className="pricing-footer">One-time payment. No subscription. No recurring charges.</p>
+            <p className="pricing-footer">Pro is a one-time payment. Elite is a monthly subscription you can cancel anytime.</p>
           </div>
         )}
       </div>
@@ -303,7 +304,7 @@ function PaidResults({ result }: { result: FullOptimizationResult }) {
       <div className="optimization-section">
         <h3>
           <Sparkles size={18} />
-          Your Optimized Bio
+          Bio Guidance
         </h3>
         <div className="optimized-bio">
           <p>{result.optimizedBio}</p>
@@ -318,7 +319,7 @@ function PaidResults({ result }: { result: FullOptimizationResult }) {
         <div className="optimization-section">
           <h3>
             <Sparkles size={18} />
-            Optimized Prompts
+            Prompt Guidance
           </h3>
           {result.optimizedPrompts.map((prompt, i) => (
             <div key={i} className="prompt-compare">

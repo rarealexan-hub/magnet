@@ -60,8 +60,8 @@ export function Success({ onStartOver }: Props) {
         <CheckCircle size={64} className="success-icon" />
         <h2>Payment Successful</h2>
         <p>
-          Your profile optimization is ready. Upload your profile again and we'll generate your
-          full optimization with rewritten bio, prompt improvements, and photo strategy.
+          Your Magnet guidance is ready. Upload your profile again and we'll generate your
+          full analysis with bio advice, prompt suggestions, and photo strategy.
         </p>
         <button className="cta-button" onClick={() => {
           if (sessionId) {
@@ -69,7 +69,7 @@ export function Success({ onStartOver }: Props) {
           }
           onStartOver();
         }}>
-          Get My Full Optimization
+          Get My Full Guidance
           <ArrowRight size={20} />
         </button>
       </div>
