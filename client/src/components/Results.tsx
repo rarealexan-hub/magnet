@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Copy, Check, AlertTriangle, RotateCcw, Crosshair, ArrowRight, Share2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Copy, Check, AlertTriangle, RotateCcw, Crosshair, ArrowRight, Share2, RefreshCw, ImagePlus } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 
@@ -141,6 +141,16 @@ export function Results({ result, profileInput, onBack, onStartOver }: Props) {
               <p>Make the changes above, then analyze your updated profile to see your new score.</p>
               <button className="next-step-btn" onClick={onBack}>
                 Edit Profile <ArrowRight size={14} />
+              </button>
+            </div>
+            <div className="next-step-card">
+              <div className="next-step-icon">
+                <ImagePlus size={20} />
+              </div>
+              <h4>Upload More Photos</h4>
+              <p>Add extra photos of yourself and the AI will tell you which ones to swap into your profile.</p>
+              <button className="next-step-btn" onClick={onBack}>
+                Add Photos <ArrowRight size={14} />
               </button>
             </div>
             <div className="next-step-card">
