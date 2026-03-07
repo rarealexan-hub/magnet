@@ -93,7 +93,7 @@ function buildUserContent(input: ProfileInput, promptText: string): ChatCompleti
       parts.push({ type: "text", text: `Photo #${i + 1}:` });
       parts.push({
         type: "image_url",
-        image_url: { url: `data:${img.mimeType};base64,${img.data}`, detail: "high" },
+        image_url: { url: `data:${img.mimeType};base64,${img.data}`, detail: "auto" },
       });
     });
   }
@@ -106,7 +106,7 @@ function buildUserContent(input: ProfileInput, promptText: string): ChatCompleti
       parts.push({ type: "text", text: `Extra Photo ${String.fromCharCode(65 + i)}:` });
       parts.push({
         type: "image_url",
-        image_url: { url: `data:${img.mimeType};base64,${img.data}`, detail: "high" },
+        image_url: { url: `data:${img.mimeType};base64,${img.data}`, detail: "auto" },
       });
     });
   }

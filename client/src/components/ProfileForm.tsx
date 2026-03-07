@@ -239,18 +239,41 @@ export function ProfileForm({ onResult, userEmail }: Props) {
     });
   };
 
-  const fileToBase64 = (file: File): Promise<string> => {
+  const resizeImage = (file: File, maxDim: number, quality: number): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve((reader.result as string).split(",")[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(dataUrl.split(",")[1]);
+        URL.revokeObjectURL(img.src);
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
     });
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return resizeImage(file, 1600, 0.8);
   };
 
   const photosToPayload = async (photos: UploadedPhoto[]) => {
     return Promise.all(
-      photos.map(async (p) => JSON.stringify({ data: await fileToBase64(p.file), mimeType: p.file.type }))
+      photos.map(async (p) => JSON.stringify({ data: await fileToBase64(p.file), mimeType: "image/jpeg" }))
     );
   };
 
@@ -280,7 +303,7 @@ export function ProfileForm({ onResult, userEmail }: Props) {
       const [screenshotPayload, currentPhotoPayload, additionalPhotoPayload] = await Promise.all([
         Promise.all(
           screenshots.map(async (s) =>
-            JSON.stringify({ data: await fileToBase64(s.file), label: s.label, mimeType: s.file.type })
+            JSON.stringify({ data: await fileToBase64(s.file), label: s.label, mimeType: "image/jpeg" })
           )
         ),
         photosToPayload(currentPhotos),

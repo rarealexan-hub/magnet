@@ -190,9 +190,11 @@ app.post("/api/analyze", authenticateOptional, async (req: AuthRequest, res) => 
   } catch (error: any) {
     console.error("Analysis error:", error);
     const msg =
-      error?.status === 400 && error?.error?.message?.includes("image")
-        ? "One or more images couldn't be processed. Please use JPG, PNG, GIF, WebP, or HEIC format."
-        : "Failed to analyze profile. Please try again.";
+      error?.status === 413
+        ? "Your photos are too large. Please try with fewer or smaller images."
+        : error?.status === 400 && error?.error?.message?.includes("image")
+          ? "One or more images couldn't be processed. Please use JPG, PNG, GIF, WebP, or HEIC format."
+          : "Failed to analyze profile. Please try again.";
     res.status(500).json({ error: msg });
   }
 });
