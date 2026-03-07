@@ -13,7 +13,12 @@ export default defineConfig({
   server: {
     allowedHosts: true,
     proxy: {
-      "/api": "http://localhost:3001",
+      "/api": {
+        target: "http://localhost:3001",
+        changeOrigin: true,
+        timeout: 120000,
+        proxyTimeout: 120000,
+      },
     },
   },
   build: {

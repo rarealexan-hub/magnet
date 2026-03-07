@@ -172,7 +172,29 @@ function filesToBase64Strings(files: Express.Multer.File[]): string[] {
   });
 }
 
-app.post("/api/analyze", authenticateOptional, analyzeUpload, async (req: AuthRequest, res) => {
+app.post("/api/analyze", authenticateOptional, (req: AuthRequest, res: Response, next: NextFunction) => {
+  console.log("Analyze request received, content-type:", req.headers["content-type"], "content-length:", req.headers["content-length"]);
+  analyzeUpload(req, res, (err) => {
+    if (err) {
+      console.error("Multer error:", err);
+      if (err instanceof multer.MulterError) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          res.status(413).json({ error: "One or more files are too large. Maximum 20MB per file." });
+          return;
+        }
+        if (err.code === "LIMIT_FILE_COUNT") {
+          res.status(400).json({ error: "Too many files uploaded." });
+          return;
+        }
+        res.status(400).json({ error: "File upload error. Please try again." });
+        return;
+      }
+      res.status(400).json({ error: err.message || "Upload failed." });
+      return;
+    }
+    next();
+  });
+}, async (req: AuthRequest, res: Response) => {
   try {
     const files = req.files as Record<string, Express.Multer.File[]> | undefined;
     const body = req.body;

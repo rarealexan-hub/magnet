@@ -283,11 +283,15 @@ export function ProfileForm({ onResult, userEmail }: Props) {
       const headers: Record<string, string> = {};
       if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers,
         body: formData,
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
         if (errData?.code === "AUDIT_LIMIT_REACHED") {
@@ -310,8 +314,12 @@ export function ProfileForm({ onResult, userEmail }: Props) {
         customTarget: targetType === "custom" ? customTarget : undefined,
       };
       onResult(data, input);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } catch (err: any) {
+      if (err?.name === "AbortError") {
+        setError("Analysis timed out. Please try with fewer photos or a stronger connection.");
+      } else {
+        setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
