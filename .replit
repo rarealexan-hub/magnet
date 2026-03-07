@@ -42,3 +42,4 @@ outputType = "webview"
 deploymentTarget = "autoscale"
 run = ["node", "--import", "tsx", "server/index.ts"]
 build = ["npm", "run", "build"]
+
