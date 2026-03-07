@@ -13,12 +13,14 @@ export function Landing({ onStart }: Props) {
           <span>Magnet</span>
         </div>
         <h1>
-          Magnet analyzes your dating profile and shows you
-          <span className="gradient-text"> what to change </span>
-          to attract the people you want
+          Your dating app profile is
+          <span className="gradient-text"> sending the wrong signals </span>
         </h1>
         <p className="subtitle">
-          Your dating app profile is sending the wrong signals.
+          Magnet analyzes your dating profile and shows you what to change to attract the people you want.
+        </p>
+        <p className="subtitle-small">
+          The advice your best friend should have given you.
         </p>
         <button className="cta-button" onClick={onStart}>
           Analyze My Profile
