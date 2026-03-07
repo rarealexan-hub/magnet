@@ -398,7 +398,7 @@ export function ProfileForm({ onResult, userEmail }: Props) {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".jpg,.jpeg,.png,.gif,.webp,.heic,.heif"
+                accept="image/*,.heic,.heif"
                 multiple
                 onChange={handleScreenshotSelect}
                 style={{ display: "none" }}
@@ -479,7 +479,7 @@ export function ProfileForm({ onResult, userEmail }: Props) {
             <input
               ref={currentPhotosRef}
               type="file"
-              accept=".jpg,.jpeg,.png,.gif,.webp,.heic,.heif"
+              accept="image/*,.heic,.heif"
               multiple
               onChange={handleCurrentPhotos}
               style={{ display: "none" }}
@@ -547,7 +547,7 @@ export function ProfileForm({ onResult, userEmail }: Props) {
             <input
               ref={additionalPhotosRef}
               type="file"
-              accept=".jpg,.jpeg,.png,.gif,.webp,.heic,.heif"
+              accept="image/*,.heic,.heif"
               multiple
               onChange={handleAdditionalPhotos}
               style={{ display: "none" }}
