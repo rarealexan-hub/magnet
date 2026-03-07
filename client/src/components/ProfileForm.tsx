@@ -268,7 +268,7 @@ export function ProfileForm({ onResult, userEmail }: Props) {
   };
 
   const fileToBase64 = (file: File): Promise<string> => {
-    return resizeImage(file, 1600, 0.8);
+    return resizeImage(file, 1024, 0.7);
   };
 
   const photosToPayload = async (photos: UploadedPhoto[]) => {
