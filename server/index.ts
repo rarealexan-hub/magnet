@@ -141,7 +141,7 @@ app.post("/api/analyze", async (req, res) => {
     console.error("Analysis error:", error);
     const msg =
       error?.status === 400 && error?.error?.message?.includes("image")
-        ? "One or more images couldn't be processed. Please use JPG, PNG, GIF, or WebP format."
+        ? "One or more images couldn't be processed. Please use JPG, PNG, GIF, WebP, or HEIC format."
         : "Failed to analyze profile. Please try again.";
     res.status(500).json({ error: msg });
   }
@@ -173,7 +173,7 @@ app.post("/api/optimize", async (req, res) => {
     console.error("Optimization error:", error);
     const msg =
       error?.status === 400 && error?.error?.message?.includes("image")
-        ? "One or more images couldn't be processed. Please use JPG, PNG, GIF, or WebP format."
+        ? "One or more images couldn't be processed. Please use JPG, PNG, GIF, WebP, or HEIC format."
         : "Failed to optimize profile. Please try again.";
     res.status(500).json({ error: msg });
   }

@@ -19,6 +19,7 @@
     "drizzle-zod": "^0.8.3",
     "express": "^5.2.1",
     "framer-motion": "^12.35.0",
+    "heic2any": "^0.0.4",
     "lucide-react": "^0.577.0",
     "openai": "^6.25.0",
     "p-limit": "^7.3.0",

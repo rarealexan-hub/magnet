@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Plus, X, Loader2, Upload, Type, Camera, GripVertical, ImagePlus, Sparkles } from "lucide-react";
+import heic2any from "heic2any";
 import { TARGET_TYPES } from "@shared/types";
 import type { ProfileInput, ProfileResult } from "@shared/types";
 
@@ -25,6 +26,20 @@ const MAX_CURRENT_PHOTOS = 9;
 const MAX_ADDITIONAL_PHOTOS = 10;
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+const HEIC_TYPES = ["image/heic", "image/heif"];
+const ALL_ACCEPTED_TYPES = [...SUPPORTED_IMAGE_TYPES, ...HEIC_TYPES];
+
+function isHeic(file: File): boolean {
+  if (HEIC_TYPES.includes(file.type)) return true;
+  const ext = file.name.toLowerCase();
+  return ext.endsWith(".heic") || ext.endsWith(".heif");
+}
+
+async function convertHeicToJpeg(file: File): Promise<File> {
+  const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 }) as Blob;
+  const name = file.name.replace(/\.heic$/i, ".jpg").replace(/\.heif$/i, ".jpg");
+  return new File([blob], name, { type: "image/jpeg" });
+}
 
 export function ProfileForm({ onResult }: Props) {
   const [platform, setPlatform] = useState<ProfileInput["platform"]>("hinge");
@@ -66,7 +81,7 @@ export function ProfileForm({ onResult }: Props) {
   };
 
   const processFiles = useCallback(
-    (
+    async (
       files: FileList,
       setter: React.Dispatch<React.SetStateAction<UploadedPhoto[]>>,
       current: UploadedPhoto[],
@@ -81,19 +96,31 @@ export function ProfileForm({ onResult }: Props) {
       const newPhotos: UploadedPhoto[] = [];
       const skipped: string[] = [];
 
-      Array.from(files)
-        .slice(0, remaining)
-        .forEach((file) => {
-          if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
-            skipped.push(`${file.name} (use JPG, PNG, GIF, or WebP)`);
-            return;
+      const filesToProcess = Array.from(files).slice(0, remaining);
+      for (const file of filesToProcess) {
+        if (isHeic(file)) {
+          try {
+            const converted = await convertHeicToJpeg(file);
+            if (converted.size > MAX_FILE_SIZE) {
+              skipped.push(`${file.name} (over 20MB after conversion)`);
+              continue;
+            }
+            newPhotos.push({ file: converted, preview: URL.createObjectURL(converted) });
+          } catch {
+            skipped.push(`${file.name} (failed to convert HEIC)`);
           }
-          if (file.size > MAX_FILE_SIZE) {
-            skipped.push(`${file.name} (over 20MB)`);
-            return;
-          }
-          newPhotos.push({ file, preview: URL.createObjectURL(file) });
-        });
+          continue;
+        }
+        if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+          skipped.push(`${file.name} (use JPG, PNG, GIF, WebP, or HEIC)`);
+          continue;
+        }
+        if (file.size > MAX_FILE_SIZE) {
+          skipped.push(`${file.name} (over 20MB)`);
+          continue;
+        }
+        newPhotos.push({ file, preview: URL.createObjectURL(file) });
+      }
 
       if (skipped.length > 0) setError(`Skipped: ${skipped.join(", ")}`);
       setter((prev) => [...prev, ...newPhotos]);
@@ -143,7 +170,7 @@ export function ProfileForm({ onResult }: Props) {
     setDragOverIndex(null);
   };
 
-  const handleScreenshotSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleScreenshotSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
     const remaining = MAX_SCREENSHOTS - screenshots.length;
@@ -154,19 +181,31 @@ export function ProfileForm({ onResult }: Props) {
     }
     const newScreenshots: ScreenshotFile[] = [];
     const skipped: string[] = [];
-    Array.from(files)
-      .slice(0, remaining)
-      .forEach((file) => {
-        if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
-          skipped.push(`${file.name} (use JPG, PNG, GIF, or WebP)`);
-          return;
+    const filesToProcess = Array.from(files).slice(0, remaining);
+    for (const file of filesToProcess) {
+      if (isHeic(file)) {
+        try {
+          const converted = await convertHeicToJpeg(file);
+          if (converted.size > MAX_FILE_SIZE) {
+            skipped.push(`${file.name} (over 20MB)`);
+            continue;
+          }
+          newScreenshots.push({ file: converted, preview: URL.createObjectURL(converted), label: "" });
+        } catch {
+          skipped.push(`${file.name} (couldn't process this image)`);
         }
-        if (file.size > MAX_FILE_SIZE) {
-          skipped.push(`${file.name} (over 20MB)`);
-          return;
-        }
-        newScreenshots.push({ file, preview: URL.createObjectURL(file), label: "" });
-      });
+        continue;
+      }
+      if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+        skipped.push(`${file.name} (unsupported format)`);
+        continue;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        skipped.push(`${file.name} (over 20MB)`);
+        continue;
+      }
+      newScreenshots.push({ file, preview: URL.createObjectURL(file), label: "" });
+    }
     if (skipped.length > 0) setError(`Skipped: ${skipped.join(", ")}`);
     setScreenshots((prev) => [...prev, ...newScreenshots]);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -361,7 +400,7 @@ export function ProfileForm({ onResult }: Props) {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".jpg,.jpeg,.png,.gif,.webp"
+                accept=".jpg,.jpeg,.png,.gif,.webp,.heic,.heif"
                 multiple
                 onChange={handleScreenshotSelect}
                 style={{ display: "none" }}
@@ -442,7 +481,7 @@ export function ProfileForm({ onResult }: Props) {
             <input
               ref={currentPhotosRef}
               type="file"
-              accept=".jpg,.jpeg,.png,.gif,.webp"
+              accept=".jpg,.jpeg,.png,.gif,.webp,.heic,.heif"
               multiple
               onChange={handleCurrentPhotos}
               style={{ display: "none" }}
@@ -498,7 +537,7 @@ export function ProfileForm({ onResult }: Props) {
             <input
               ref={additionalPhotosRef}
               type="file"
-              accept=".jpg,.jpeg,.png,.gif,.webp"
+              accept=".jpg,.jpeg,.png,.gif,.webp,.heic,.heif"
               multiple
               onChange={handleAdditionalPhotos}
               style={{ display: "none" }}
