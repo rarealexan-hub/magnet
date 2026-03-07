@@ -25,6 +25,18 @@ body {
   color: var(--text);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+button, a {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+select, input, textarea {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .app {
@@ -426,7 +438,7 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--text);
-  font-size: 14px;
+  font-size: 16px;
   font-family: inherit;
   resize: vertical;
   line-height: 1.5;
@@ -445,7 +457,7 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text);
-  font-size: 14px;
+  font-size: 16px;
   font-family: inherit;
 }
 
@@ -460,8 +472,8 @@ h1 {
 }
 
 .remove-btn {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -470,6 +482,7 @@ h1 {
   border-radius: 8px;
   color: var(--text-muted);
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .remove-btn:hover {
@@ -597,17 +610,18 @@ h1 {
   position: absolute;
   top: 6px;
   right: 6px;
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.7);
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   color: white;
   cursor: pointer;
   transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .screenshot-remove:hover {
@@ -618,7 +632,7 @@ h1 {
   border: none !important;
   border-top: 1px solid var(--border) !important;
   border-radius: 0 !important;
-  font-size: 12px !important;
+  font-size: 16px !important;
   padding: 8px 10px !important;
 }
 
@@ -765,6 +779,39 @@ h1 {
   cursor: grabbing;
 }
 
+.mobile-reorder {
+  display: none;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.reorder-btn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.reorder-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.reorder-btn:not(:disabled):active {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent-light);
+  border-color: var(--accent);
+}
+
 .sortable .photo-card {
   cursor: grab;
 }
@@ -845,6 +892,9 @@ h1 {
   color: var(--text-muted);
   font-size: 14px;
   cursor: pointer;
+  padding: 8px 4px;
+  min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .back-link:hover {
@@ -1548,6 +1598,20 @@ h1 {
   .score-hero {
     flex-direction: column;
     text-align: center;
+    gap: 20px;
+    padding: 20px 16px 16px;
+  }
+
+  .score-card-header {
+    padding: 14px 16px;
+  }
+
+  .score-breakdown {
+    padding: 0 16px 16px;
+  }
+
+  .match-killer {
+    padding: 14px 16px;
   }
 
   .breakdown-label {
@@ -1557,6 +1621,11 @@ h1 {
 
   .scores-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .score-item {
+    padding: 14px 8px;
   }
 
   .social-proof {
@@ -1569,12 +1638,108 @@ h1 {
     height: 1px;
   }
 
+  .form-page {
+    padding: 24px 16px 60px;
+  }
+
   .form-container {
-    padding: 24px;
+    padding: 20px;
+    border-radius: 14px;
+  }
+
+  .form-header h2 {
+    font-size: 20px;
   }
 
   .target-grid {
     grid-template-columns: 1fr;
+  }
+
+  .mode-toggle {
+    flex-direction: column;
+  }
+
+  .screenshot-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .photo-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .drag-handle.desktop-only {
+    display: none;
+  }
+
+  .mobile-reorder {
+    display: flex;
+  }
+
+  .sortable .photo-card {
+    cursor: default;
+  }
+
+  .results-page {
+    padding: 24px 16px 60px;
+  }
+
+  .roast-text {
+    font-size: 16px;
+  }
+
+  .roast-card {
+    padding: 20px;
+  }
+
+  .mistakes-section {
+    padding: 20px;
+  }
+
+  .optimization-section {
+    padding: 20px;
+  }
+
+  .photo-advice-card {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .pricing-card {
+    padding: 20px;
+  }
+
+  .pricing-title {
+    font-size: 20px;
+  }
+
+  .price-amount {
+    font-size: 28px;
+  }
+
+  .upload-btn {
+    padding: 16px;
+    min-height: 56px;
+  }
+
+  .platform-btn {
+    padding: 10px 18px;
+    min-height: 44px;
+  }
+
+  .add-btn {
+    padding: 10px 16px;
+    min-height: 44px;
+  }
+
+  .copy-btn {
+    padding: 10px 16px;
+    min-height: 44px;
+  }
+
+  .cta-button {
+    width: 100%;
+    justify-content: center;
+    padding: 18px 32px;
   }
 }
 

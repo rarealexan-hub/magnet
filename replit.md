@@ -54,6 +54,19 @@ shared/
 - `used_sessions` — tracks consumed Stripe checkout session IDs to prevent replay (session_id TEXT PRIMARY KEY, used_at)
 - `stripe.*` — managed by stripe-replit-sync (products, prices, sessions, etc.)
 
+## Mobile Responsiveness
+
+- Viewport meta tag with `width=device-width, initial-scale=1.0`
+- iOS zoom prevention: all text inputs at 16px minimum font size
+- 44px minimum tap targets on all interactive controls (buttons, remove icons, reorder arrows)
+- Touch-friendly global CSS: `-webkit-tap-highlight-color: transparent`, `touch-action: manipulation`, `-webkit-appearance: none`
+- Mobile breakpoint at 640px with adapted layouts for all pages (landing, form, results, pricing)
+- Photo reorder: desktop uses HTML5 drag-and-drop, mobile uses up/down arrow buttons (drag disabled on touch devices via `pointer: coarse` media query)
+- Responsive grids: features auto-fit, pricing stacks at 800px, photos 3-col on mobile, screenshots 2-col on mobile
+- CTA button goes full-width on mobile
+- Mode toggle (type/screenshot) stacks vertically on mobile
+- Score breakdown, roast cards, pricing cards, photo advice all reduce padding on mobile
+
 ## Key Dependencies
 
 - openai (via Replit AI Integrations - no API key needed)
@@ -62,6 +75,7 @@ shared/
 - express, cors
 - react, react-dom, vite
 - lucide-react (icons)
+- heic2any (HEIC/HEIF to JPEG conversion for iPhone photos)
 - concurrently (dev server)
 
 ## Stripe Setup

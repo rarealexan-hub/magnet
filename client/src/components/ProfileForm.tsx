@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { Plus, X, Loader2, Upload, Type, Camera, GripVertical, ImagePlus, Sparkles } from "lucide-react";
+import { Plus, X, Loader2, Upload, Type, Camera, GripVertical, ImagePlus, Sparkles, ChevronUp, ChevronDown } from "lucide-react";
 import heic2any from "heic2any";
 import { TARGET_TYPES } from "@shared/types";
 import type { ProfileInput, ProfileResult } from "@shared/types";
@@ -56,6 +56,7 @@ export function ProfileForm({ onResult }: Props) {
   const [error, setError] = useState("");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
   const paidSessionId = sessionStorage.getItem("paidSessionId");
 
@@ -167,6 +168,16 @@ export function ProfileForm({ onResult }: Props) {
     }
     setDragIndex(null);
     setDragOverIndex(null);
+  };
+
+  const movePhoto = (i: number, direction: "up" | "down") => {
+    setCurrentPhotos((prev) => {
+      const target = direction === "up" ? i - 1 : i + 1;
+      if (target < 0 || target >= prev.length) return prev;
+      const updated = [...prev];
+      [updated[i], updated[target]] = [updated[target], updated[i]];
+      return updated;
+    });
   };
 
   const handleScreenshotSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -491,10 +502,12 @@ export function ProfileForm({ onResult }: Props) {
                   <div
                     key={i}
                     className={`photo-card ${dragIndex === i ? "dragging" : ""} ${dragOverIndex === i ? "drag-over" : ""}`}
-                    draggable
-                    onDragStart={() => handleDragStart(i)}
-                    onDragOver={(e) => handleDragOver(e, i)}
-                    onDragEnd={handleDragEnd}
+                    {...(!isTouchDevice ? {
+                      draggable: true,
+                      onDragStart: () => handleDragStart(i),
+                      onDragOver: (e: React.DragEvent) => handleDragOver(e, i),
+                      onDragEnd: handleDragEnd
+                    } : {})}
                   >
                     <div className="photo-card-img">
                       <img src={p.preview} alt={`Photo ${i + 1}`} />
@@ -502,10 +515,20 @@ export function ProfileForm({ onResult }: Props) {
                       <button type="button" className="screenshot-remove" onClick={() => removeCurrentPhoto(i)}>
                         <X size={14} />
                       </button>
-                      <div className="drag-handle">
+                      <div className="drag-handle desktop-only">
                         <GripVertical size={14} />
                       </div>
                     </div>
+                    {currentPhotos.length > 1 && (
+                      <div className="mobile-reorder">
+                        <button type="button" className="reorder-btn" onClick={() => movePhoto(i, "up")} disabled={i === 0} aria-label="Move up">
+                          <ChevronUp size={14} />
+                        </button>
+                        <button type="button" className="reorder-btn" onClick={() => movePhoto(i, "down")} disabled={i === currentPhotos.length - 1} aria-label="Move down">
+                          <ChevronDown size={14} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
