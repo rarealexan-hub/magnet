@@ -14,7 +14,7 @@ export function Landing({ onStart }: Props) {
         </div>
         <h1>
           Your dating app profile is
-          <span className="gradient-text"> sending the wrong signals </span>
+          <span className="gradient-text"> sending the wrong signals. </span>
         </h1>
         <p className="subtitle">
           Magnet analyzes your dating profile and shows you what to change to attract the people you want.
