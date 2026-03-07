@@ -3,12 +3,14 @@ import { User } from "lucide-react";
 import { Landing } from "./components/Landing";
 import { ProfileForm } from "./components/ProfileForm";
 import { Results } from "./components/Results";
+import { FullReport } from "./components/FullReport";
+import { Dashboard } from "./components/Dashboard";
 import { AuthModal } from "./components/AuthModal";
 import { UserMenu } from "./components/UserMenu";
 import { useAuth } from "./hooks/useAuth";
 import type { ProfileInput, ProfileResult } from "@shared/types";
 
-type View = "landing" | "form" | "results";
+type View = "landing" | "form" | "results" | "full-report" | "dashboard";
 
 export default function App() {
   const [view, setView] = useState<View>("landing");
@@ -23,11 +25,6 @@ export default function App() {
     setResult(data);
     setProfileInput(input);
     setView("results");
-  };
-
-  const handleBack = () => {
-    setView("form");
-    setResult(null);
   };
 
   const handleStartOver = () => {
@@ -63,8 +60,22 @@ export default function App() {
         <Results
           result={result}
           profileInput={profileInput}
-          onBack={handleBack}
           onStartOver={handleStartOver}
+          onFullReport={() => setView("full-report")}
+          onDashboard={() => setView("dashboard")}
+        />
+      )}
+      {view === "full-report" && result && profileInput && (
+        <FullReport
+          result={result}
+          profileInput={profileInput}
+          onBack={() => setView("results")}
+        />
+      )}
+      {view === "dashboard" && result && (
+        <Dashboard
+          result={result}
+          onBack={() => setView("results")}
         />
       )}
 

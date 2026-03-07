@@ -1,16 +1,17 @@
 import { useState } from "react";
-import { ArrowLeft, Copy, Check, AlertTriangle, RotateCcw, Crosshair, ArrowRight, Share2, RefreshCw, ImagePlus } from "lucide-react";
+import { Copy, Check, AlertTriangle, Crosshair, ArrowRight, Share2, FileText, Zap, Crown } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 
 interface Props {
   result: ProfileResult;
   profileInput: ProfileInput;
-  onBack: () => void;
   onStartOver: () => void;
+  onFullReport: () => void;
+  onDashboard: () => void;
 }
 
-export function Results({ result, profileInput, onBack, onStartOver }: Props) {
+export function Results({ result, profileInput, onStartOver, onFullReport, onDashboard }: Props) {
   const [copied, setCopied] = useState(false);
 
   const { score, feedback } = result;
@@ -45,14 +46,6 @@ export function Results({ result, profileInput, onBack, onStartOver }: Props) {
   return (
     <div className="results-page">
       <div className="results-container">
-        <div className="results-header">
-          <button className="back-link" onClick={onBack}>
-            <ArrowLeft size={16} /> Edit profile
-          </button>
-          <button className="back-link" onClick={onStartOver}>
-            <RotateCcw size={16} /> Start over
-          </button>
-        </div>
 
         <div className="score-card">
           <div className="score-card-header">
@@ -127,43 +120,74 @@ export function Results({ result, profileInput, onBack, onStartOver }: Props) {
           </ul>
         </div>
 
-        <div className="results-next-steps">
-          <h3 className="next-steps-title">What's next?</h3>
-          <p className="next-steps-subtitle">
-            Now you know what's holding your profile back. Here's how to move forward.
+        <div className="upgrade-section">
+          <h3 className="upgrade-title">Ready to fix your profile?</h3>
+          <p className="upgrade-subtitle">
+            You've seen the problems. Now get the solutions.
           </p>
-          <div className="next-steps-grid">
-            <div className="next-step-card">
-              <div className="next-step-icon">
-                <RefreshCw size={20} />
+
+          <div className="pricing-cards">
+            <div className="pricing-card">
+              <div className="pricing-card-header">
+                <div className="pricing-icon">
+                  <FileText size={22} />
+                </div>
+                <div>
+                  <h4>Full Report</h4>
+                  <p className="pricing-tagline">One-time deep dive</p>
+                </div>
               </div>
-              <h4>Fix & Resubmit</h4>
-              <p>Make the changes above, then analyze your updated profile to see your new score.</p>
-              <button className="next-step-btn" onClick={onBack}>
-                Edit Profile <ArrowRight size={14} />
+              <div className="pricing-price">
+                <span className="price-amount">$2.99</span>
+                <span className="price-period">one time</span>
+              </div>
+              <ul className="pricing-features">
+                <li><Zap size={14} /> Detailed photo-by-photo analysis</li>
+                <li><Zap size={14} /> Exact bio & prompt rewrites</li>
+                <li><Zap size={14} /> Photo swap recommendations from your uploads</li>
+                <li><Zap size={14} /> Optimal photo order suggestion</li>
+                <li><Zap size={14} /> Platform-specific optimization tips</li>
+              </ul>
+              <button className="pricing-btn" onClick={onFullReport}>
+                Get Full Report <ArrowRight size={16} />
               </button>
             </div>
-            <div className="next-step-card">
-              <div className="next-step-icon">
-                <ImagePlus size={20} />
+
+            <div className="pricing-card featured">
+              <div className="pricing-badge">Best Value</div>
+              <div className="pricing-card-header">
+                <div className="pricing-icon featured-icon">
+                  <Crown size={22} />
+                </div>
+                <div>
+                  <h4>Magnet Pro</h4>
+                  <p className="pricing-tagline">Unlimited optimization</p>
+                </div>
               </div>
-              <h4>Upload More Photos</h4>
-              <p>Add extra photos of yourself and the AI will tell you which ones to swap into your profile.</p>
-              <button className="next-step-btn" onClick={onBack}>
-                Add Photos <ArrowRight size={14} />
-              </button>
-            </div>
-            <div className="next-step-card">
-              <div className="next-step-icon">
-                <Share2 size={20} />
+              <div className="pricing-price">
+                <span className="price-amount">$12.99</span>
+                <span className="price-period">/month</span>
               </div>
-              <h4>Share Your Score</h4>
-              <p>Challenge your friends to beat your Magnet Score. See who has the best profile.</p>
-              <button className="next-step-btn" onClick={copyRoast}>
-                {copied ? <><Check size={14} /> Copied!</> : <><Copy size={14} /> Copy Roast</>}
+              <ul className="pricing-features">
+                <li><Zap size={14} /> Everything in Full Report</li>
+                <li><Zap size={14} /> Unlimited profile reviews</li>
+                <li><Zap size={14} /> All platforms (Hinge, Tinder, Bumble)</li>
+                <li><Zap size={14} /> Live dashboard monitoring</li>
+                <li><Zap size={14} /> Algorithm change alerts</li>
+                <li><Zap size={14} /> Priority AI analysis</li>
+              </ul>
+              <button className="pricing-btn featured-btn" onClick={onDashboard}>
+                Go Pro <ArrowRight size={16} />
               </button>
             </div>
           </div>
+        </div>
+
+        <div className="results-footer">
+          <button className="share-roast-btn" onClick={copyRoast}>
+            <Share2 size={16} />
+            {copied ? "Copied!" : "Share your roast with friends"}
+          </button>
           <button className="results-start-over-btn" onClick={onStartOver}>
             Analyze a Different Profile <ArrowRight size={16} />
           </button>

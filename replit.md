@@ -14,9 +14,9 @@ A web app that analyzes and optimizes dating profiles for apps like Hinge, Tinde
 ```
 client/           - React frontend
   src/
-    components/   - Landing, ProfileForm, Results, ScoreRing, AuthModal, UserMenu
+    components/   - Landing, ProfileForm, Results, FullReport, Dashboard, ScoreRing, AuthModal, UserMenu
     hooks/        - useAuth (JWT auth state management)
-    App.tsx       - Main app with view routing (landing/form/results)
+    App.tsx       - Main app with view routing (landing/form/results/full-report/dashboard)
     styles.css    - Full app styles
   index.html
   public/
@@ -40,6 +40,9 @@ shared/
 6. **Email Collection**: Required email field on form
 7. **Shareable Results**: Copy Magnet Score roast for social sharing (viral loop)
 8. **Before/After Examples**: Landing page shows transformation case study
+9. **Pricing CTAs**: Results page shows $2.99 one-time Full Report and $12.99/mo Magnet Pro subscription options (no Stripe integration yet — buttons navigate to preview pages)
+10. **Full Report Page**: Detailed per-category analysis with improvement suggestions and photo swap recommendations
+11. **Dashboard Page**: Magnet Pro live dashboard preview with score trends, platform health, and algorithm alerts
 
 ## Database Tables
 
