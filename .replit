@@ -1,48 +1,7 @@
-modules = ["nodejs-22", "python-3.11"]
+modules = ["nodejs-22"]
 [nix]
 channel = "stable-25_05"
 packages = ["unzip"]
 
 [agent]
 expertMode = true
-integrations =["javascript_openai_ai_integrations:2.0.0"]
-
-[workflows]
-runButton = "Project"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Start application"
-
-[[workflows.workflow]]
-name = "Start application"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "webview"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-waitForPort = 5000
-
-[[ports]]
-localPort = 5000
-externalPort = 80
-
-[userenv]
-
-[userenv.shared]
-JWT_SECRET = "ce82b15b2bd83e01904275c51954787e1d26240c1d45a8c5182baf3fb9934b69cfc99519ea2e66a71463bc01961f5a02"
-
-[deployment]
-deploymentTarget = "cloudrun"
-publicDir = "dist/public"
-
-text
-npm run dev
