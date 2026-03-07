@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Copy, Check, AlertTriangle, RotateCcw, Crosshair } from "lucide-react";
+import { ArrowLeft, Copy, Check, AlertTriangle, RotateCcw, Crosshair, ArrowRight, Share2, RefreshCw } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 
@@ -125,6 +125,38 @@ export function Results({ result, profileInput, onBack, onStartOver }: Props) {
               </li>
             ))}
           </ul>
+        </div>
+
+        <div className="results-next-steps">
+          <h3 className="next-steps-title">What's next?</h3>
+          <p className="next-steps-subtitle">
+            Now you know what's holding your profile back. Here's how to move forward.
+          </p>
+          <div className="next-steps-grid">
+            <div className="next-step-card">
+              <div className="next-step-icon">
+                <RefreshCw size={20} />
+              </div>
+              <h4>Fix & Resubmit</h4>
+              <p>Make the changes above, then analyze your updated profile to see your new score.</p>
+              <button className="next-step-btn" onClick={onBack}>
+                Edit Profile <ArrowRight size={14} />
+              </button>
+            </div>
+            <div className="next-step-card">
+              <div className="next-step-icon">
+                <Share2 size={20} />
+              </div>
+              <h4>Share Your Score</h4>
+              <p>Challenge your friends to beat your Magnet Score. See who has the best profile.</p>
+              <button className="next-step-btn" onClick={copyRoast}>
+                {copied ? <><Check size={14} /> Copied!</> : <><Copy size={14} /> Copy Roast</>}
+              </button>
+            </div>
+          </div>
+          <button className="results-start-over-btn" onClick={onStartOver}>
+            Analyze a Different Profile <ArrowRight size={16} />
+          </button>
         </div>
 
       </div>
