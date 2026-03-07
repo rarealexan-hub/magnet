@@ -20,9 +20,23 @@ async function initAuditTracking() {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS free_audits (
         id SERIAL PRIMARY KEY,
-        email TEXT NOT NULL UNIQUE,
+        email TEXT NOT NULL,
+        platform TEXT NOT NULL DEFAULT 'unknown',
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+    await pool.query(`
+      ALTER TABLE free_audits ADD COLUMN IF NOT EXISTS platform TEXT NOT NULL DEFAULT 'unknown'
+    `);
+    await pool.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'free_audits_email_platform_unique'
+        ) THEN
+          ALTER TABLE free_audits DROP CONSTRAINT IF EXISTS free_audits_email_unique;
+          ALTER TABLE free_audits ADD CONSTRAINT free_audits_email_platform_unique UNIQUE (email, platform);
+        END IF;
+      END $$;
     `);
   } catch (err) {
     console.error("Failed to create audit tracking table:", err);
@@ -96,13 +110,22 @@ app.post("/api/analyze", async (req, res) => {
     }
 
     const email = input.data.email.toLowerCase().trim();
+    const platform = input.data.platform;
     const existing = await pool.query(
-      "SELECT id FROM free_audits WHERE email = $1",
+      "SELECT platform FROM free_audits WHERE email = $1",
       [email]
     );
     if (existing.rows.length > 0) {
+      const usedPlatform = existing.rows[0].platform;
+      if (existing.rows.some((r: { platform: string }) => r.platform === platform)) {
+        res.status(403).json({
+          error: `You've already used your free audit for ${platform}. Upgrade to Pro for unlimited optimizations across all apps.`,
+          code: "AUDIT_LIMIT_REACHED",
+        });
+        return;
+      }
       res.status(403).json({
-        error: "You've already used your free audit. Upgrade to Pro for unlimited optimizations.",
+        error: `Your free audit was used for ${usedPlatform}. Upgrade to Pro to audit your ${platform} profile and get unlimited optimizations.`,
         code: "AUDIT_LIMIT_REACHED",
       });
       return;
@@ -110,8 +133,8 @@ app.post("/api/analyze", async (req, res) => {
 
     const result = await analyzeProfile(input.data);
     await pool.query(
-      "INSERT INTO free_audits (email) VALUES ($1) ON CONFLICT (email) DO NOTHING",
-      [email]
+      "INSERT INTO free_audits (email, platform) VALUES ($1, $2) ON CONFLICT (email, platform) DO NOTHING",
+      [email, platform]
     );
     res.json(result);
   } catch (error: any) {

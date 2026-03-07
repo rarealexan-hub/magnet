@@ -35,7 +35,7 @@ shared/
 ## Features
 
 1. **Free Profile Analysis**: Score card with 5-category breakdown (Photo Quality, Attraction Signals, Personality Signals, Match Targeting, First Impression) + witty roast + top 3 fixes with "biggest match killer" callout
-2. **One Free Audit Per Email**: Server-side enforcement via `free_audits` table — each email gets one free analysis, then must upgrade
+2. **One Free Audit Per Email (Per Platform)**: Server-side enforcement via `free_audits` table — each email gets one free analysis for one dating platform, then must upgrade for additional platforms or re-audits
 3. **Match Targeting**: Choose who you want to attract (7 preset types + custom)
 4. **Screenshot Upload**: Upload screenshots of dating profile instead of typing it out (uses OpenAI vision)
 5. **Photo Upload**: Upload current profile photos (drag to reorder, up to 9) + additional candidate photos (up to 10) for AI photo evaluation
@@ -50,7 +50,7 @@ shared/
 
 ## Database Tables
 
-- `free_audits` — tracks which emails have used their free audit (id, email, created_at)
+- `free_audits` — tracks which emails have used their free audit per platform (id, email, platform, created_at; UNIQUE on email+platform)
 - `stripe.*` — managed by stripe-replit-sync (products, prices, sessions, etc.)
 
 ## Key Dependencies
