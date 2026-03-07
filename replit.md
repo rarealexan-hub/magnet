@@ -51,6 +51,7 @@ shared/
 ## Database Tables
 
 - `free_audits` — tracks which emails have used their free audit per platform (id, email, platform, created_at; UNIQUE on email+platform)
+- `used_sessions` — tracks consumed Stripe checkout session IDs to prevent replay (session_id TEXT PRIMARY KEY, used_at)
 - `stripe.*` — managed by stripe-replit-sync (products, prices, sessions, etc.)
 
 ## Key Dependencies

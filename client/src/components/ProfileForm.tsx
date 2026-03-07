@@ -27,7 +27,6 @@ const MAX_ADDITIONAL_PHOTOS = 10;
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 const HEIC_TYPES = ["image/heic", "image/heif"];
-const ALL_ACCEPTED_TYPES = [...SUPPORTED_IMAGE_TYPES, ...HEIC_TYPES];
 
 function isHeic(file: File): boolean {
   if (HEIC_TYPES.includes(file.type)) return true;
@@ -309,7 +308,7 @@ export function ProfileForm({ onResult }: Props) {
         if (!res.ok) {
           const errData = await res.json().catch(() => null);
           if (errData?.code === "AUDIT_LIMIT_REACHED") {
-            setError("You've already used your free audit for this email. Upgrade to Pro to get a full profile optimization.");
+            setError(errData.error || "You've already used your free audit. Upgrade to Pro for unlimited optimizations.");
             return;
           }
           throw new Error(errData?.error || "Analysis failed");

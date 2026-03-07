@@ -38,6 +38,12 @@ async function initAuditTracking() {
         END IF;
       END $$;
     `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS used_sessions (
+        session_id TEXT PRIMARY KEY,
+        used_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
   } catch (err) {
     console.error("Failed to create audit tracking table:", err);
   }
@@ -155,6 +161,15 @@ app.post("/api/optimize", async (req, res) => {
       return;
     }
 
+    const alreadyUsed = await pool.query(
+      "SELECT session_id FROM used_sessions WHERE session_id = $1",
+      [sessionId]
+    );
+    if (alreadyUsed.rows.length > 0) {
+      res.status(403).json({ error: "This payment session has already been used." });
+      return;
+    }
+
     const stripe = await getUncachableStripeClient();
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     if (session.payment_status !== "paid") {
@@ -168,6 +183,12 @@ app.post("/api/optimize", async (req, res) => {
       return;
     }
     const result = await optimizeProfile(input.data);
+
+    await pool.query(
+      "INSERT INTO used_sessions (session_id) VALUES ($1) ON CONFLICT (session_id) DO NOTHING",
+      [sessionId]
+    );
+
     res.json(result);
   } catch (error: any) {
     console.error("Optimization error:", error);
