@@ -32,6 +32,25 @@ export interface ProfileResult {
   feedback: ProfileFeedback;
 }
 
+export interface AnalysisRecord {
+  id: number;
+  email: string;
+  platform: string;
+  score: ProfileScore;
+  feedback: ProfileFeedback;
+  created_at: string;
+}
+
+export interface DashboardData {
+  analyses: AnalysisRecord[];
+  platforms: {
+    platform: string;
+    latestScore: number;
+    analysisCount: number;
+    lastAnalyzed: string;
+  }[];
+}
+
 export const TARGET_TYPES = [
   { id: "ambitious-professionals", label: "Ambitious Professionals", description: "Career-driven, motivated, goal-oriented" },
   { id: "creatives", label: "Creatives & Artists", description: "Artistic, expressive, unconventional" },

@@ -7,7 +7,7 @@ import { Pool } from "pg";
 import { analyzeProfile } from "./ai.js";
 import { hashPassword, comparePassword, generateToken, verifyToken } from "./auth.js";
 import type { Request, Response, NextFunction } from "express";
-import type { ProfileInput } from "../shared/types.js";
+import type { ProfileInput, AnalysisRecord, DashboardData } from "../shared/types.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -45,6 +45,27 @@ async function initAuditTracking() {
         password_hash TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS analyses (
+        id SERIAL PRIMARY KEY,
+        user_email TEXT NOT NULL,
+        platform TEXT NOT NULL,
+        overall_score INTEGER NOT NULL,
+        photo_quality INTEGER NOT NULL,
+        attraction_signals INTEGER NOT NULL,
+        personality_signals INTEGER NOT NULL,
+        match_targeting INTEGER NOT NULL,
+        first_impression INTEGER NOT NULL,
+        roast TEXT,
+        mistakes JSONB DEFAULT '[]',
+        profile_type TEXT,
+        profile_type_explanation TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_analyses_email ON analyses (user_email)
     `);
   } catch (err) {
     console.error("Failed to create audit tracking table:", err);
@@ -164,6 +185,86 @@ app.get("/api/auth/me", async (req: AuthRequest, res) => {
   res.json({ user: { id: payload.userId, email: payload.email } });
 });
 
+function authenticateRequired(req: AuthRequest, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  const payload = verifyToken(authHeader.slice(7));
+  if (!payload) {
+    res.status(401).json({ error: "Invalid or expired token" });
+    return;
+  }
+  req.user = payload;
+  next();
+}
+
+app.get("/api/dashboard", authenticateRequired, async (req: AuthRequest, res: Response) => {
+  try {
+    const email = req.user!.email;
+    const result = await pool.query(
+      `SELECT id, user_email, platform, overall_score, photo_quality, attraction_signals,
+              personality_signals, match_targeting, first_impression, roast, mistakes,
+              profile_type, profile_type_explanation, created_at
+       FROM analyses WHERE user_email = $1 ORDER BY created_at DESC`,
+      [email]
+    );
+
+    const analyses: AnalysisRecord[] = result.rows.map((r: any) => ({
+      id: r.id,
+      email: r.user_email,
+      platform: r.platform,
+      score: {
+        overall: r.overall_score,
+        photoQuality: r.photo_quality,
+        attractionSignals: r.attraction_signals,
+        personalitySignals: r.personality_signals,
+        matchTargeting: r.match_targeting,
+        firstImpression: r.first_impression,
+      },
+      feedback: {
+        roast: r.roast || "",
+        mistakes: r.mistakes || [],
+        profileType: r.profile_type || "generic",
+        profileTypeExplanation: r.profile_type_explanation || "",
+      },
+      created_at: r.created_at,
+    }));
+
+    const platformMap = new Map<string, { latestScore: number; analysisCount: number; lastAnalyzed: string }>();
+    for (const a of analyses) {
+      if (!platformMap.has(a.platform)) {
+        platformMap.set(a.platform, {
+          latestScore: a.score.overall,
+          analysisCount: 1,
+          lastAnalyzed: a.created_at,
+        });
+      } else {
+        const p = platformMap.get(a.platform)!;
+        p.analysisCount++;
+      }
+    }
+
+    const allPlatforms = ["hinge", "tinder", "bumble"];
+    const platforms = allPlatforms.map((p) => {
+      const data = platformMap.get(p);
+      return {
+        platform: p,
+        latestScore: data?.latestScore ?? 0,
+        analysisCount: data?.analysisCount ?? 0,
+        lastAnalyzed: data?.lastAnalyzed ?? "",
+      };
+    });
+
+    const dashboardData: DashboardData = { analyses, platforms };
+    res.json(dashboardData);
+  } catch (error) {
+    console.error("Dashboard error:", error);
+    res.status(500).json({ error: "Failed to load dashboard data" });
+  }
+});
+
 function filesToBase64Strings(files: Express.Multer.File[]): string[] {
   return files.map((f) => {
     const data = f.buffer.toString("base64");
@@ -254,30 +355,50 @@ app.post("/api/analyze", authenticateOptional, (req: AuthRequest, res: Response,
       customTarget,
     };
 
-    const existing = await pool.query(
-      "SELECT platform FROM free_audits WHERE email = $1",
-      [email]
-    );
-    if (existing.rows.length > 0) {
-      const usedPlatform = existing.rows[0].platform;
-      if (existing.rows.some((r: { platform: string }) => r.platform === platform)) {
+    const isAuthenticated = !!req.user;
+
+    if (!isAuthenticated) {
+      const existing = await pool.query(
+        "SELECT platform FROM free_audits WHERE email = $1",
+        [email]
+      );
+      if (existing.rows.length > 0) {
+        const usedPlatform = existing.rows[0].platform;
+        if (existing.rows.some((r: { platform: string }) => r.platform === platform)) {
+          res.status(403).json({
+            error: `You've already used your free Magnet analysis for ${platform}.`,
+            code: "AUDIT_LIMIT_REACHED",
+          });
+          return;
+        }
         res.status(403).json({
-          error: `You've already used your free Magnet analysis for ${platform}.`,
+          error: `Your free analysis was already used for ${usedPlatform}. Each email gets one free analysis.`,
           code: "AUDIT_LIMIT_REACHED",
         });
         return;
       }
-      res.status(403).json({
-        error: `Your free analysis was already used for ${usedPlatform}. Each email gets one free analysis.`,
-        code: "AUDIT_LIMIT_REACHED",
-      });
-      return;
     }
 
     const result = await analyzeProfile(profileInput);
+
+    if (!isAuthenticated) {
+      await pool.query(
+        "INSERT INTO free_audits (email, platform) VALUES ($1, $2) ON CONFLICT (email, platform) DO NOTHING",
+        [email, platform]
+      );
+    }
+
+    const ownerEmail = req.user?.email || email;
     await pool.query(
-      "INSERT INTO free_audits (email, platform) VALUES ($1, $2) ON CONFLICT (email, platform) DO NOTHING",
-      [email, platform]
+      `INSERT INTO analyses (user_email, platform, overall_score, photo_quality, attraction_signals, personality_signals, match_targeting, first_impression, roast, mistakes, profile_type, profile_type_explanation)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [
+        ownerEmail, platform,
+        result.score.overall, result.score.photoQuality, result.score.attractionSignals,
+        result.score.personalitySignals, result.score.matchTargeting, result.score.firstImpression,
+        result.feedback.roast, JSON.stringify(result.feedback.mistakes),
+        result.feedback.profileType, result.feedback.profileTypeExplanation
+      ]
     );
     res.json(result);
   } catch (error: any) {

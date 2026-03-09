@@ -83,9 +83,12 @@ export function useAuth() {
     setState({ user: null, loading: false });
   };
 
+  const token = localStorage.getItem("magnet_token") || undefined;
+
   return {
     user: state.user,
     loading: state.loading,
+    token,
     login,
     register,
     logout,

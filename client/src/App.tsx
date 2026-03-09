@@ -8,7 +8,7 @@ import { Dashboard } from "./components/Dashboard";
 import { AuthModal } from "./components/AuthModal";
 import { UserMenu } from "./components/UserMenu";
 import { useAuth } from "./hooks/useAuth";
-import type { ProfileInput, ProfileResult } from "@shared/types";
+import type { ProfileInput, ProfileResult, AnalysisRecord } from "@shared/types";
 
 type View = "landing" | "form" | "results" | "full-report" | "dashboard";
 
@@ -17,7 +17,8 @@ export default function App() {
   const [result, setResult] = useState<ProfileResult | null>(null);
   const [profileInput, setProfileInput] = useState<ProfileInput | null>(null);
   const [showAuth, setShowAuth] = useState(false);
-  const { user, loading, login, register, logout } = useAuth();
+  const [preselectedPlatform, setPreselectedPlatform] = useState<string | undefined>();
+  const { user, loading, token, login, register, logout } = useAuth();
 
   const handleStartAudit = () => setView("form");
 
@@ -31,6 +32,7 @@ export default function App() {
     setView("landing");
     setResult(null);
     setProfileInput(null);
+    setPreselectedPlatform(undefined);
     window.history.pushState({}, "", "/");
   };
 
@@ -39,12 +41,42 @@ export default function App() {
     return register(email, password);
   };
 
+  const handleAnalyzeFromDashboard = (platform?: string) => {
+    setResult(null);
+    setProfileInput(null);
+    setPreselectedPlatform(platform);
+    setView("form");
+  };
+
+  const handleViewResultFromDashboard = (analysis: AnalysisRecord) => {
+    setResult({
+      score: analysis.score,
+      feedback: analysis.feedback,
+    });
+    setProfileInput({
+      platform: analysis.platform as ProfileInput["platform"],
+      email: analysis.email,
+      bio: "",
+      prompts: [],
+      photoDescriptions: [],
+      screenshots: [],
+      currentPhotos: [],
+      additionalPhotos: [],
+      targetType: "",
+    });
+    setView("results");
+  };
+
   return (
     <div className="app">
       {!loading && (
         <div className="app-header">
           {user ? (
-            <UserMenu user={user} onLogout={logout} />
+            <UserMenu
+              user={user}
+              onLogout={() => { logout(); handleStartOver(); }}
+              onDashboard={() => setView("dashboard")}
+            />
           ) : (
             <button className="header-signin" onClick={() => setShowAuth(true)}>
               <User size={14} />
@@ -55,7 +87,13 @@ export default function App() {
       )}
 
       {view === "landing" && <Landing onStart={handleStartAudit} />}
-      {view === "form" && <ProfileForm onResult={handleResult} userEmail={user?.email} />}
+      {view === "form" && (
+        <ProfileForm
+          onResult={handleResult}
+          userEmail={user?.email}
+          preselectedPlatform={preselectedPlatform}
+        />
+      )}
       {view === "results" && result && profileInput && (
         <Results
           result={result}
@@ -72,10 +110,13 @@ export default function App() {
           onBack={() => setView("results")}
         />
       )}
-      {view === "dashboard" && result && (
+      {view === "dashboard" && (
         <Dashboard
-          result={result}
-          onBack={() => setView("results")}
+          onAnalyze={handleAnalyzeFromDashboard}
+          onViewResult={handleViewResultFromDashboard}
+          onBack={() => result ? setView("results") : setView("landing")}
+          userEmail={user?.email}
+          token={token}
         />
       )}
 

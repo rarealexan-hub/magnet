@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from "react";
-import { User, LogOut, ChevronDown } from "lucide-react";
+import { User, LogOut, ChevronDown, BarChart3 } from "lucide-react";
 import type { AuthUser } from "../hooks/useAuth";
 
 interface Props {
   user: AuthUser;
   onLogout: () => void;
+  onDashboard: () => void;
 }
 
-export function UserMenu({ user, onLogout }: Props) {
+export function UserMenu({ user, onLogout, onDashboard }: Props) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -34,6 +35,10 @@ export function UserMenu({ user, onLogout }: Props) {
       {open && (
         <div className="user-dropdown">
           <div className="user-dropdown-email">{user.email}</div>
+          <button className="user-dropdown-item" onClick={() => { onDashboard(); setOpen(false); }}>
+            <BarChart3 size={14} />
+            Dashboard
+          </button>
           <button className="user-dropdown-item" onClick={() => { onLogout(); setOpen(false); }}>
             <LogOut size={14} />
             Sign out

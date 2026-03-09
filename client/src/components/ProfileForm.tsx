@@ -7,6 +7,7 @@ import type { ProfileInput, ProfileResult } from "@shared/types";
 interface Props {
   onResult: (data: ProfileResult, input: ProfileInput) => void;
   userEmail?: string;
+  preselectedPlatform?: string;
 }
 
 type InputMode = "type" | "screenshot";
@@ -89,8 +90,10 @@ function compressImage(file: File, maxDim = 1600, quality = 0.75): Promise<File>
   });
 }
 
-export function ProfileForm({ onResult, userEmail }: Props) {
-  const [platform, setPlatform] = useState<ProfileInput["platform"]>("hinge");
+export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props) {
+  const [platform, setPlatform] = useState<ProfileInput["platform"]>(
+    (preselectedPlatform as ProfileInput["platform"]) || "hinge"
+  );
   const [email, setEmail] = useState(userEmail || "");
   const [inputMode, setInputMode] = useState<InputMode>("screenshot");
   const [bio, setBio] = useState("");

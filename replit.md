@@ -42,12 +42,13 @@ shared/
 8. **Before/After Examples**: Landing page shows transformation case study
 9. **Pricing CTAs**: Results page shows $2.99 one-time Full Report and $12.99/mo Magnet Pro subscription options (no Stripe integration yet — buttons navigate to preview pages)
 10. **Full Report Page**: Detailed per-category analysis with improvement suggestions and photo swap recommendations
-11. **Dashboard Page**: Magnet Pro live dashboard preview with score trends, platform health, and algorithm alerts
+11. **Dashboard Page**: Functional Magnet Pro dashboard — fetches real analysis history from DB, shows score trend chart, per-platform health status with re-analyze buttons, analysis history list with clickthrough to results. Accessible from user menu for logged-in users. Requires authentication.
 
 ## Database Tables
 
 - `users` — user accounts (id SERIAL PK, email TEXT UNIQUE, password_hash TEXT, created_at)
 - `free_audits` — tracks which emails have used their free Magnet analysis per platform (id, email, platform, created_at; UNIQUE on email+platform)
+- `analyses` — persists every analysis result (id SERIAL PK, user_email TEXT, platform TEXT, overall_score INT, photo_quality INT, attraction_signals INT, personality_signals INT, match_targeting INT, first_impression INT, roast TEXT, mistakes JSONB, profile_type TEXT, profile_type_explanation TEXT, created_at TIMESTAMP); indexed on user_email
 
 ## Mobile Responsiveness
 
