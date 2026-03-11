@@ -1,6 +1,7 @@
 import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
+import { FeedbackSurvey } from "./FeedbackSurvey";
 
 interface Props {
   result: ProfileResult;
@@ -122,6 +123,12 @@ export function FullReport({ result, profileInput, onBack }: Props) {
             </div>
           </div>
         </div>
+
+        <FeedbackSurvey
+          page="full-report"
+          platform={profileInput.platform}
+          magnetScore={result.score.overall}
+        />
 
         <div className="report-footer">
           <button className="results-start-over-btn" onClick={onBack}>

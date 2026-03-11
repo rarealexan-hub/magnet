@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Copy, Check, AlertTriangle, Crosshair, ArrowRight, Share2, FileText, Zap, Crown } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
+import { FeedbackSurvey } from "./FeedbackSurvey";
 
 interface Props {
   result: ProfileResult;
@@ -192,6 +193,12 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onDas
             Analyze a Different Profile <ArrowRight size={16} />
           </button>
         </div>
+
+        <FeedbackSurvey
+          page="results"
+          platform={profileInput.platform}
+          magnetScore={score.overall}
+        />
 
       </div>
     </div>

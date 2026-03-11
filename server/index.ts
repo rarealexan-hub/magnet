@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import { Pool } from "pg";
 import { analyzeProfile } from "./ai.js";
 import { hashPassword, comparePassword, generateToken, verifyToken } from "./auth.js";
+import { getUncachableGoogleSheetClient } from "./googleSheets.js";
 import type { Request, Response, NextFunction } from "express";
 import type { ProfileInput, AnalysisRecord, DashboardData } from "../shared/types.js";
 
@@ -414,6 +415,49 @@ app.post("/api/analyze", authenticateOptional, (req: AuthRequest, res: Response,
               ? "Too many requests. Please wait a minute and try again."
               : "Failed to analyze profile. Please try again.";
     res.status(500).json({ error: msg });
+  }
+});
+
+app.post("/api/feedback", async (req: Request, res: Response) => {
+  try {
+    const { rating, wouldRecommend, biggestImprovement, openFeedback, page, platform, magnetScore, email } = req.body;
+
+    if (!rating || rating < 1 || rating > 5) {
+      res.status(400).json({ error: "Rating is required (1-5)" });
+      return;
+    }
+
+    const spreadsheetId = process.env.FEEDBACK_SPREADSHEET_ID;
+    if (!spreadsheetId) {
+      console.error("FEEDBACK_SPREADSHEET_ID not set");
+      res.status(500).json({ error: "Feedback not configured" });
+      return;
+    }
+
+    const sheets = await getUncachableGoogleSheetClient();
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: "Feedback!A:I",
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [[
+          new Date().toISOString(),
+          rating,
+          wouldRecommend ?? "",
+          biggestImprovement ?? "",
+          openFeedback ?? "",
+          page ?? "",
+          platform ?? "",
+          magnetScore ?? "",
+          email ?? "",
+        ]],
+      },
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Feedback submission error:", error);
+    res.status(500).json({ error: "Failed to submit feedback" });
   }
 });
 

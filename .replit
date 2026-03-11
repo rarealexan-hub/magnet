@@ -1,10 +1,11 @@
-modules = ["nodejs-22", "postgresql-16"]
+modules = ["nodejs-22", "postgresql-16", "python-3.11"]
 [nix]
 channel = "stable-25_05"
 packages = ["unzip"]
 
 [agent]
 expertMode = true
+integrations = ["google-sheet:1.0.0"]
 
 [[ports]]
 localPort = 3001
@@ -42,3 +43,8 @@ outputType = "webview"
 deploymentTarget = "autoscale"
 run = ["node", "--import", "tsx", "server/index.ts"]
 build = ["npm", "run", "build"]
+
+[userenv]
+
+[userenv.shared]
+FEEDBACK_SPREADSHEET_ID = "1DwV5NQ8d0T0CHZfX_T9B7-sd1yVZ8y772S3ilgB41PY"
