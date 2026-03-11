@@ -194,18 +194,45 @@ IMPORTANT: Format the "mistakes" as short, punchy issue labels (e.g. "Weak first
 
 Remember: The roast should make someone want to share their Magnet Score. Think "this bio could belong to 4.7 million people" energy.`;
 
+async function callWithRetry(
+  fn: () => Promise<any>,
+  maxRetries = 3,
+  baseDelay = 2000
+): Promise<any> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      const isRetryable =
+        err?.status === 400 && err?.message?.includes("internal error") ||
+        err?.status === 429 ||
+        err?.status === 500 ||
+        err?.status === 502 ||
+        err?.status === 503;
+
+      if (!isRetryable || attempt === maxRetries) throw err;
+
+      const delay = baseDelay * Math.pow(2, attempt);
+      console.log(`AI call failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms...`);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+}
+
 export async function analyzeProfile(input: ProfileInput): Promise<ProfileResult> {
   const content = await buildUserContent(input, ANALYZE_PROMPT);
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-5.2",
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content },
-    ],
-    response_format: { type: "json_object" },
-    temperature: 0.8,
-  });
+  const response = await callWithRetry(() =>
+    openai.chat.completions.create({
+      model: "gpt-5.2",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.8,
+    })
+  );
 
   const raw = response.choices[0]?.message?.content || "{}";
   const parsed = JSON.parse(raw);
