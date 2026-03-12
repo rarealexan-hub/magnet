@@ -20,11 +20,19 @@ export interface ProfileScore {
   firstImpression: number;
 }
 
+export interface PhotoSwapRecommendation {
+  action: "swap" | "add" | "remove" | "reorder";
+  currentPhoto?: string;
+  additionalPhoto?: string;
+  reason: string;
+}
+
 export interface ProfileFeedback {
   roast: string;
   mistakes: string[];
   profileType: "high-signal" | "generic" | "entertainment";
   profileTypeExplanation: string;
+  photoSwapRecommendations?: PhotoSwapRecommendation[];
 }
 
 export interface ProfileResult {

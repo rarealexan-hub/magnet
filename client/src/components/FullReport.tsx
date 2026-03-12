@@ -1,4 +1,4 @@
-import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight } from "lucide-react";
+import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight, ArrowLeftRight, PlusCircle, MinusCircle, MoveVertical } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 import { FeedbackSurvey } from "./FeedbackSurvey";
@@ -89,17 +89,54 @@ export function FullReport({ result, profileInput, onBack }: Props) {
                 <Camera size={18} />
               </div>
               <h3>Photo Swap Recommendations</h3>
+              <span className="report-section-badge">{profileInput.additionalPhotos.length} extra photo{profileInput.additionalPhotos.length > 1 ? "s" : ""} reviewed</span>
             </div>
             <div className="report-section-body">
               <p className="report-section-analysis">
-                Based on the {profileInput.additionalPhotos.length} additional photo{profileInput.additionalPhotos.length > 1 ? "s" : ""} you uploaded, here are our recommendations for optimizing your photo lineup.
+                Your additional photos were compared against your current lineup. Here's what to swap, add, or remove to maximize your profile's impact.
               </p>
-              <div className="report-fix-box">
-                <p className="report-fix-title">Suggested changes</p>
-                <p className="report-fix-text">
-                  Review your additional photos against your current profile. Swap in photos with better lighting, clearer expressions, and more variety. Your strongest photo should always be first.
-                </p>
-              </div>
+              {result.feedback.photoSwapRecommendations && result.feedback.photoSwapRecommendations.length > 0 ? (
+                <div className="swap-recommendations">
+                  {result.feedback.photoSwapRecommendations.map((rec, i) => {
+                    const actionIcon = rec.action === "swap" ? <ArrowLeftRight size={14} />
+                      : rec.action === "add" ? <PlusCircle size={14} />
+                      : rec.action === "remove" ? <MinusCircle size={14} />
+                      : <MoveVertical size={14} />;
+                    const actionLabel = rec.action === "swap" ? "Swap"
+                      : rec.action === "add" ? "Add"
+                      : rec.action === "remove" ? "Remove"
+                      : "Reorder";
+                    return (
+                      <div key={i} className="swap-rec-item">
+                        <div className="swap-rec-header">
+                          <span className={`swap-action-badge swap-action-${rec.action}`}>
+                            {actionIcon} {actionLabel}
+                          </span>
+                          {rec.currentPhoto && rec.additionalPhoto && (
+                            <span className="swap-photo-label">
+                              {rec.currentPhoto} → {rec.additionalPhoto}
+                            </span>
+                          )}
+                          {rec.currentPhoto && !rec.additionalPhoto && (
+                            <span className="swap-photo-label">{rec.currentPhoto}</span>
+                          )}
+                          {rec.additionalPhoto && !rec.currentPhoto && (
+                            <span className="swap-photo-label">{rec.additionalPhoto}</span>
+                          )}
+                        </div>
+                        <p className="swap-rec-reason">{rec.reason}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="report-fix-box">
+                  <p className="report-fix-title">General recommendation</p>
+                  <p className="report-fix-text">
+                    Compare your additional photos against your current profile. Swap in photos with better lighting, clearer expressions, and more variety. Your strongest photo should always be first.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}

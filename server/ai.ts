@@ -186,9 +186,24 @@ Respond in this exact JSON format:
     "roast": "<2-3 sentence witty roast of the profile that's entertaining but not mean — make it shareable on TikTok>",
     "mistakes": ["<specific issue detected — e.g. 'Weak first photo', 'Low social proof', 'Missing lifestyle signal'>", "<issue 2>", "<issue 3>"],
     "profileType": "<high-signal | generic | entertainment>",
-    "profileTypeExplanation": "<1-2 sentences explaining why they fall in this category>"
+    "profileTypeExplanation": "<1-2 sentences explaining why they fall in this category>",
+    "photoSwapRecommendations": [
+      {
+        "action": "<swap | add | remove | reorder>",
+        "currentPhoto": "<e.g. 'Photo #2' or null if not a swap>",
+        "additionalPhoto": "<e.g. 'Extra Photo B' or null if not applicable>",
+        "reason": "<specific, actionable reason — e.g. 'Extra Photo B has better lighting and a genuine smile vs Photo #2 which looks forced'>"
+      }
+    ]
   }
 }
+
+IMPORTANT PHOTO SWAP RULES:
+- Only include photoSwapRecommendations if additional candidate photos were provided. If no additional photos, omit this field entirely or return an empty array.
+- Be specific: reference exact photo numbers (Photo #1, Photo #2) and extra photo letters (Extra Photo A, Extra Photo B).
+- Give a clear, concrete reason for each recommendation — what's better about the swap and why.
+- Consider: first photo impact, variety, lighting, expression, energy, and what each photo communicates.
+- Max 5 recommendations. Prioritize the highest-impact swaps.
 
 IMPORTANT: Format the "mistakes" as short, punchy issue labels (e.g. "Weak first photo", "Low social proof", "Missing lifestyle signal", "Generic bio", "No conversation hooks"). These show up as "Issues detected" in the UI.
 
@@ -252,6 +267,14 @@ export async function analyzeProfile(input: ProfileInput): Promise<ProfileResult
         ? parsed.feedback.profileType
         : "generic",
       profileTypeExplanation: parsed.feedback?.profileTypeExplanation ?? "",
+      photoSwapRecommendations: Array.isArray(parsed.feedback?.photoSwapRecommendations)
+        ? parsed.feedback.photoSwapRecommendations.map((r: any) => ({
+            action: ["swap", "add", "remove", "reorder"].includes(r.action) ? r.action : "swap",
+            currentPhoto: r.currentPhoto ?? undefined,
+            additionalPhoto: r.additionalPhoto ?? undefined,
+            reason: r.reason ?? "",
+          }))
+        : undefined,
     },
   };
 }
