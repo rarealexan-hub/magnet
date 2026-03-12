@@ -3,6 +3,7 @@ import { Plus, X, Loader2, Upload, Type, Camera, GripVertical, ImagePlus, Chevro
 import heic2any from "heic2any";
 import { TARGET_TYPES } from "@shared/types";
 import type { ProfileInput, ProfileResult } from "@shared/types";
+import { FeedbackSurvey } from "./FeedbackSurvey";
 
 interface Props {
   onResult: (data: ProfileResult, input: ProfileInput) => void;
@@ -669,6 +670,7 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
             )}
           </button>
         </form>
+        <FeedbackSurvey page="paste-profile" />
       </div>
     </div>
   );
