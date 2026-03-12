@@ -5,10 +5,19 @@ import multer from "multer";
 import { fileURLToPath } from "url";
 import { Pool } from "pg";
 import { analyzeProfile } from "./ai.js";
-import { hashPassword, comparePassword, generateToken, verifyToken } from "./auth.js";
+import {
+  hashPassword,
+  comparePassword,
+  generateToken,
+  verifyToken,
+} from "./auth.js";
 import { getUncachableGoogleSheetClient } from "./googleSheets.js";
 import type { Request, Response, NextFunction } from "express";
-import type { ProfileInput, AnalysisRecord, DashboardData } from "../shared/types.js";
+import type {
+  ProfileInput,
+  AnalysisRecord,
+  DashboardData,
+} from "../shared/types.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -77,13 +86,23 @@ await initAuditTracking();
 
 app.use(express.json({ limit: "50mb" }));
 
-const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/heic", "image/heif"];
+const ALLOWED_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+];
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 20 * 1024 * 1024, files: 25 },
   fileFilter: (_req, file, cb) => {
-    if (ALLOWED_MIME_TYPES.includes(file.mimetype) || file.mimetype.startsWith("image/")) {
+    if (
+      ALLOWED_MIME_TYPES.includes(file.mimetype) ||
+      file.mimetype.startsWith("image/")
+    ) {
       cb(null, true);
     } else {
       cb(new Error("Only image files are allowed"));
@@ -101,7 +120,11 @@ interface AuthRequest extends Request {
   user?: { userId: number; email: string };
 }
 
-function authenticateOptional(req: AuthRequest, res: Response, next: NextFunction) {
+function authenticateOptional(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) {
   const authHeader = req.headers.authorization;
   if (authHeader?.startsWith("Bearer ")) {
     const payload = verifyToken(authHeader.slice(7));
@@ -125,14 +148,16 @@ app.post("/api/auth/register", async (req, res) => {
       email.toLowerCase().trim(),
     ]);
     if (existing.rows.length > 0) {
-      res.status(400).json({ error: "An account with this email already exists" });
+      res
+        .status(400)
+        .json({ error: "An account with this email already exists" });
       return;
     }
 
     const passwordHash = await hashPassword(password);
     const result = await pool.query(
       "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email",
-      [email.toLowerCase().trim(), passwordHash]
+      [email.toLowerCase().trim(), passwordHash],
     );
     const user = result.rows[0];
     const token = generateToken({ userId: user.id, email: user.email });
@@ -150,9 +175,10 @@ app.post("/api/auth/login", async (req, res) => {
       res.status(400).json({ error: "Email and password required" });
       return;
     }
-    const result = await pool.query("SELECT id, email, password_hash FROM users WHERE email = $1", [
-      email.toLowerCase().trim(),
-    ]);
+    const result = await pool.query(
+      "SELECT id, email, password_hash FROM users WHERE email = $1",
+      [email.toLowerCase().trim()],
+    );
     if (result.rows.length === 0) {
       res.status(401).json({ error: "Invalid email or password" });
       return;
@@ -186,7 +212,11 @@ app.get("/api/auth/me", async (req: AuthRequest, res) => {
   res.json({ user: { id: payload.userId, email: payload.email } });
 });
 
-function authenticateRequired(req: AuthRequest, res: Response, next: NextFunction) {
+function authenticateRequired(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
     res.status(401).json({ error: "Authentication required" });
@@ -201,70 +231,77 @@ function authenticateRequired(req: AuthRequest, res: Response, next: NextFunctio
   next();
 }
 
-app.get("/api/dashboard", authenticateRequired, async (req: AuthRequest, res: Response) => {
-  try {
-    const email = req.user!.email;
-    const result = await pool.query(
-      `SELECT id, user_email, platform, overall_score, photo_quality, attraction_signals,
+app.get(
+  "/api/dashboard",
+  authenticateRequired,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const email = req.user!.email;
+      const result = await pool.query(
+        `SELECT id, user_email, platform, overall_score, photo_quality, attraction_signals,
               personality_signals, match_targeting, first_impression, roast, mistakes,
               profile_type, profile_type_explanation, created_at
        FROM analyses WHERE user_email = $1 ORDER BY created_at DESC`,
-      [email]
-    );
+        [email],
+      );
 
-    const analyses: AnalysisRecord[] = result.rows.map((r: any) => ({
-      id: r.id,
-      email: r.user_email,
-      platform: r.platform,
-      score: {
-        overall: r.overall_score,
-        photoQuality: r.photo_quality,
-        attractionSignals: r.attraction_signals,
-        personalitySignals: r.personality_signals,
-        matchTargeting: r.match_targeting,
-        firstImpression: r.first_impression,
-      },
-      feedback: {
-        roast: r.roast || "",
-        mistakes: r.mistakes || [],
-        profileType: r.profile_type || "generic",
-        profileTypeExplanation: r.profile_type_explanation || "",
-      },
-      created_at: r.created_at,
-    }));
+      const analyses: AnalysisRecord[] = result.rows.map((r: any) => ({
+        id: r.id,
+        email: r.user_email,
+        platform: r.platform,
+        score: {
+          overall: r.overall_score,
+          photoQuality: r.photo_quality,
+          attractionSignals: r.attraction_signals,
+          personalitySignals: r.personality_signals,
+          matchTargeting: r.match_targeting,
+          firstImpression: r.first_impression,
+        },
+        feedback: {
+          roast: r.roast || "",
+          mistakes: r.mistakes || [],
+          profileType: r.profile_type || "generic",
+          profileTypeExplanation: r.profile_type_explanation || "",
+        },
+        created_at: r.created_at,
+      }));
 
-    const platformMap = new Map<string, { latestScore: number; analysisCount: number; lastAnalyzed: string }>();
-    for (const a of analyses) {
-      if (!platformMap.has(a.platform)) {
-        platformMap.set(a.platform, {
-          latestScore: a.score.overall,
-          analysisCount: 1,
-          lastAnalyzed: a.created_at,
-        });
-      } else {
-        const p = platformMap.get(a.platform)!;
-        p.analysisCount++;
+      const platformMap = new Map<
+        string,
+        { latestScore: number; analysisCount: number; lastAnalyzed: string }
+      >();
+      for (const a of analyses) {
+        if (!platformMap.has(a.platform)) {
+          platformMap.set(a.platform, {
+            latestScore: a.score.overall,
+            analysisCount: 1,
+            lastAnalyzed: a.created_at,
+          });
+        } else {
+          const p = platformMap.get(a.platform)!;
+          p.analysisCount++;
+        }
       }
+
+      const allPlatforms = ["hinge", "tinder", "bumble"];
+      const platforms = allPlatforms.map((p) => {
+        const data = platformMap.get(p);
+        return {
+          platform: p,
+          latestScore: data?.latestScore ?? 0,
+          analysisCount: data?.analysisCount ?? 0,
+          lastAnalyzed: data?.lastAnalyzed ?? "",
+        };
+      });
+
+      const dashboardData: DashboardData = { analyses, platforms };
+      res.json(dashboardData);
+    } catch (error) {
+      console.error("Dashboard error:", error);
+      res.status(500).json({ error: "Failed to load dashboard data" });
     }
-
-    const allPlatforms = ["hinge", "tinder", "bumble"];
-    const platforms = allPlatforms.map((p) => {
-      const data = platformMap.get(p);
-      return {
-        platform: p,
-        latestScore: data?.latestScore ?? 0,
-        analysisCount: data?.analysisCount ?? 0,
-        lastAnalyzed: data?.lastAnalyzed ?? "",
-      };
-    });
-
-    const dashboardData: DashboardData = { analyses, platforms };
-    res.json(dashboardData);
-  } catch (error) {
-    console.error("Dashboard error:", error);
-    res.status(500).json({ error: "Failed to load dashboard data" });
-  }
-});
+  },
+);
 
 function filesToBase64Strings(files: Express.Multer.File[]): string[] {
   return files.map((f) => {
@@ -274,153 +311,213 @@ function filesToBase64Strings(files: Express.Multer.File[]): string[] {
   });
 }
 
-app.post("/api/analyze", authenticateOptional, (req: AuthRequest, res: Response, next: NextFunction) => {
-  console.log("Analyze request received, content-type:", req.headers["content-type"], "content-length:", req.headers["content-length"]);
-  analyzeUpload(req, res, (err) => {
-    if (err) {
-      console.error("Multer error:", err);
-      if (err instanceof multer.MulterError) {
-        if (err.code === "LIMIT_FILE_SIZE") {
-          res.status(413).json({ error: "One or more files are too large. Maximum 20MB per file." });
+app.post(
+  "/api/analyze",
+  authenticateOptional,
+  (req: AuthRequest, res: Response, next: NextFunction) => {
+    console.log(
+      "Analyze request received, content-type:",
+      req.headers["content-type"],
+      "content-length:",
+      req.headers["content-length"],
+    );
+    analyzeUpload(req, res, (err) => {
+      if (err) {
+        console.error("Multer error:", err);
+        if (err instanceof multer.MulterError) {
+          if (err.code === "LIMIT_FILE_SIZE") {
+            res
+              .status(413)
+              .json({
+                error:
+                  "One or more files are too large. Maximum 20MB per file.",
+              });
+            return;
+          }
+          if (err.code === "LIMIT_FILE_COUNT") {
+            res.status(400).json({ error: "Too many files uploaded." });
+            return;
+          }
+          res
+            .status(400)
+            .json({ error: "File upload error. Please try again." });
           return;
         }
-        if (err.code === "LIMIT_FILE_COUNT") {
-          res.status(400).json({ error: "Too many files uploaded." });
-          return;
-        }
-        res.status(400).json({ error: "File upload error. Please try again." });
+        res.status(400).json({ error: err.message || "Upload failed." });
         return;
       }
-      res.status(400).json({ error: err.message || "Upload failed." });
-      return;
-    }
-    next();
-  });
-}, async (req: AuthRequest, res: Response) => {
-  try {
-    const files = req.files as Record<string, Express.Multer.File[]> | undefined;
-    const body = req.body;
-
-    const platform = body.platform;
-    const email = (req.user?.email || body.email || "").toLowerCase().trim();
-    const bio = body.bio || "";
-    const prompts = body.prompts ? (Array.isArray(body.prompts) ? body.prompts : [body.prompts]) : [];
-    const photoDescriptions = body.photoDescriptions ? (Array.isArray(body.photoDescriptions) ? body.photoDescriptions : [body.photoDescriptions]) : [];
-    const targetType = body.targetType || "";
-    const customTarget = body.customTarget;
-    const screenshotLabels = body.screenshotLabels ? (Array.isArray(body.screenshotLabels) ? body.screenshotLabels : [body.screenshotLabels]) : [];
-
-    const validPlatforms = ["hinge", "tinder", "bumble", "other"];
-    if (!platform || !validPlatforms.includes(platform)) {
-      res.status(400).json({ error: "Invalid platform" });
-      return;
-    }
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      res.status(400).json({ error: "Please provide a valid email address" });
-      return;
-    }
-    if (!targetType.trim()) {
-      res.status(400).json({ error: "Please select a target match type" });
-      return;
-    }
-
-    const screenshotFiles = files?.screenshots || [];
-    const currentPhotoFiles = files?.currentPhotos || [];
-    const additionalPhotoFiles = files?.additionalPhotos || [];
-
-    const hasTextContent = bio.trim() || prompts.some((p: string) => p.trim());
-    const hasScreenshots = screenshotFiles.length > 0;
-
-    if (!hasTextContent && !hasScreenshots) {
-      res.status(400).json({ error: "Please provide at least a bio, one prompt, or upload a screenshot" });
-      return;
-    }
-
-    const screenshotStrings = screenshotFiles.map((f, i) => {
-      const data = f.buffer.toString("base64");
-      const mimeType = f.mimetype || "image/jpeg";
-      const label = screenshotLabels[i] || "";
-      return JSON.stringify({ data, mimeType, label });
+      next();
     });
+  },
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const files = req.files as
+        | Record<string, Express.Multer.File[]>
+        | undefined;
+      const body = req.body;
 
-    const profileInput: ProfileInput = {
-      platform: platform as ProfileInput["platform"],
-      email,
-      bio,
-      prompts: prompts.filter((p: string) => typeof p === "string"),
-      photoDescriptions: photoDescriptions.filter((p: string) => typeof p === "string"),
-      screenshots: screenshotStrings,
-      currentPhotos: filesToBase64Strings(currentPhotoFiles),
-      additionalPhotos: filesToBase64Strings(additionalPhotoFiles),
-      targetType,
-      customTarget,
-    };
+      const platform = body.platform;
+      const email = (req.user?.email || body.email || "").toLowerCase().trim();
+      const bio = body.bio || "";
+      const prompts = body.prompts
+        ? Array.isArray(body.prompts)
+          ? body.prompts
+          : [body.prompts]
+        : [];
+      const photoDescriptions = body.photoDescriptions
+        ? Array.isArray(body.photoDescriptions)
+          ? body.photoDescriptions
+          : [body.photoDescriptions]
+        : [];
+      const targetType = body.targetType || "";
+      const customTarget = body.customTarget;
+      const screenshotLabels = body.screenshotLabels
+        ? Array.isArray(body.screenshotLabels)
+          ? body.screenshotLabels
+          : [body.screenshotLabels]
+        : [];
 
-    const isAuthenticated = !!req.user;
+      const validPlatforms = ["hinge", "tinder", "bumble", "other"];
+      if (!platform || !validPlatforms.includes(platform)) {
+        res.status(400).json({ error: "Invalid platform" });
+        return;
+      }
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        res.status(400).json({ error: "Please provide a valid email address" });
+        return;
+      }
+      if (!targetType.trim()) {
+        res.status(400).json({ error: "Please select a target match type" });
+        return;
+      }
 
-    if (!isAuthenticated) {
-      const existing = await pool.query(
-        "SELECT platform FROM free_audits WHERE email = $1",
-        [email]
-      );
-      if (existing.rows.length > 0) {
-        const usedPlatform = existing.rows[0].platform;
-        if (existing.rows.some((r: { platform: string }) => r.platform === platform)) {
+      const screenshotFiles = files?.screenshots || [];
+      const currentPhotoFiles = files?.currentPhotos || [];
+      const additionalPhotoFiles = files?.additionalPhotos || [];
+
+      const hasTextContent =
+        bio.trim() || prompts.some((p: string) => p.trim());
+      const hasScreenshots = screenshotFiles.length > 0;
+
+      if (!hasTextContent && !hasScreenshots) {
+        res
+          .status(400)
+          .json({
+            error:
+              "Please provide at least a bio, one prompt, or upload a screenshot",
+          });
+        return;
+      }
+
+      const screenshotStrings = screenshotFiles.map((f, i) => {
+        const data = f.buffer.toString("base64");
+        const mimeType = f.mimetype || "image/jpeg";
+        const label = screenshotLabels[i] || "";
+        return JSON.stringify({ data, mimeType, label });
+      });
+
+      const profileInput: ProfileInput = {
+        platform: platform as ProfileInput["platform"],
+        email,
+        bio,
+        prompts: prompts.filter((p: string) => typeof p === "string"),
+        photoDescriptions: photoDescriptions.filter(
+          (p: string) => typeof p === "string",
+        ),
+        screenshots: screenshotStrings,
+        currentPhotos: filesToBase64Strings(currentPhotoFiles),
+        additionalPhotos: filesToBase64Strings(additionalPhotoFiles),
+        targetType,
+        customTarget,
+      };
+
+      const isAuthenticated = !!req.user;
+
+      if (!isAuthenticated) {
+        const existing = await pool.query(
+          "SELECT platform FROM free_audits WHERE email = $1",
+          [email],
+        );
+        if (existing.rows.length > 0) {
+          const usedPlatform = existing.rows[0].platform;
+          if (
+            existing.rows.some(
+              (r: { platform: string }) => r.platform === platform,
+            )
+          ) {
+            res.status(403).json({
+              error: `You've already used your free Magnet analysis for ${platform}.`,
+              code: "AUDIT_LIMIT_REACHED",
+            });
+            return;
+          }
           res.status(403).json({
-            error: `You've already used your free Magnet analysis for ${platform}.`,
+            error: `Your free analysis was already used for ${usedPlatform}. Each email gets one free analysis.`,
             code: "AUDIT_LIMIT_REACHED",
           });
           return;
         }
-        res.status(403).json({
-          error: `Your free analysis was already used for ${usedPlatform}. Each email gets one free analysis.`,
-          code: "AUDIT_LIMIT_REACHED",
-        });
-        return;
       }
-    }
 
-    const result = await analyzeProfile(profileInput);
+      const result = await analyzeProfile(profileInput);
 
-    if (!isAuthenticated) {
+      if (!isAuthenticated) {
+        await pool.query(
+          "INSERT INTO free_audits (email, platform) VALUES ($1, $2) ON CONFLICT (email, platform) DO NOTHING",
+          [email, platform],
+        );
+      }
+
+      const ownerEmail = req.user?.email || email;
       await pool.query(
-        "INSERT INTO free_audits (email, platform) VALUES ($1, $2) ON CONFLICT (email, platform) DO NOTHING",
-        [email, platform]
-      );
-    }
-
-    const ownerEmail = req.user?.email || email;
-    await pool.query(
-      `INSERT INTO analyses (user_email, platform, overall_score, photo_quality, attraction_signals, personality_signals, match_targeting, first_impression, roast, mistakes, profile_type, profile_type_explanation)
+        `INSERT INTO analyses (user_email, platform, overall_score, photo_quality, attraction_signals, personality_signals, match_targeting, first_impression, roast, mistakes, profile_type, profile_type_explanation)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-      [
-        ownerEmail, platform,
-        result.score.overall, result.score.photoQuality, result.score.attractionSignals,
-        result.score.personalitySignals, result.score.matchTargeting, result.score.firstImpression,
-        result.feedback.roast, JSON.stringify(result.feedback.mistakes),
-        result.feedback.profileType, result.feedback.profileTypeExplanation
-      ]
-    );
-    res.json(result);
-  } catch (error: any) {
-    console.error("Analysis error:", error);
-    const msg =
-      error?.status === 413
-        ? "Your photos are too large. Please try with fewer or smaller images."
-        : error?.status === 400 && error?.error?.message?.includes("internal error")
-          ? "The AI service is temporarily busy. Please wait a moment and try again."
-          : error?.status === 400 && error?.error?.message?.includes("image")
-            ? "One or more images couldn't be processed. Please use JPG, PNG, GIF, WebP, or HEIC format."
-            : error?.status === 429
-              ? "Too many requests. Please wait a minute and try again."
-              : "Failed to analyze profile. Please try again.";
-    res.status(500).json({ error: msg });
-  }
-});
+        [
+          ownerEmail,
+          platform,
+          result.score.overall,
+          result.score.photoQuality,
+          result.score.attractionSignals,
+          result.score.personalitySignals,
+          result.score.matchTargeting,
+          result.score.firstImpression,
+          result.feedback.roast,
+          JSON.stringify(result.feedback.mistakes),
+          result.feedback.profileType,
+          result.feedback.profileTypeExplanation,
+        ],
+      );
+      res.json(result);
+    } catch (error: any) {
+      console.error("Analysis error:", error);
+      const msg =
+        error?.status === 413
+          ? "Your photos are too large. Please try with fewer or smaller images."
+          : error?.status === 400 &&
+              error?.error?.message?.includes("internal error")
+            ? "The AI service is temporarily busy. Please wait a moment and try again."
+            : error?.status === 400 && error?.error?.message?.includes("image")
+              ? "One or more images couldn't be processed. Please use JPG, PNG, GIF, WebP, or HEIC format."
+              : error?.status === 429
+                ? "Too many requests. Please wait a minute and try again."
+                : "Failed to analyze profile. Please try again.";
+      res.status(500).json({ error: msg });
+    }
+  },
+);
 
 app.post("/api/feedback", async (req: Request, res: Response) => {
   try {
-    const { rating, wouldRecommend, biggestImprovement, openFeedback, page, platform, magnetScore, email } = req.body;
+    const {
+      rating,
+      wouldRecommend,
+      biggestImprovement,
+      openFeedback,
+      page,
+      platform,
+      magnetScore,
+      email,
+    } = req.body;
 
     if (!rating || rating < 1 || rating > 5) {
       res.status(400).json({ error: "Rating is required (1-5)" });
@@ -440,17 +537,19 @@ app.post("/api/feedback", async (req: Request, res: Response) => {
       range: "Feedback!A:I",
       valueInputOption: "USER_ENTERED",
       requestBody: {
-        values: [[
-          new Date().toISOString(),
-          rating,
-          wouldRecommend ?? "",
-          biggestImprovement ?? "",
-          openFeedback ?? "",
-          page ?? "",
-          platform ?? "",
-          magnetScore ?? "",
-          email ?? "",
-        ]],
+        values: [
+          [
+            new Date().toISOString(),
+            rating,
+            wouldRecommend ?? "",
+            biggestImprovement ?? "",
+            openFeedback ?? "",
+            page ?? "",
+            platform ?? "",
+            magnetScore ?? "",
+            email ?? "",
+          ],
+        ],
       },
     });
 
@@ -464,7 +563,11 @@ app.post("/api/feedback", async (req: Request, res: Response) => {
 app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {
-      res.status(413).json({ error: "One or more files are too large. Maximum 20MB per file." });
+      res
+        .status(413)
+        .json({
+          error: "One or more files are too large. Maximum 20MB per file.",
+        });
       return;
     }
     if (err.code === "LIMIT_FILE_COUNT") {
@@ -475,7 +578,11 @@ app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     return;
   }
   if (err?.message === "Only image files are allowed") {
-    res.status(400).json({ error: "Only image files (JPG, PNG, GIF, WebP, HEIC) are allowed." });
+    res
+      .status(400)
+      .json({
+        error: "Only image files (JPG, PNG, GIF, WebP, HEIC) are allowed.",
+      });
     return;
   }
   next(err);
