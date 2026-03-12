@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { ArrowLeft, Crown, ArrowRight, TrendingUp, Activity, Bell, RefreshCw, BarChart3, Shield, Plus, Loader2, LogIn } from "lucide-react";
 import type { DashboardData, AnalysisRecord } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
-import { FeedbackSurvey } from "./FeedbackSurvey";
 
 interface Props {
   onAnalyze: (platform?: string) => void;
@@ -277,7 +276,6 @@ export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }:
               </button>
             </div>
 
-            <FeedbackSurvey page="dashboard" />
           </>
         )}
       </div>
