@@ -480,41 +480,40 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
               </button>
             </div>
           ) : (
-            <>
-              <div className="form-section">
-                <label className="form-label">Your Bio</label>
-                <textarea
-                  className="form-textarea"
-                  rows={4}
-                  placeholder='e.g. "I love traveling, good food, and hanging out with friends"'
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                />
-              </div>
-              <div className="form-section">
-                <label className="form-label">Prompts & Answers</label>
-                <p className="form-hint">Paste your prompt responses (e.g. "A life goal of mine is...")</p>
-                {prompts.map((prompt, i) => (
-                  <div key={i} className="input-row">
-                    <input
-                      className="form-input"
-                      placeholder={`Prompt ${i + 1}`}
-                      value={prompt}
-                      onChange={(e) => updatePrompt(i, e.target.value)}
-                    />
-                    {prompts.length > 1 && (
-                      <button type="button" className="remove-btn" onClick={() => removePrompt(i)}>
-                        <X size={16} />
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <button type="button" className="add-btn" onClick={addPrompt}>
-                  <Plus size={16} /> Add Prompt
-                </button>
-              </div>
-            </>
+            <div className="form-section">
+              <label className="form-label">Your Bio</label>
+              <textarea
+                className="form-textarea"
+                rows={4}
+                placeholder='e.g. "I love traveling, good food, and hanging out with friends"'
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+              />
+            </div>
           )}
+
+          <div className="form-section">
+            <label className="form-label">Prompts & Answers</label>
+            <p className="form-hint">Paste your prompt responses (e.g. "A life goal of mine is...")</p>
+            {prompts.map((prompt, i) => (
+              <div key={i} className="input-row">
+                <input
+                  className="form-input"
+                  placeholder={`Prompt ${i + 1}`}
+                  value={prompt}
+                  onChange={(e) => updatePrompt(i, e.target.value)}
+                />
+                {prompts.length > 1 && (
+                  <button type="button" className="remove-btn" onClick={() => removePrompt(i)}>
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+            ))}
+            <button type="button" className="add-btn" onClick={addPrompt}>
+              <Plus size={16} /> Add Prompt
+            </button>
+          </div>
 
           <div className="form-section photos-section">
             <label className="form-label">Your Current Profile Photos</label>
