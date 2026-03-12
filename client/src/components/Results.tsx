@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Copy, Check, AlertTriangle, Crosshair, ArrowRight, Share2, FileText, Zap, Crown } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
@@ -14,6 +14,10 @@ interface Props {
 
 export function Results({ result, profileInput, onStartOver, onFullReport, onDashboard }: Props) {
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
 
   const { score, feedback } = result;
 

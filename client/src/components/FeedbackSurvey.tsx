@@ -98,7 +98,7 @@ export function FeedbackSurvey({ page, platform, magnetScore, email }: Props) {
                     onMouseLeave={() => setHovered(0)}
                     onClick={() => setRating(s)}
                   >
-                    <Star size={28} />
+                    <Star size={36} />
                   </button>
                 ))}
               </div>

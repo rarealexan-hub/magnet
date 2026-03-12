@@ -2464,7 +2464,7 @@ h1 {
 }
 
 .feedback-survey {
-  margin-top: 32px;
+  margin-top: 48px;
   position: relative;
   z-index: 10;
 }
@@ -2474,35 +2474,36 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 20px;
+  padding: 20px 24px;
   background: rgba(99, 102, 241, 0.08);
   border: 1px solid rgba(99, 102, 241, 0.2);
-  border-radius: 12px;
+  border-radius: 16px;
 }
 
 .feedback-banner-text {
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--text-muted);
 }
 
 .feedback-banner-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-shrink: 0;
 }
 
 .feedback-open-btn {
-  padding: 8px 16px;
+  padding: 12px 22px;
   background: var(--accent);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 13px;
+  border-radius: 10px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s;
-  min-height: 36px;
+  min-height: 44px;
 }
 
 .feedback-open-btn:hover {
@@ -2513,16 +2514,16 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   background: none;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--muted);
   cursor: pointer;
   transition: all 0.15s;
   flex-shrink: 0;
-  min-height: 36px;
+  min-height: 44px;
 }
 
 .feedback-dismiss-btn:hover {
@@ -2533,11 +2534,11 @@ h1 {
 .feedback-form-wrap {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 20px;
 }
 
 .feedback-form {
-  padding: 24px;
+  padding: 32px;
 }
 
 .feedback-form-header {
@@ -2548,27 +2549,27 @@ h1 {
 }
 
 .feedback-form-header h4 {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text);
   margin: 0;
 }
 
 .feedback-field {
-  margin-bottom: 18px;
+  margin-bottom: 24px;
 }
 
 .feedback-field label {
   display: block;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-muted);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .star-row {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .star-btn {
@@ -2594,20 +2595,20 @@ h1 {
 .feedback-options {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .feedback-option {
-  padding: 8px 16px;
+  padding: 10px 20px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 24px;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
-  min-height: 36px;
+  min-height: 44px;
 }
 
 .feedback-option:hover {
@@ -2655,15 +2656,15 @@ h1 {
 
 .feedback-textarea {
   width: 100%;
-  padding: 12px 14px;
+  padding: 14px 16px;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 12px;
   color: var(--text);
-  font-size: 14px;
+  font-size: 15px;
   font-family: inherit;
   resize: vertical;
-  min-height: 80px;
+  min-height: 100px;
 }
 
 .feedback-textarea:focus {
