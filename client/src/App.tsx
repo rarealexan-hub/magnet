@@ -18,6 +18,7 @@ export default function App() {
   const [profileInput, setProfileInput] = useState<ProfileInput | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [preselectedPlatform, setPreselectedPlatform] = useState<string | undefined>();
+  const [fullReportViewed, setFullReportViewed] = useState(false);
   const { user, loading, token, login, register, logout } = useAuth();
 
   const handleStartAudit = () => setView("form");
@@ -33,6 +34,7 @@ export default function App() {
     setResult(null);
     setProfileInput(null);
     setPreselectedPlatform(undefined);
+    setFullReportViewed(false);
     window.history.pushState({}, "", "/");
   };
 
@@ -99,8 +101,9 @@ export default function App() {
           result={result}
           profileInput={profileInput}
           onStartOver={handleStartOver}
-          onFullReport={() => setView("full-report")}
+          onFullReport={() => { setFullReportViewed(true); setView("full-report"); }}
           onDashboard={() => setView("dashboard")}
+          fullReportViewed={fullReportViewed}
         />
       )}
       {view === "full-report" && result && profileInput && (

@@ -10,9 +10,10 @@ interface Props {
   onStartOver: () => void;
   onFullReport: () => void;
   onDashboard: () => void;
+  fullReportViewed?: boolean;
 }
 
-export function Results({ result, profileInput, onStartOver, onFullReport, onDashboard }: Props) {
+export function Results({ result, profileInput, onStartOver, onFullReport, onDashboard, fullReportViewed }: Props) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -132,31 +133,33 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onDas
           </p>
 
           <div className="pricing-cards">
-            <div className="pricing-card">
-              <div className="pricing-card-header">
-                <div className="pricing-icon">
-                  <FileText size={22} />
+            {!fullReportViewed && (
+              <div className="pricing-card">
+                <div className="pricing-card-header">
+                  <div className="pricing-icon">
+                    <FileText size={22} />
+                  </div>
+                  <div>
+                    <h4>Full Report</h4>
+                    <p className="pricing-tagline">One-time deep dive</p>
+                  </div>
                 </div>
-                <div>
-                  <h4>Full Report</h4>
-                  <p className="pricing-tagline">One-time deep dive</p>
+                <div className="pricing-price">
+                  <span className="price-amount">$2.99</span>
+                  <span className="price-period">one time</span>
                 </div>
+                <ul className="pricing-features">
+                  <li><Zap size={14} /> Detailed photo-by-photo analysis</li>
+                  <li><Zap size={14} /> Exact bio & prompt rewrites</li>
+                  <li><Zap size={14} /> Photo swap recommendations from your uploads</li>
+                  <li><Zap size={14} /> Optimal photo order suggestion</li>
+                  <li><Zap size={14} /> Platform-specific optimization tips</li>
+                </ul>
+                <button className="pricing-btn" onClick={onFullReport}>
+                  Get Full Report <ArrowRight size={16} />
+                </button>
               </div>
-              <div className="pricing-price">
-                <span className="price-amount">$2.99</span>
-                <span className="price-period">one time</span>
-              </div>
-              <ul className="pricing-features">
-                <li><Zap size={14} /> Detailed photo-by-photo analysis</li>
-                <li><Zap size={14} /> Exact bio & prompt rewrites</li>
-                <li><Zap size={14} /> Photo swap recommendations from your uploads</li>
-                <li><Zap size={14} /> Optimal photo order suggestion</li>
-                <li><Zap size={14} /> Platform-specific optimization tips</li>
-              </ul>
-              <button className="pricing-btn" onClick={onFullReport}>
-                Get Full Report <ArrowRight size={16} />
-              </button>
-            </div>
+            )}
 
             <div className="pricing-card featured">
               <div className="pricing-badge">Best Value</div>
@@ -193,6 +196,11 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onDas
             <Share2 size={16} />
             {copied ? "Copied!" : "Share your roast with friends"}
           </button>
+          {fullReportViewed && (
+            <button className="pricing-btn" style={{ width: "100%" }} onClick={onFullReport}>
+              <FileText size={15} /> View Full Report
+            </button>
+          )}
           <button className="results-start-over-btn" onClick={onStartOver}>
             Analyze a Different Profile <ArrowRight size={16} />
           </button>
