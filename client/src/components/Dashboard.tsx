@@ -147,12 +147,53 @@ export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }:
   const hasAnalyses = analyses.length > 0;
   const latest = analyses[0];
   const previous = analyses[1];
+  const oldest = analyses[analyses.length - 1];
   const chartData = [...analyses].reverse().slice(-10);
   const avgScore = hasAnalyses
     ? Math.round(analyses.reduce((s, a) => s + a.score.overall, 0) / analyses.length)
     : 0;
   const bestScore = hasAnalyses ? Math.max(...analyses.map(a => a.score.overall)) : 0;
   const scoreDelta = latest && previous ? latest.score.overall - previous.score.overall : null;
+  const totalGain = latest && oldest && latest !== oldest ? latest.score.overall - oldest.score.overall : null;
+  const daysSinceLast = latest
+    ? Math.floor((Date.now() - new Date(latest.created_at).getTime()) / 86400000)
+    : null;
+
+  const issueFrequency = new Map<string, number>();
+  for (const a of analyses) {
+    for (const m of a.feedback.mistakes) {
+      issueFrequency.set(m, (issueFrequency.get(m) || 0) + 1);
+    }
+  }
+  const recurringIssues = Array.from(issueFrequency.entries())
+    .filter(([, count]) => count > 1)
+    .sort((a, b) => b[1] - a[1]);
+
+  const categoryAvgs = CATEGORY_META.map(({ key, label, icon }) => {
+    const avg = Math.round(analyses.reduce((s, a) => s + ((a.score as any)[key] as number), 0) / analyses.length);
+    const latestVal = (latest?.score as any)?.[key] as number;
+    const oldestVal = (oldest?.score as any)?.[key] as number;
+    const trend = analyses.length > 1 ? latestVal - oldestVal : null;
+    return { key, label, icon, avg, latestVal, trend };
+  });
+  const focusCategory = [...categoryAvgs].sort((a, b) => a.avg - b.avg)[0];
+
+  const profileTypeHistory = [...analyses].reverse().map(a => a.feedback.profileType);
+  const typeChanges = profileTypeHistory.reduce<string[]>((acc, t) => {
+    if (acc[acc.length - 1] !== t) acc.push(t);
+    return acc;
+  }, []);
+
+  const TYPE_LABELS: Record<string, string> = {
+    "high-signal": "High-Signal",
+    "generic": "Generic",
+    "entertainment": "Entertainment",
+  };
+  const TYPE_COLORS: Record<string, string> = {
+    "high-signal": "#4ade80",
+    "generic": "#facc15",
+    "entertainment": "#60a5fa",
+  };
 
   return (
     <div className="results-page">
@@ -389,6 +430,151 @@ export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }:
                 })}
               </div>
             </div>
+
+            {/* ── Insight cards ── */}
+            <div className="dash-insight-grid">
+              <div className="dash-insight-card focus-card">
+                <div className="dash-insight-icon" style={{ background: "rgba(99,102,241,0.12)", color: "#818cf8" }}>
+                  <focusCategory.icon size={18} />
+                </div>
+                <div className="dash-insight-body">
+                  <span className="dash-insight-label">Focus Area</span>
+                  <span className="dash-insight-title">{focusCategory.label}</span>
+                  <p className="dash-insight-desc">
+                    Averaging <strong>{focusCategory.avg}/100</strong> — your lowest category. Improving this is your biggest lever.
+                  </p>
+                </div>
+              </div>
+
+              <div className="dash-insight-card">
+                <div className="dash-insight-icon" style={{ background: "rgba(250,204,21,0.1)", color: "#facc15" }}>
+                  <Star size={18} />
+                </div>
+                <div className="dash-insight-body">
+                  <span className="dash-insight-label">Personal Best</span>
+                  <span className="dash-insight-title" style={{ color: scoreColor(bestScore) }}>{bestScore}/100</span>
+                  {totalGain !== null ? (
+                    <p className="dash-insight-desc">
+                      {totalGain > 0
+                        ? <>You've gained <strong style={{ color: "#4ade80" }}>+{totalGain} pts</strong> since your first scan.</>
+                        : totalGain < 0
+                        ? <>You're <strong style={{ color: "#f87171" }}>{totalGain} pts</strong> below your starting score.</>
+                        : <>Your score has held steady since your first scan.</>}
+                    </p>
+                  ) : (
+                    <p className="dash-insight-desc">Run more analyses to track your progress.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="dash-insight-card">
+                <div className="dash-insight-icon" style={{ background: daysSinceLast && daysSinceLast > 14 ? "rgba(248,113,113,0.1)" : "rgba(74,222,128,0.1)", color: daysSinceLast && daysSinceLast > 14 ? "#f87171" : "#4ade80" }}>
+                  <Activity size={18} />
+                </div>
+                <div className="dash-insight-body">
+                  <span className="dash-insight-label">Last Analysis</span>
+                  <span className="dash-insight-title">
+                    {daysSinceLast === 0 ? "Today" : daysSinceLast === 1 ? "Yesterday" : `${daysSinceLast}d ago`}
+                  </span>
+                  <p className="dash-insight-desc">
+                    {daysSinceLast && daysSinceLast > 14
+                      ? "Profiles drift. A fresh scan could reveal new issues."
+                      : "You're staying on top of your profile. Keep it up."}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Category trends ── */}
+            {analyses.length > 1 && (
+              <div className="dash-section">
+                <div className="dash-section-header">
+                  <h3>Category Trends</h3>
+                  <span className="dash-section-count">First scan → Latest scan</span>
+                </div>
+                <div className="dash-category-trends">
+                  {categoryAvgs.map(({ key, label, icon: Icon, avg, latestVal, trend }) => (
+                    <div key={key} className="dash-trend-row">
+                      <div className="dash-trend-left">
+                        <Icon size={14} />
+                        <span className="dash-trend-label">{label}</span>
+                      </div>
+                      <div className="dash-trend-bar-wrap">
+                        <div className="dash-trend-bar-bg">
+                          <div
+                            className="dash-trend-bar-fill"
+                            style={{ width: `${avg}%`, background: scoreColor(avg) }}
+                          />
+                        </div>
+                      </div>
+                      <span className="dash-trend-val" style={{ color: scoreColor(latestVal) }}>{latestVal}</span>
+                      {trend !== null && (
+                        <span className={`dash-trend-delta ${trend > 0 ? "up" : trend < 0 ? "down" : "flat"}`}>
+                          {trend > 0 ? <TrendingUp size={11} /> : trend < 0 ? <TrendingDown size={11} /> : <Minus size={11} />}
+                          {trend > 0 ? `+${trend}` : trend !== 0 ? trend : "—"}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Recurring issues ── */}
+            {recurringIssues.length > 0 && (
+              <div className="dash-section">
+                <div className="dash-section-header">
+                  <h3>Recurring Issues</h3>
+                  <span className="dash-section-count">Across all scans</span>
+                </div>
+                <div className="dash-recurring-list">
+                  {recurringIssues.map(([issue, count]) => (
+                    <div key={issue} className="dash-recurring-item">
+                      <div className="dash-recurring-bar-wrap">
+                        <div
+                          className="dash-recurring-bar"
+                          style={{ width: `${Math.round((count / analyses.length) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="dash-recurring-label">{issue}</span>
+                      <span className="dash-recurring-count">{count}/{analyses.length} scans</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Profile type progression ── */}
+            {analyses.length > 1 && (
+              <div className="dash-section">
+                <div className="dash-section-header">
+                  <h3>Profile Type Progression</h3>
+                  <span className="dash-section-count">{typeChanges.length === 1 ? "No change yet" : `${typeChanges.length - 1} transition${typeChanges.length > 2 ? "s" : ""}`}</span>
+                </div>
+                <div className="dash-type-timeline">
+                  {[...analyses].reverse().map((a, i) => (
+                    <div key={a.id} className="dash-type-step">
+                      <div
+                        className="dash-type-dot"
+                        style={{ background: TYPE_COLORS[a.feedback.profileType] ?? "#6366f1" }}
+                      />
+                      {i < analyses.length - 1 && <div className="dash-type-line" />}
+                      <div className="dash-type-info">
+                        <span className="dash-type-name" style={{ color: TYPE_COLORS[a.feedback.profileType] ?? "#6366f1" }}>
+                          {TYPE_LABELS[a.feedback.profileType]}
+                        </span>
+                        <span className="dash-type-meta">{timeAgo(a.created_at)} · {a.score.overall}/100</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {typeChanges[typeChanges.length - 1] !== "high-signal" && (
+                  <p className="dash-type-goal">
+                    Goal: <strong style={{ color: "#4ade80" }}>High-Signal</strong> — specific, authentic, and sending clear attraction cues on every photo and prompt.
+                  </p>
+                )}
+              </div>
+            )}
 
             <FeedbackSurvey page="dashboard" />
           </>
