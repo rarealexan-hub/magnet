@@ -3456,3 +3456,92 @@ h1 {
     font-size: 10px;
   }
 }
+
+/* ── Pro-locked CTAs ── */
+
+.pro-locked-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  gap: 10px;
+}
+
+.pro-locked-cta:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.pro-locked-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.pro-locked-left svg {
+  opacity: 0.5;
+}
+
+.pro-locked-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #c084fc;
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  border-radius: 20px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+
+/* Dashboard Pro-locked buttons */
+.dash-pro-locked-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  width: 100%;
+  justify-content: center;
+  opacity: 0.7;
+  cursor: default;
+}
+
+.dash-pro-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #c084fc;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 20px;
+  padding: 2px 6px;
+  margin-left: auto;
+}
+
+.dash-new-btn-locked {
+  cursor: default;
+  opacity: 0.65;
+  gap: 6px;
+}
+
+.dash-new-btn-locked:hover {
+  background: rgba(99,102,241,0.1);
+}

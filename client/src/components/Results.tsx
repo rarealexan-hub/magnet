@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Copy, Check, AlertTriangle, Crosshair, ArrowRight, Share2, FileText, Zap, Crown } from "lucide-react";
+import { Copy, Check, AlertTriangle, Crosshair, ArrowRight, Share2, FileText, Zap, Crown, Lock } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 import { FeedbackSurvey } from "./FeedbackSurvey";
@@ -201,9 +201,13 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onDas
               <FileText size={15} /> View Full Report
             </button>
           )}
-          <button className="results-start-over-btn" onClick={onStartOver}>
-            Analyze a Different Profile <ArrowRight size={16} />
-          </button>
+          <div className="pro-locked-cta" onClick={onDashboard}>
+            <div className="pro-locked-left">
+              <Lock size={14} />
+              <span>Analyze another platform</span>
+            </div>
+            <span className="pro-locked-badge"><Crown size={11} /> Pro only</span>
+          </div>
         </div>
 
         <FeedbackSurvey
