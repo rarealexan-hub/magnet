@@ -3821,3 +3821,536 @@ h1 {
     font-size: 11px;
   }
 }
+
+/* ════════════════════════════════════════════
+   COMPREHENSIVE MOBILE POLISH PASS
+   ════════════════════════════════════════════ */
+
+/* Prevent iOS input zoom (must be ≥16px) */
+input, textarea, select {
+  font-size: 16px !important;
+}
+
+/* Smooth scroll & safe area insets */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Button tap improvements ── */
+button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+@media (max-width: 640px) {
+
+  /* ── Landing ── */
+  .landing-hero {
+    margin-bottom: 36px;
+    padding: 0 4px;
+  }
+
+  h1 {
+    font-size: clamp(28px, 9vw, 44px);
+    letter-spacing: -0.03em;
+  }
+
+  .subtitle {
+    font-size: 15px;
+  }
+
+  .subtitle-small {
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+
+  .cta-button {
+    width: 100%;
+    justify-content: center;
+    font-size: 16px;
+    padding: 16px 24px;
+  }
+
+  .cta-sub {
+    font-size: 13px;
+  }
+
+  .credibility-cue {
+    font-size: 12px;
+  }
+
+  .badge {
+    font-size: 12px;
+    padding: 5px 12px;
+    margin-bottom: 18px;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+
+  .feature-card {
+    padding: 20px;
+  }
+
+  .before-after-section {
+    margin-bottom: 36px;
+  }
+
+  .section-title {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  /* ── Form ── */
+  .form-page {
+    padding: 28px 14px 80px;
+  }
+
+  .form-container {
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  .form-header {
+    margin-bottom: 20px;
+  }
+
+  .form-header h2 {
+    font-size: 18px;
+  }
+
+  .platform-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .platform-btn {
+    flex: 1;
+    min-width: calc(50% - 4px);
+    justify-content: center;
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+  }
+
+  .prompt-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .add-prompt-row {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .char-counter {
+    font-size: 10px;
+  }
+
+  .submit-btn {
+    font-size: 15px;
+    padding: 16px 20px;
+  }
+
+  /* ── Results ── */
+  .results-page {
+    padding: 20px 14px 60px;
+  }
+
+  .score-hero {
+    padding: 20px 16px 16px;
+    gap: 16px;
+  }
+
+  .score-number {
+    font-size: 44px;
+  }
+
+  .score-label {
+    font-size: 18px;
+  }
+
+  .score-breakdown {
+    padding: 0 16px 16px;
+  }
+
+  .breakdown-label {
+    min-width: 90px;
+    font-size: 11px;
+  }
+
+  .breakdown-val {
+    font-size: 11px;
+    min-width: 24px;
+  }
+
+  .roast-card {
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  .roast-text {
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .mistakes-section {
+    padding: 18px;
+  }
+
+  .mistakes-list {
+    gap: 8px;
+  }
+
+  .mistake-item {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .upgrade-section {
+    padding: 18px;
+    border-radius: 16px;
+    margin-top: 20px;
+  }
+
+  .upgrade-title {
+    font-size: 20px;
+  }
+
+  .upgrade-subtitle {
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+
+  .pricing-card {
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  .pricing-features {
+    gap: 8px;
+  }
+
+  .pricing-features li {
+    font-size: 13px;
+  }
+
+  .results-footer {
+    gap: 10px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .share-roast-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .results-start-over-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pro-locked-cta {
+    padding: 12px 14px;
+  }
+
+  /* ── Full Report ── */
+  .report-hero {
+    padding: 20px 16px;
+  }
+
+  .report-hero-title {
+    font-size: 20px;
+  }
+
+  .report-hero-subtitle {
+    font-size: 13px;
+  }
+
+  .report-section-card {
+    border-radius: 14px;
+  }
+
+  .report-section-header {
+    padding: 14px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .report-section-header h3 {
+    font-size: 13px;
+  }
+
+  .report-section-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+  }
+
+  .report-section-body {
+    padding: 14px 16px;
+  }
+
+  .report-section-analysis {
+    font-size: 13px;
+  }
+
+  .report-fix-box {
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  .report-fix-title {
+    font-size: 11px;
+  }
+
+  .report-fix-text {
+    font-size: 13px;
+  }
+
+  .rewrite-block {
+    font-size: 13px;
+    padding: 12px;
+  }
+
+  .swap-rec-item {
+    padding: 12px 14px;
+  }
+
+  .swap-rec-reason {
+    font-size: 13px;
+  }
+
+  /* ── Dashboard ── */
+  .dash-hero-title {
+    font-size: 22px;
+  }
+
+  .dash-stats-strip {
+    gap: 8px;
+  }
+
+  .dash-stat {
+    padding: 12px 8px;
+    border-radius: 12px;
+  }
+
+  .dash-stat-val {
+    font-size: 22px;
+  }
+
+  .dash-stat-label {
+    font-size: 10px;
+  }
+
+  .dash-card {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .dash-cat-left {
+    width: 90px;
+    font-size: 10px;
+  }
+
+  .dash-chart-area {
+    min-height: 120px;
+  }
+
+  .dash-chart-bars {
+    height: 120px;
+  }
+
+  .dash-insight-card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .dash-insight-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+  }
+
+  .dash-insight-title {
+    font-size: 15px;
+  }
+
+  .dash-insight-desc {
+    font-size: 11px;
+  }
+
+  .dash-category-trends {
+    padding: 14px;
+    border-radius: 12px;
+    gap: 12px;
+  }
+
+  .dash-trend-left {
+    width: 90px;
+    font-size: 10px;
+  }
+
+  .dash-trend-delta {
+    width: 40px;
+    font-size: 10px;
+  }
+
+  .dash-recurring-list {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .dash-recurring-bar-wrap {
+    display: none;
+  }
+
+  .dash-recurring-label {
+    font-size: 12px;
+  }
+
+  .dash-recurring-item {
+    gap: 8px;
+  }
+
+  .dash-type-timeline {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .dash-type-name {
+    font-size: 12px;
+  }
+
+  .dash-history-item {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .dash-history-main {
+    min-width: 0;
+  }
+
+  .dash-history-roast {
+    display: none;
+  }
+
+  .dash-history-issues {
+    display: none;
+  }
+
+  .dash-platform-card {
+    padding: 14px;
+  }
+
+  /* ── Auth modal ── */
+  .auth-modal {
+    padding: 20px;
+    margin: 0 8px;
+  }
+
+  /* ── Feedback survey ── */
+  .feedback-form {
+    padding: 20px 16px;
+  }
+
+  .feedback-form-header h4 {
+    font-size: 18px;
+  }
+
+  .feedback-field label {
+    font-size: 14px;
+  }
+
+  /* ── Score ring label inside cards ── */
+  .score-item {
+    padding: 12px 6px;
+  }
+
+  /* ── General containers ── */
+  .results-container {
+    gap: 16px;
+  }
+
+}
+
+/* ── Additional mobile touch target fixes ── */
+@media (max-width: 640px) {
+  .platform-select {
+    gap: 6px;
+  }
+
+  .platform-btn {
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: 13px;
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+  }
+
+  .pricing-btn {
+    min-height: 48px;
+    font-size: 14px;
+  }
+
+  .dash-view-btn {
+    min-height: 40px;
+    font-size: 12px;
+    padding: 8px 14px;
+  }
+
+  .dash-new-btn {
+    min-height: 36px;
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+
+  .landing-hero {
+    padding-top: 20px;
+  }
+
+  /* Ensure score ring doesn't overflow on small screens */
+  .score-hero .score-ring-wrap {
+    flex-shrink: 0;
+  }
+
+  /* Compact gap between sections */
+  .results-container {
+    gap: 14px;
+  }
+
+  /* Make form labels bigger for readability */
+  .form-group label {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* Fix history item layout when roast is hidden */
+  .dash-history-item {
+    align-items: center;
+  }
+
+  .dash-history-main {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2px 8px;
+  }
+
+  .dash-history-top {
+    width: 100%;
+  }
+}
