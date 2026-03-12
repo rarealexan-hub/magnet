@@ -2465,6 +2465,8 @@ h1 {
 
 .feedback-survey {
   margin-top: 32px;
+  position: relative;
+  z-index: 10;
 }
 
 .feedback-banner {
@@ -2532,7 +2534,6 @@ h1 {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 16px;
-  overflow: hidden;
 }
 
 .feedback-form {
