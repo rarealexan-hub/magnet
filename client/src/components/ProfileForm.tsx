@@ -481,7 +481,7 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
               type="button"
               className="taste-none-btn"
               disabled={loading}
-              onClick={() => runAnalysis([])}
+              onClick={() => runAnalysis(["none"])}
             >
               None of these appeal to me
             </button>

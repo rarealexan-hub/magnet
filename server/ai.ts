@@ -174,15 +174,19 @@ function buildProfileText(input: ProfileInput): string {
   }
 
   if (input.photoTasteSelections && input.photoTasteSelections.length > 0) {
-    const VIBE_MAP: Record<string, string> = {
-      adventurous: "adventurous & active (outdoors, travel, high-energy)",
-      sophisticated: "polished & confident (stylish, refined, well-dressed)",
-      candid: "natural & authentic (candid moments, genuine smiles, unposed)",
-      playful: "fun & playful (lighthearted, expressive, laughing)",
-    };
-    const vibeLabels = input.photoTasteSelections.map((v) => VIBE_MAP[v] || v);
-    message += `\nUser's photo aesthetic preferences (what they find attractive): ${vibeLabels.join(" and ")}.\n`;
-    message += `Use this to calibrate photo recommendations — advise photo styles that align with what this person finds visually compelling.\n`;
+    if (input.photoTasteSelections.includes("none")) {
+      message += `\nPhoto aesthetic preference: The user explicitly indicated that none of the provided photo style options appealed to them. Do NOT assume any particular aesthetic preference. Instead, base all photo quality scoring and swap/order recommendations purely on their gender, sexual orientation, partner preferences, and target audience — optimising for what THEIR audience responds to, not a generic vibe.\n`;
+    } else {
+      const VIBE_MAP: Record<string, string> = {
+        adventurous: "adventurous & active (outdoors, travel, high-energy)",
+        sophisticated: "polished & confident (stylish, refined, well-dressed)",
+        candid: "natural & authentic (candid moments, genuine smiles, unposed)",
+        playful: "fun & playful (lighthearted, expressive, laughing)",
+      };
+      const vibeLabels = input.photoTasteSelections.map((v) => VIBE_MAP[v] || v);
+      message += `\nUser's photo aesthetic preferences (what they find attractive): ${vibeLabels.join(" and ")}.\n`;
+      message += `Use this to calibrate photo recommendations — advise photo styles that align with what this person finds visually compelling.\n`;
+    }
   }
 
   if (input.targetType) {
@@ -243,12 +247,23 @@ RULES:
 
 categoryAnalysis: Always include all 5 fields. Write about THIS specific profile — not generic advice. If no photos were uploaded, focus on what you can infer from bio/prompts.
 
-USE GENDER + ORIENTATION + PREFERENCES TO CALIBRATE ALL PHOTO FEEDBACK:
-- Gender shapes what signals read as attractive in photos. A man's lead photo should project confidence, lifestyle, and approachability — not just a mirror selfie. A woman's lead photo should convey warmth, personality, and energy — not just aesthetics. Non-binary and genderfluid users benefit from photos that communicate authentic self-expression and distinctive personality. Apply these calibrated standards when scoring photoQuality and firstImpression.
-- Partner preferences tell you WHO is evaluating this profile. If the user is attracted to women, evaluate photos through the lens of what women respond to (warmth, status cues, social proof, genuine smile). If attracted to men, evaluate through what men respond to (energy, lifestyle, confidence, physical presentation). If attracted to any gender, apply broader standards. Reference this explicitly in your photoQuality and attractionSignals analysis.
-- Sexual orientation affects platform context. Gay/lesbian users compete in a smaller pool and must stand out harder. Bisexual/pansexual users need photos that communicate openness. Apply this when giving photoOrder and photoSwap advice.
-- Photo taste selections (adventurous, sophisticated, candid, playful) tell you what this person finds visually compelling — use that to guide swap and order recommendations toward photo styles that align with their aesthetic.
-- Write photo feedback that reflects WHO this specific person is and WHO they're trying to attract — not generic one-size-fits-all photo advice.
+USE GENDER, ORIENTATION, PREFERENCES, AND PHOTO TASTE TO CALIBRATE EVERYTHING — INCLUDING SCORES:
+
+SCORES: All five score dimensions must be calibrated using the user's identity context:
+- photoQuality: Score against what photos work for THIS person's gender presenting to THEIR target audience. A candid warm smile may be a 90 for a woman attracting men; the same photo may score lower for a man who needs to project status or lifestyle.
+- attractionSignals: Score based on whether the profile sends the right signals for the user's gender and orientation. Gay men need to signal personality + physicality differently than straight men. Women attracting women need different cues than women attracting men.
+- personalitySignals: Score against how well the personality shown matches what the target audience finds compelling. An emotionally expressive bio reads differently depending on who's reading it.
+- matchTargeting: Score based on how well the profile content aligns with BOTH the stated target type AND the partner preferences. A profile targeting "ambitious professionals" should be scored for how well it speaks to that audience given the user's gender and orientation.
+- firstImpression: Score the lead photo against what creates the strongest first impression for this specific person's gender presenting to their stated audience.
+
+ANALYSIS TEXT: All categoryAnalysis fields must explicitly reference the user's gender and audience:
+- Do not write generic advice. Write "As a man attracting women, your lead photo needs to…" or "For a gay man on Hinge, this prompt reads as…" — specific, identity-aware coaching.
+- Partner preferences define the evaluator's lens. Always frame feedback from the perspective of who is actually swiping on this profile.
+- If the user said none of the photo styles appealed to them, lean entirely on gender + orientation + partner preferences to calibrate recommendations. Do not invent a vibe preference.
+
+PHOTO SWAP & ORDER: Lead photo selection and swap recommendations must reflect the user's gender, orientation, and audience — not generic "best photo" logic. What performs as a lead photo for a straight woman attracting men is fundamentally different from what works for a gay man or a non-binary person.
+
+PROMPTS: Prompt coaching should reflect what the target audience finds engaging. A prompt that works for someone attracting adventurous women may fall flat for someone attracting intellectual men. Call this out specifically.
 
 promptRecommendations: Only include prompts that were actually provided. If no prompts/bio were given, omit this field or return empty array. Give the direction, not the full rewrite — we want to coach, not ghostwrite. 1-3 sentences per suggestion max.
 
