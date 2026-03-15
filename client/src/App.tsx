@@ -102,7 +102,6 @@ export default function App() {
           profileInput={profileInput}
           onStartOver={handleStartOver}
           onFullReport={() => { setFullReportViewed(true); setView("full-report"); }}
-          onDashboard={() => setView("dashboard")}
           fullReportViewed={fullReportViewed}
         />
       )}

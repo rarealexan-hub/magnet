@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Copy, Check, AlertTriangle, Crosshair, ArrowRight, Share2, FileText, Zap, Crown, Lock } from "lucide-react";
+import { Copy, Check, AlertTriangle, Crosshair, ArrowRight, Share2, FileText, Zap } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 import { FeedbackSurvey } from "./FeedbackSurvey";
@@ -9,11 +9,10 @@ interface Props {
   profileInput: ProfileInput;
   onStartOver: () => void;
   onFullReport: () => void;
-  onDashboard: () => void;
   fullReportViewed?: boolean;
 }
 
-export function Results({ result, profileInput, onStartOver, onFullReport, onDashboard, fullReportViewed }: Props) {
+export function Results({ result, profileInput, onStartOver, onFullReport, fullReportViewed }: Props) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -161,33 +160,6 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onDas
               </div>
             )}
 
-            <div className="pricing-card featured">
-              <div className="pricing-badge">Best Value</div>
-              <div className="pricing-card-header">
-                <div className="pricing-icon featured-icon">
-                  <Crown size={22} />
-                </div>
-                <div>
-                  <h4>Magnet Pro</h4>
-                  <p className="pricing-tagline">Unlimited optimization</p>
-                </div>
-              </div>
-              <div className="pricing-price">
-                <span className="price-amount">$12.99</span>
-                <span className="price-period">/month</span>
-              </div>
-              <ul className="pricing-features">
-                <li><Zap size={14} /> Everything in Full Report</li>
-                <li><Zap size={14} /> Unlimited profile reviews</li>
-                <li><Zap size={14} /> All platforms (Hinge, Tinder, Bumble)</li>
-                <li><Zap size={14} /> Live dashboard monitoring</li>
-                <li><Zap size={14} /> Algorithm change alerts</li>
-                <li><Zap size={14} /> Priority AI analysis</li>
-              </ul>
-              <button className="pricing-btn featured-btn" onClick={onDashboard}>
-                Go Pro <ArrowRight size={16} />
-              </button>
-            </div>
           </div>
         </div>
 
@@ -201,13 +173,6 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onDas
               <FileText size={15} /> View Full Report
             </button>
           )}
-          <div className="pro-locked-cta" onClick={onDashboard}>
-            <div className="pro-locked-left">
-              <Lock size={14} />
-              <span>Analyze another platform</span>
-            </div>
-            <span className="pro-locked-badge"><Crown size={11} /> Pro only</span>
-          </div>
         </div>
 
         <FeedbackSurvey

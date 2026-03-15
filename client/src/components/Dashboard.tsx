@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import {
-  ArrowLeft, Crown, ArrowRight, TrendingUp, TrendingDown,
+  ArrowLeft, ArrowRight, TrendingUp, TrendingDown,
   Activity, RefreshCw, BarChart3, Plus, Loader2, LogIn,
-  Camera, Crosshair, Zap, Star, ChevronRight, Minus, Lock
+  Camera, Crosshair, Zap, Star, ChevronRight, Minus
 } from "lucide-react";
 import type { DashboardData, AnalysisRecord } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
@@ -204,7 +204,6 @@ export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }:
         </div>
 
         <div className="dash-hero">
-          <div className="report-hero-badge pro-badge"><Crown size={13} /> Magnet Pro</div>
           <h2 className="dash-hero-title">Your Dashboard</h2>
           <p className="dash-hero-sub">{userEmail}</p>
         </div>
@@ -336,10 +335,9 @@ export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }:
             <div className="dash-section">
               <div className="dash-section-header">
                 <h3>Platform Health</h3>
-                <div className="dash-new-btn dash-new-btn-locked">
-                  <Lock size={12} /> New Analysis
-                  <span className="dash-pro-chip"><Crown size={10} /> Pro</span>
-                </div>
+                <button className="dash-new-btn" onClick={() => onAnalyze()}>
+                  <Plus size={12} /> New Analysis
+                </button>
               </div>
               <div className="dash-platform-grid">
                 {platforms.map((p) => (
@@ -363,18 +361,16 @@ export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }:
                             <span className="dash-platform-last">Last {timeAgo(p.lastAnalyzed)}</span>
                           </div>
                         </div>
-                        <div className="dash-pro-locked-btn">
-                          <Lock size={12} /> Re-analyze
-                          <span className="dash-pro-chip"><Crown size={10} /> Pro</span>
-                        </div>
+                        <button className="dash-platform-action-btn" onClick={() => onAnalyze()}>
+                          Re-analyze <ArrowRight size={12} />
+                        </button>
                       </>
                     ) : (
                       <div className="dash-platform-empty">
                         <p>Not analyzed yet</p>
-                        <div className="dash-pro-locked-btn">
-                          <Lock size={12} /> Analyze
-                          <span className="dash-pro-chip"><Crown size={10} /> Pro</span>
-                        </div>
+                        <button className="dash-platform-action-btn" onClick={() => onAnalyze()}>
+                          Analyze <ArrowRight size={12} />
+                        </button>
                       </div>
                     )}
                   </div>

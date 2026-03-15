@@ -4567,3 +4567,27 @@ button {
     font-size: 12px;
   }
 }
+
+/* ── Platform card action buttons (unlocked) ── */
+.dash-platform-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(99,102,241,0.1);
+  border: 1px solid rgba(99,102,241,0.25);
+  border-radius: 8px;
+  color: #818cf8;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  margin-top: 10px;
+}
+
+.dash-platform-action-btn:hover {
+  background: rgba(99,102,241,0.2);
+  border-color: rgba(99,102,241,0.4);
+}
