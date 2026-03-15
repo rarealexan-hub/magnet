@@ -169,6 +169,18 @@ function buildProfileText(input: ProfileInput): string {
     message += `\nUser is attracted to: ${input.partnerPreferences.join(", ")}\n`;
   }
 
+  if (input.photoTasteSelections && input.photoTasteSelections.length > 0) {
+    const VIBE_MAP: Record<string, string> = {
+      adventurous: "adventurous & active (outdoors, travel, high-energy)",
+      sophisticated: "polished & confident (stylish, refined, well-dressed)",
+      candid: "natural & authentic (candid moments, genuine smiles, unposed)",
+      playful: "fun & playful (lighthearted, expressive, laughing)",
+    };
+    const vibeLabels = input.photoTasteSelections.map((v) => VIBE_MAP[v] || v);
+    message += `\nUser's photo aesthetic preferences (what they find attractive): ${vibeLabels.join(" and ")}.\n`;
+    message += `Use this to calibrate photo recommendations — advise photo styles that align with what this person finds visually compelling.\n`;
+  }
+
   if (input.targetType) {
     message += `\nTarget match type: ${input.customTarget || input.targetType}\n`;
   }

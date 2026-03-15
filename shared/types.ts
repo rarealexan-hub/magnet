@@ -11,6 +11,7 @@ export interface ProfileInput {
   customTarget?: string;
   sexualOrientation?: string;
   partnerPreferences?: string[];
+  photoTasteSelections?: string[];
 }
 
 export const SEXUAL_ORIENTATIONS = [

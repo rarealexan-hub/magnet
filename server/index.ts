@@ -377,6 +377,11 @@ app.post(
           ? body.partnerPreferences
           : [body.partnerPreferences]
         : [];
+      const photoTasteSelections = body.photoTasteSelections
+        ? Array.isArray(body.photoTasteSelections)
+          ? body.photoTasteSelections
+          : [body.photoTasteSelections]
+        : [];
       const screenshotLabels = body.screenshotLabels
         ? Array.isArray(body.screenshotLabels)
           ? body.screenshotLabels
@@ -437,6 +442,7 @@ app.post(
         customTarget,
         sexualOrientation: sexualOrientation || undefined,
         partnerPreferences: partnerPreferences.length > 0 ? partnerPreferences : undefined,
+        photoTasteSelections: photoTasteSelections.length > 0 ? photoTasteSelections : undefined,
       };
 
       const isAuthenticated = !!req.user;

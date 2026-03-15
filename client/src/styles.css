@@ -4887,3 +4887,146 @@ button {
     padding: 7px 13px;
   }
 }
+
+/* ── Photo Taste Step ── */
+.taste-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.taste-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s, opacity 0.15s;
+  text-align: left;
+  padding: 0;
+}
+
+.taste-card:hover:not(.dimmed) {
+  border-color: rgba(99,102,241,0.5);
+  transform: translateY(-2px);
+}
+
+.taste-card.selected {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
+}
+
+.taste-card.dimmed {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.taste-img-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/5;
+  overflow: hidden;
+}
+
+.taste-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.taste-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  background: #6366f1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.taste-number {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.6);
+}
+
+.taste-card-body {
+  padding: 10px 12px 12px;
+}
+
+.taste-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 2px 0;
+}
+
+.taste-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.taste-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.taste-progress {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+  font-weight: 500;
+}
+
+.taste-back-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+  padding: 4px;
+  transition: color 0.15s;
+}
+
+.taste-back-btn:hover {
+  color: var(--text);
+}
+
+@media (max-width: 480px) {
+  .taste-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .taste-label {
+    font-size: 12px;
+  }
+
+  .taste-desc {
+    display: none;
+  }
+
+  .taste-card-body {
+    padding: 8px 10px 10px;
+  }
+}

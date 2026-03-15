@@ -106,12 +106,25 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
   const [customTarget, setCustomTarget] = useState("");
   const [sexualOrientation, setSexualOrientation] = useState("");
   const [partnerPreferences, setPartnerPreferences] = useState<string[]>([]);
+  const [step, setStep] = useState<"form" | "taste">("form");
+  const [tasteSelections, setTasteSelections] = useState<string[]>([]);
+  const pendingFormData = useRef<FormData | null>(null);
+  const pendingInputMeta = useRef<Omit<ProfileInput, "screenshots" | "currentPhotos" | "additionalPhotos" | "photoTasteSelections"> | null>(null);
 
   const togglePartnerPref = (id: string) => {
     setPartnerPreferences((prev) =>
       prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
     );
   };
+
+  const toggleTaste = (id: string) => {
+    setTasteSelections((prev) => {
+      if (prev.includes(id)) return prev.filter((p) => p !== id);
+      if (prev.length >= 2) return prev;
+      return [...prev, id];
+    });
+  };
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -294,83 +307,56 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const hasTextContent = bio.trim() || prompts.some((p) => p.trim());
-    const hasScreenshots = screenshots.length > 0;
+  const buildFormData = (tasteVibes: string[]) => {
+    const fd = new FormData();
+    fd.append("platform", platform);
+    fd.append("email", email.trim());
+    fd.append("bio", bio);
+    fd.append("targetType", targetType);
+    if (targetType === "custom" && customTarget) fd.append("customTarget", customTarget);
+    if (sexualOrientation) fd.append("sexualOrientation", sexualOrientation);
+    partnerPreferences.forEach((p) => fd.append("partnerPreferences", p));
+    tasteVibes.forEach((v) => fd.append("photoTasteSelections", v));
+    prompts.filter((p) => p.trim()).forEach((p) => fd.append("prompts", p));
+    photoDescriptions.filter((p) => p.trim()).forEach((p) => fd.append("photoDescriptions", p));
+    screenshots.forEach((s) => { fd.append("screenshots", s.file); fd.append("screenshotLabels", s.label || ""); });
+    currentPhotos.forEach((p) => fd.append("currentPhotos", p.file));
+    additionalPhotos.forEach((p) => fd.append("additionalPhotos", p.file));
+    return fd;
+  };
 
-    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setError("Please enter a valid email address.");
-      return;
-    }
-    if (!hasTextContent && !hasScreenshots) {
-      setError("Add at least your bio, a prompt, or upload a screenshot to get started.");
-      return;
-    }
-    if (!targetType) {
-      setError("Choose who you want to attract.");
-      return;
-    }
-
+  const runAnalysis = async (tasteVibes: string[]) => {
     setLoading(true);
     setError("");
-
     try {
-      const formData = new FormData();
-      formData.append("platform", platform);
-      formData.append("email", email.trim());
-      formData.append("bio", bio);
-      formData.append("targetType", targetType);
-      if (targetType === "custom" && customTarget) {
-        formData.append("customTarget", customTarget);
-      }
-      if (sexualOrientation) formData.append("sexualOrientation", sexualOrientation);
-      partnerPreferences.forEach((p) => formData.append("partnerPreferences", p));
-      prompts.filter((p) => p.trim()).forEach((p) => formData.append("prompts", p));
-      photoDescriptions.filter((p) => p.trim()).forEach((p) => formData.append("photoDescriptions", p));
-
-      screenshots.forEach((s) => {
-        formData.append("screenshots", s.file);
-        formData.append("screenshotLabels", s.label || "");
-      });
-      currentPhotos.forEach((p) => formData.append("currentPhotos", p.file));
-      additionalPhotos.forEach((p) => formData.append("additionalPhotos", p.file));
-
+      const formData = buildFormData(tasteVibes);
       const authToken = localStorage.getItem("magnet_token");
       const headers: Record<string, string> = {};
       if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
-
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 120000);
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers,
-        body: formData,
-        signal: controller.signal,
-      });
+      const res = await fetch("/api/analyze", { method: "POST", headers, body: formData, signal: controller.signal });
       clearTimeout(timeoutId);
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
         if (errData?.code === "AUDIT_LIMIT_REACHED") {
           setError(errData.error || "You've already used your free Magnet analysis.");
+          setStep("form");
           return;
         }
         throw new Error(errData?.error || "Analysis failed");
       }
       const data = await res.json();
       const input: ProfileInput = {
-        platform,
-        email: email.trim(),
-        bio,
+        platform, email: email.trim(), bio,
         prompts: prompts.filter((p) => p.trim()),
         photoDescriptions: photoDescriptions.filter((p) => p.trim()),
-        screenshots: [],
-        currentPhotos: [],
-        additionalPhotos: [],
+        screenshots: [], currentPhotos: [], additionalPhotos: [],
         targetType,
         customTarget: targetType === "custom" ? customTarget : undefined,
         sexualOrientation: sexualOrientation || undefined,
         partnerPreferences: partnerPreferences.length > 0 ? partnerPreferences : undefined,
+        photoTasteSelections: tasteVibes.length > 0 ? tasteVibes : undefined,
       };
       onResult(data, input);
     } catch (err: any) {
@@ -383,6 +369,123 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
       setLoading(false);
     }
   };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const hasTextContent = bio.trim() || prompts.some((p) => p.trim());
+    const hasScreenshots = screenshots.length > 0;
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (!hasTextContent && !hasScreenshots) {
+      setError("Add at least your bio, a prompt, or upload a screenshot to get started.");
+      return;
+    }
+    if (!targetType) {
+      setError("Choose who you want to attract.");
+      return;
+    }
+    setError("");
+    setTasteSelections([]);
+    setStep("taste");
+    window.scrollTo({ top: 0, behavior: "instant" });
+  };
+
+  const TASTE_PHOTOS = [
+    {
+      id: "adventurous",
+      label: "Adventurous & Active",
+      description: "Outdoors, travel, high energy",
+      url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=500&fit=crop&auto=format&q=80",
+    },
+    {
+      id: "sophisticated",
+      label: "Polished & Confident",
+      description: "Stylish, refined, put-together",
+      url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop&auto=format&q=80",
+    },
+    {
+      id: "candid",
+      label: "Natural & Authentic",
+      description: "Genuine moments, real smiles",
+      url: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&h=500&fit=crop&auto=format&q=80",
+    },
+    {
+      id: "playful",
+      label: "Fun & Playful",
+      description: "Lighthearted, laughing, expressive",
+      url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=500&fit=crop&auto=format&q=80",
+    },
+  ] as const;
+
+  if (step === "taste") {
+    return (
+      <div className="form-page">
+        <div className="form-container">
+          <div className="form-header">
+            <h2>What draws you in?</h2>
+            <p>Pick the 2 photo styles you find most attractive. This helps us tailor your profile advice.</p>
+          </div>
+          <div className="taste-grid">
+            {TASTE_PHOTOS.map((photo) => {
+              const selected = tasteSelections.includes(photo.id);
+              const maxed = tasteSelections.length >= 2 && !selected;
+              return (
+                <button
+                  key={photo.id}
+                  type="button"
+                  className={`taste-card ${selected ? "selected" : ""} ${maxed ? "dimmed" : ""}`}
+                  onClick={() => toggleTaste(photo.id)}
+                >
+                  <div className="taste-img-wrap">
+                    <img src={photo.url} alt={photo.label} className="taste-img" loading="lazy" />
+                    {selected && (
+                      <div className="taste-check">
+                        <span>✓</span>
+                      </div>
+                    )}
+                    {!selected && tasteSelections.indexOf(photo.id) === -1 && !maxed && (
+                      <div className="taste-number">
+                        {tasteSelections.length === 0 ? "1st" : "2nd"}
+                      </div>
+                    )}
+                  </div>
+                  <div className="taste-card-body">
+                    <p className="taste-label">{photo.label}</p>
+                    <p className="taste-desc">{photo.description}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <div className="taste-footer">
+            <p className="taste-progress">
+              {tasteSelections.length === 0 && "Select 2 photos to continue"}
+              {tasteSelections.length === 1 && "Select 1 more to continue"}
+              {tasteSelections.length === 2 && "Ready — let's analyze your profile"}
+            </p>
+            <button
+              type="button"
+              className="submit-btn"
+              disabled={tasteSelections.length < 2 || loading}
+              onClick={() => runAnalysis(tasteSelections)}
+            >
+              {loading ? (
+                <><Loader2 size={20} className="spin" /> Analyzing your profile...</>
+              ) : (
+                "Analyze My Profile →"
+              )}
+            </button>
+            <button type="button" className="taste-back-btn" onClick={() => setStep("form")}>
+              ← Back to profile
+            </button>
+            {error && <div className="form-error">{error}</div>}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="form-page">
