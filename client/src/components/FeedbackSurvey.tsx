@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Star, X, Send, Check, ChevronDown } from "lucide-react";
 
 interface Props {
@@ -6,6 +6,8 @@ interface Props {
   platform?: string;
   magnetScore?: number;
   email?: string;
+  defaultOpen?: boolean;
+  surveyRef?: React.RefObject<HTMLDivElement>;
 }
 
 const IMPROVEMENT_OPTIONS = [
@@ -19,8 +21,14 @@ const IMPROVEMENT_OPTIONS = [
 
 type Step = "banner" | "form" | "done" | "dismissed";
 
-export function FeedbackSurvey({ page, platform, magnetScore, email }: Props) {
-  const [step, setStep] = useState<Step>("banner");
+export function FeedbackSurvey({ page, platform, magnetScore, email, defaultOpen, surveyRef }: Props) {
+  const [step, setStep] = useState<Step>(defaultOpen ? "form" : "banner");
+
+  useEffect(() => {
+    if (defaultOpen && step !== "done" && step !== "dismissed") {
+      setStep("form");
+    }
+  }, [defaultOpen]);
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(0);
   const [wouldRecommend, setWouldRecommend] = useState<string>("");
@@ -60,7 +68,7 @@ export function FeedbackSurvey({ page, platform, magnetScore, email }: Props) {
   if (step === "dismissed") return null;
 
   return (
-    <div className="feedback-survey">
+    <div className="feedback-survey" ref={surveyRef}>
       {step === "banner" && (
         <div className="feedback-banner">
           <span className="feedback-banner-text">

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Copy, Check, AlertTriangle, Crosshair, ArrowRight, Share2, FileText, Zap, Lightbulb, Lock } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Copy, Check, AlertTriangle, Crosshair, ArrowRight, Share2, FileText, Zap, Lightbulb, Lock, MessageSquare } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 import { FeedbackSurvey } from "./FeedbackSurvey";
@@ -79,6 +79,15 @@ function BasicSuggestions({ score }: { score: ProfileResult["score"] }) {
 
 export function Results({ result, profileInput, onStartOver, onFullReport, fullReportViewed }: Props) {
   const [copied, setCopied] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const surveyRef = useRef<HTMLDivElement>(null);
+
+  const openFeedback = () => {
+    setFeedbackOpen(true);
+    setTimeout(() => {
+      surveyRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 80);
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -235,6 +244,9 @@ export function Results({ result, profileInput, onStartOver, onFullReport, fullR
             <Share2 size={16} />
             {copied ? "Copied!" : "Share your roast with friends"}
           </button>
+          <button className="feedback-float-btn" onClick={openFeedback}>
+            <MessageSquare size={15} /> Give Feedback
+          </button>
           {fullReportViewed && (
             <button className="pricing-btn" style={{ width: "100%" }} onClick={onFullReport}>
               <FileText size={15} /> View Full Report
@@ -256,6 +268,8 @@ export function Results({ result, profileInput, onStartOver, onFullReport, fullR
           page="results"
           platform={profileInput.platform}
           magnetScore={score.overall}
+          defaultOpen={feedbackOpen}
+          surveyRef={surveyRef}
         />
 
       </div>
