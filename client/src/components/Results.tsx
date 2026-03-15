@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Copy, Check, AlertTriangle, Crosshair, ArrowRight, Share2, FileText, Zap } from "lucide-react";
+import { Copy, Check, AlertTriangle, Crosshair, ArrowRight, Share2, FileText, Zap, Lightbulb, Lock } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 import { FeedbackSurvey } from "./FeedbackSurvey";
@@ -10,6 +10,71 @@ interface Props {
   onStartOver: () => void;
   onFullReport: () => void;
   fullReportViewed?: boolean;
+}
+
+const BASIC_SUGGESTIONS: Record<string, { tip: string; locked: string }> = {
+  photoQuality: {
+    tip: "Replace group shots, blurry photos, or bathroom selfies with clear solo photos taken in natural light. Every photo should pass a quick test: does this make someone want to know more about me?",
+    locked: "Which specific photos to swap and exactly what order they should appear in",
+  },
+  attractionSignals: {
+    tip: "Your lead photo should show your face clearly — no sunglasses, no hats, no group shots. A genuine smile and natural eye contact are the two highest-converting signals on any app.",
+    locked: "A photo-by-photo breakdown of what each shot is signaling and how to fix it",
+  },
+  personalitySignals: {
+    tip: "Replace at least one generic prompt with a specific story, strong opinion, or niche interest. 'I love hiking and trying new restaurants' doesn't tell anyone anything. Find the detail only you would say.",
+    locked: "Specific coaching on each of your prompts with direction on exactly what to change",
+  },
+  matchTargeting: {
+    tip: "Include at least one specific, slightly polarizing detail — a niche hobby, a strong opinion, or an unusual trait. Generic profiles attract no one. Specific profiles attract the right people.",
+    locked: "Platform-specific targeting analysis based on your actual content",
+  },
+  firstImpression: {
+    tip: "In under 2 seconds a swiper sees your lead photo and maybe your first line. Make sure both stop the scroll: your best photo first, your sharpest prompt line up front.",
+    locked: "Your optimal photo order and which prompt to lead with for maximum first-impression impact",
+  },
+};
+
+function BasicSuggestions({ score }: { score: ProfileResult["score"] }) {
+  const categories = [
+    { key: "photoQuality" as const, label: "Photo Quality" },
+    { key: "attractionSignals" as const, label: "Attraction Signals" },
+    { key: "personalitySignals" as const, label: "Personality Signals" },
+    { key: "matchTargeting" as const, label: "Match Targeting" },
+    { key: "firstImpression" as const, label: "First Impression" },
+  ];
+
+  const weak = categories.filter((c) => score[c.key] < 70);
+  if (weak.length === 0) return null;
+
+  return (
+    <div className="basic-suggestions-section">
+      <h3 className="basic-suggestions-title">
+        <Lightbulb size={18} /> Basic fixes to start with
+      </h3>
+      <p className="basic-suggestions-sub">
+        These are direction-level tips. The Full Report gives you the exact specifics.
+      </p>
+      <div className="basic-suggestions-list">
+        {weak.map((cat) => {
+          const s = BASIC_SUGGESTIONS[cat.key];
+          return (
+            <div key={cat.key} className="basic-suggestion-item">
+              <div className="basic-suggestion-header">
+                <span className="basic-suggestion-label">{cat.label}</span>
+                <span className="basic-suggestion-score">{score[cat.key]}/100</span>
+              </div>
+              <p className="basic-suggestion-tip">{s.tip}</p>
+              <div className="basic-suggestion-locked">
+                <Lock size={11} />
+                <span>Full Report: {s.locked}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export function Results({ result, profileInput, onStartOver, onFullReport, fullReportViewed }: Props) {
@@ -125,10 +190,12 @@ export function Results({ result, profileInput, onStartOver, onFullReport, fullR
           </ul>
         </div>
 
+        <BasicSuggestions score={score} />
+
         <div className="upgrade-section">
-          <h3 className="upgrade-title">Ready to fix your profile?</h3>
+          <h3 className="upgrade-title">Get the full fix, not just the diagnosis</h3>
           <p className="upgrade-subtitle">
-            You've seen the problems. Now get the solutions.
+            The Full Report tells you <em>exactly</em> what to change and how — per photo, per prompt, in order.
           </p>
 
           <div className="pricing-cards">
@@ -148,11 +215,11 @@ export function Results({ result, profileInput, onStartOver, onFullReport, fullR
                   <span className="price-period">one time</span>
                 </div>
                 <ul className="pricing-features">
-                  <li><Zap size={14} /> Detailed photo-by-photo analysis</li>
-                  <li><Zap size={14} /> Exact bio & prompt rewrites</li>
-                  <li><Zap size={14} /> Photo swap recommendations from your uploads</li>
-                  <li><Zap size={14} /> Optimal photo order suggestion</li>
-                  <li><Zap size={14} /> Platform-specific optimization tips</li>
+                  <li><Zap size={14} /> Per-photo breakdown — exactly what each photo signals</li>
+                  <li><Zap size={14} /> Prompt coaching — what's wrong with each one & how to fix it</li>
+                  <li><Zap size={14} /> Photo swap picks — which of your extras to swap in and where</li>
+                  <li><Zap size={14} /> Optimal photo order — ranked 1–6 with reasoning</li>
+                  <li><Zap size={14} /> Category-level AI analysis written about your profile</li>
                 </ul>
                 <button className="pricing-btn" onClick={onFullReport}>
                   Get Full Report <ArrowRight size={16} />
