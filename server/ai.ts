@@ -161,6 +161,10 @@ function buildProfileText(input: ProfileInput): string {
     }
   }
 
+  if (input.gender && input.gender !== "prefer-not-to-say") {
+    message += `\nUser's gender: ${input.gender}\n`;
+  }
+
   if (input.sexualOrientation && input.sexualOrientation !== "prefer-not-to-say") {
     message += `\nUser's sexual orientation: ${input.sexualOrientation}\n`;
   }

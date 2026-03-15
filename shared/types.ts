@@ -9,10 +9,22 @@ export interface ProfileInput {
   additionalPhotos: string[];
   targetType: string;
   customTarget?: string;
+  gender?: string;
   sexualOrientation?: string;
   partnerPreferences?: string[];
   photoTasteSelections?: string[];
 }
+
+export const GENDER_OPTIONS = [
+  { id: "man", label: "Man" },
+  { id: "woman", label: "Woman" },
+  { id: "non-binary", label: "Non-binary" },
+  { id: "genderfluid", label: "Genderfluid" },
+  { id: "transgender-man", label: "Transgender man" },
+  { id: "transgender-woman", label: "Transgender woman" },
+  { id: "other", label: "Other" },
+  { id: "prefer-not-to-say", label: "Prefer not to say" },
+] as const;
 
 export const SEXUAL_ORIENTATIONS = [
   { id: "straight", label: "Straight" },

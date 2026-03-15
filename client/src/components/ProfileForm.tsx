@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Plus, X, Loader2, Upload, Type, Camera, GripVertical, ImagePlus, ChevronUp, ChevronDown } from "lucide-react";
 import heic2any from "heic2any";
-import { TARGET_TYPES, SEXUAL_ORIENTATIONS, PARTNER_PREFERENCES } from "@shared/types";
+import { TARGET_TYPES, GENDER_OPTIONS, SEXUAL_ORIENTATIONS, PARTNER_PREFERENCES } from "@shared/types";
 import type { ProfileInput, ProfileResult } from "@shared/types";
 
 interface Props {
@@ -104,6 +104,7 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
   const [additionalPhotos, setAdditionalPhotos] = useState<UploadedPhoto[]>([]);
   const [targetType, setTargetType] = useState("");
   const [customTarget, setCustomTarget] = useState("");
+  const [gender, setGender] = useState("");
   const [sexualOrientation, setSexualOrientation] = useState("");
   const [partnerPreferences, setPartnerPreferences] = useState<string[]>([]);
   const [step, setStep] = useState<"form" | "taste">("form");
@@ -311,6 +312,7 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     fd.append("bio", bio);
     fd.append("targetType", targetType);
     if (targetType === "custom" && customTarget) fd.append("customTarget", customTarget);
+    if (gender) fd.append("gender", gender);
     if (sexualOrientation) fd.append("sexualOrientation", sexualOrientation);
     partnerPreferences.forEach((p) => fd.append("partnerPreferences", p));
     tasteVibes.forEach((v) => fd.append("photoTasteSelections", v));
@@ -351,6 +353,7 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
         screenshots: [], currentPhotos: [], additionalPhotos: [],
         targetType,
         customTarget: targetType === "custom" ? customTarget : undefined,
+        gender: gender || undefined,
         sexualOrientation: sexualOrientation || undefined,
         partnerPreferences: partnerPreferences.length > 0 ? partnerPreferences : undefined,
         photoTasteSelections: tasteVibes.length > 0 ? tasteVibes : undefined,
@@ -504,6 +507,23 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
                   onClick={() => setPlatform(p)}
                 >
                   {p.charAt(0).toUpperCase() + p.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-section">
+            <label className="form-label">Your gender</label>
+            <p className="form-hint">Helps the AI understand your profile context and give relevant feedback.</p>
+            <div className="orientation-grid">
+              {GENDER_OPTIONS.map((g) => (
+                <button
+                  key={g.id}
+                  type="button"
+                  className={`orientation-btn ${gender === g.id ? "active" : ""}`}
+                  onClick={() => setGender(gender === g.id ? "" : g.id)}
+                >
+                  {g.label}
                 </button>
               ))}
             </div>

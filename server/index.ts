@@ -371,6 +371,7 @@ app.post(
         : [];
       const targetType = body.targetType || "";
       const customTarget = body.customTarget;
+      const gender = body.gender || "";
       const sexualOrientation = body.sexualOrientation || "";
       const partnerPreferences = body.partnerPreferences
         ? Array.isArray(body.partnerPreferences)
@@ -440,6 +441,7 @@ app.post(
         additionalPhotos: filesToBase64Strings(additionalPhotoFiles),
         targetType,
         customTarget,
+        gender: gender || undefined,
         sexualOrientation: sexualOrientation || undefined,
         partnerPreferences: partnerPreferences.length > 0 ? partnerPreferences : undefined,
         photoTasteSelections: photoTasteSelections.length > 0 ? photoTasteSelections : undefined,
