@@ -239,6 +239,17 @@ Respond in this exact JSON format:
     "photoOrderRecommendation": {
       "suggestedOrder": ["<e.g. 'Photo #3'>", "<'Photo #1'>", "<'Extra Photo B'>", "<'Photo #2'>"],
       "reason": "<explain why this order works — what signal each position sends>"
+    },
+    "sampleProfile": {
+      "headline": "<1 short punchy line describing who this upgraded profile now shows — e.g. 'Curious, grounded, and actually interesting'>",
+      "bio": "<improved bio if they provided one — keep their voice but sharper. 2-4 sentences. Omit this field if no bio was given.>",
+      "prompts": [
+        {
+          "question": "<their exact prompt question>",
+          "answer": "<a sample answer implementing the coaching direction. Authentic voice, no clichés. 1-3 sentences. This inspires them, it's not a ghostwrite.>"
+        }
+      ],
+      "summary": "<1-2 sentences: what this upgraded profile now signals to their target audience and why it works better than the original>"
     }
   }
 }
@@ -273,7 +284,13 @@ photoOrderRecommendation: Only include if current profile photos were provided. 
 
 mistakes: Short, punchy issue labels (3-6 words max). These show as "Issues detected" chips in the UI.
 
-roast: Make someone want to share their score. Entertaining but never cruel.`;
+roast: Make someone want to share their score. Entertaining but never cruel.
+
+sampleProfile: Always include this — it's the most exciting part of the paid report. It's a preview showing what their profile could look like after the coaching.
+- headline: 1 punchy line capturing who the upgraded profile now presents as. Not generic ("Better version of you") — specific to their personality and content (e.g. "Quietly ambitious, weirdly funny, actually interesting").
+- bio: Only if they gave a bio. Rewrite it with their voice intact but sharper — cut the fluff, lead with something specific, end with something that invites a reply. 2-4 sentences.
+- prompts: Only include prompts they actually provided. Write a sample answer for each that implements the coaching direction. Keep their tone and personality — make it feel like a real person wrote it, not a robot. 1-3 sentences per answer. Avoid clichés.
+- summary: 1-2 sentences explaining what the upgraded profile now signals compared to the original — be specific about the transformation and who it attracts.`;
 
 
 async function callWithRetry(
@@ -363,6 +380,19 @@ export async function analyzeProfile(input: ProfileInput): Promise<ProfileResult
         ? {
             suggestedOrder: parsed.feedback.photoOrderRecommendation.suggestedOrder,
             reason: parsed.feedback.photoOrderRecommendation.reason ?? "",
+          }
+        : undefined,
+      sampleProfile: parsed.feedback?.sampleProfile?.headline
+        ? {
+            headline: parsed.feedback.sampleProfile.headline ?? "",
+            bio: parsed.feedback.sampleProfile.bio ?? undefined,
+            prompts: Array.isArray(parsed.feedback.sampleProfile.prompts)
+              ? parsed.feedback.sampleProfile.prompts.map((p: any) => ({
+                  question: p.question ?? "",
+                  answer: p.answer ?? "",
+                }))
+              : undefined,
+            summary: parsed.feedback.sampleProfile.summary ?? "",
           }
         : undefined,
     },

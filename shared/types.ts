@@ -81,6 +81,18 @@ export interface CategoryAnalysis {
   firstImpression: string;
 }
 
+export interface SamplePrompt {
+  question: string;
+  answer: string;
+}
+
+export interface SampleProfile {
+  headline: string;
+  bio?: string;
+  prompts?: SamplePrompt[];
+  summary: string;
+}
+
 export interface ProfileFeedback {
   roast: string;
   mistakes: string[];
@@ -90,6 +102,7 @@ export interface ProfileFeedback {
   promptRecommendations?: PromptRecommendation[];
   photoOrderRecommendation?: PhotoOrderRecommendation;
   categoryAnalysis?: CategoryAnalysis;
+  sampleProfile?: SampleProfile;
 }
 
 export interface ProfileResult {

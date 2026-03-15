@@ -1,4 +1,4 @@
-import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight, ArrowLeftRight, PlusCircle, MinusCircle, MoveVertical, ListOrdered, MessageSquare, AlertCircle, Lightbulb } from "lucide-react";
+import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight, ArrowLeftRight, PlusCircle, MinusCircle, MoveVertical, ListOrdered, MessageSquare, AlertCircle, Lightbulb, Sparkles, Quote } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 import { FeedbackSurvey } from "./FeedbackSurvey";
@@ -296,6 +296,64 @@ export function FullReport({ result, profileInput, onBack }: Props) {
                   <p className="report-fix-text">{feedback.photoOrderRecommendation.reason}</p>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Profile preview ── */}
+        {feedback.sampleProfile && (
+          <div className="report-section-card sample-profile-card">
+            <div className="report-section-header">
+              <div className="report-section-icon" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}>
+                <Sparkles size={18} />
+              </div>
+              <div>
+                <h3>Your Profile, Upgraded</h3>
+                <p className="report-section-subhead">A sample of what your profile could look like after applying this feedback</p>
+              </div>
+            </div>
+            <div className="report-section-body">
+              <div className="sample-profile-mock">
+                <div className="sample-mock-header" style={{
+                  borderColor: platform === "hinge" ? "#e8472f"
+                    : platform === "tinder" ? "#fd5564"
+                    : platform === "bumble" ? "#f8b916"
+                    : "#6366f1"
+                }}>
+                  <span className="sample-mock-platform">{platformLabel}</span>
+                  <span className="sample-mock-headline">{feedback.sampleProfile.headline}</span>
+                </div>
+
+                {feedback.sampleProfile.bio && (
+                  <div className="sample-mock-bio">
+                    <p className="sample-mock-bio-label">About me</p>
+                    <p className="sample-mock-bio-text">{feedback.sampleProfile.bio}</p>
+                  </div>
+                )}
+
+                {feedback.sampleProfile.prompts && feedback.sampleProfile.prompts.length > 0 && (
+                  <div className="sample-mock-prompts">
+                    {feedback.sampleProfile.prompts.map((p, i) => (
+                      <div key={i} className="sample-mock-prompt-card">
+                        <p className="sample-mock-prompt-q">
+                          <Quote size={11} style={{ opacity: 0.5, marginRight: 5, flexShrink: 0 }} />
+                          {p.question}
+                        </p>
+                        <p className="sample-mock-prompt-a">{p.answer}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="sample-mock-summary">
+                  <Sparkles size={13} style={{ flexShrink: 0, opacity: 0.7 }} />
+                  <p>{feedback.sampleProfile.summary}</p>
+                </div>
+              </div>
+
+              <p className="sample-profile-disclaimer">
+                This is a directional sample — personalise it with your own voice and specifics before using it.
+              </p>
             </div>
           </div>
         )}

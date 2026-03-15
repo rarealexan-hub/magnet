@@ -5077,3 +5077,121 @@ button {
   border-color: rgba(99,102,241,0.3);
   color: #a5b4fc;
 }
+
+/* ── Profile Preview (Sample Profile) ── */
+.sample-profile-card .report-section-header {
+  align-items: flex-start;
+}
+
+.report-section-subhead {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 3px 0 0;
+  font-weight: 400;
+}
+
+.sample-profile-mock {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.sample-mock-header {
+  padding: 18px 20px 16px;
+  border-bottom: 2px solid;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sample-mock-platform {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.sample-mock-headline {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.sample-mock-bio {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sample-mock-bio-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.sample-mock-bio-text {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.65;
+  margin: 0;
+}
+
+.sample-mock-prompts {
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sample-mock-prompt-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 13px 15px;
+}
+
+.sample-mock-prompt-q {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sample-mock-prompt-a {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.sample-mock-summary {
+  padding: 14px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #a5b4fc;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.sample-mock-summary p {
+  margin: 0;
+}
+
+.sample-profile-disclaimer {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 14px 0 0;
+  opacity: 0.7;
+  font-style: italic;
+}
