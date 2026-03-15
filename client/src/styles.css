@@ -4693,3 +4693,91 @@ button {
     font-size: 13px;
   }
 }
+
+/* ── Reanalyze CTA (Results footer) ── */
+.reanalyze-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  margin-top: 4px;
+}
+
+.reanalyze-cta:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(99,102,241,0.3);
+}
+
+.reanalyze-cta-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reanalyze-cta-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(99,102,241,0.12);
+  color: #818cf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.reanalyze-cta-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 2px 0;
+}
+
+.reanalyze-cta-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.reanalyze-price-badge {
+  font-size: 14px;
+  font-weight: 800;
+  color: #818cf8;
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.25);
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Price pill inside dashboard buttons ── */
+.dash-price-pill {
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(99,102,241,0.2);
+  color: #a5b4fc;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 4px;
+}
+
+@media (max-width: 640px) {
+  .reanalyze-cta {
+    padding: 12px 14px;
+  }
+
+  .reanalyze-cta-title {
+    font-size: 13px;
+  }
+
+  .reanalyze-price-badge {
+    font-size: 13px;
+  }
+}
