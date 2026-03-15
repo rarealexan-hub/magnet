@@ -243,11 +243,18 @@ RULES:
 
 categoryAnalysis: Always include all 5 fields. Write about THIS specific profile — not generic advice. If no photos were uploaded, focus on what you can infer from bio/prompts.
 
+USE GENDER + ORIENTATION + PREFERENCES TO CALIBRATE ALL PHOTO FEEDBACK:
+- Gender shapes what signals read as attractive in photos. A man's lead photo should project confidence, lifestyle, and approachability — not just a mirror selfie. A woman's lead photo should convey warmth, personality, and energy — not just aesthetics. Non-binary and genderfluid users benefit from photos that communicate authentic self-expression and distinctive personality. Apply these calibrated standards when scoring photoQuality and firstImpression.
+- Partner preferences tell you WHO is evaluating this profile. If the user is attracted to women, evaluate photos through the lens of what women respond to (warmth, status cues, social proof, genuine smile). If attracted to men, evaluate through what men respond to (energy, lifestyle, confidence, physical presentation). If attracted to any gender, apply broader standards. Reference this explicitly in your photoQuality and attractionSignals analysis.
+- Sexual orientation affects platform context. Gay/lesbian users compete in a smaller pool and must stand out harder. Bisexual/pansexual users need photos that communicate openness. Apply this when giving photoOrder and photoSwap advice.
+- Photo taste selections (adventurous, sophisticated, candid, playful) tell you what this person finds visually compelling — use that to guide swap and order recommendations toward photo styles that align with their aesthetic.
+- Write photo feedback that reflects WHO this specific person is and WHO they're trying to attract — not generic one-size-fits-all photo advice.
+
 promptRecommendations: Only include prompts that were actually provided. If no prompts/bio were given, omit this field or return empty array. Give the direction, not the full rewrite — we want to coach, not ghostwrite. 1-3 sentences per suggestion max.
 
-photoSwapRecommendations: Only include if additional candidate photos were provided. Reference exact photo numbers (Photo #1) and extra photo letters (Extra Photo A). Max 5 items.
+photoSwapRecommendations: Only include if additional candidate photos were provided. Reference exact photo numbers (Photo #1) and extra photo letters (Extra Photo A). Max 5 items. When choosing which extra photos to recommend, factor in gender context and what the target audience responds to.
 
-photoOrderRecommendation: Only include if current profile photos were provided. Suggest the optimal order using the exact same photo references. If additional photos are available and should be included, reference them too.
+photoOrderRecommendation: Only include if current profile photos were provided. Suggest the optimal order using the exact same photo references. If additional photos are available and should be included, reference them too. Lead photo selection should be heavily influenced by the user's gender, orientation, and who they're trying to attract.
 
 mistakes: Short, punchy issue labels (3-6 words max). These show as "Issues detected" chips in the UI.
 
