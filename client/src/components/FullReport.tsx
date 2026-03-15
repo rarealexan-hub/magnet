@@ -168,7 +168,7 @@ export function FullReport({ result, profileInput, onBack }: Props) {
         )}
 
         {/* ── Photo swap recommendations ── */}
-        {hasAdditionalPhotos && (
+        {(feedback.photoSwapRecommendations && feedback.photoSwapRecommendations.length > 0) && (
           <div className="report-section-card">
             <div className="report-section-header">
               <div className="report-section-icon">
@@ -176,7 +176,7 @@ export function FullReport({ result, profileInput, onBack }: Props) {
               </div>
               <h3>Photo Swap Recommendations</h3>
               <span className="report-section-badge">
-                {profileInput.additionalPhotos.length} extra photo{profileInput.additionalPhotos.length > 1 ? "s" : ""} reviewed
+                {feedback.photoSwapRecommendations.length} suggestion{feedback.photoSwapRecommendations.length > 1 ? "s" : ""}
               </span>
             </div>
             <div className="report-section-body">
@@ -248,7 +248,7 @@ export function FullReport({ result, profileInput, onBack }: Props) {
         )}
 
         {/* ── Photo order recommendation ── */}
-        {hasCurrentPhotos && feedback.photoOrderRecommendation && (
+        {feedback.photoOrderRecommendation && (
           <div className="report-section-card">
             <div className="report-section-header">
               <div className="report-section-icon">
