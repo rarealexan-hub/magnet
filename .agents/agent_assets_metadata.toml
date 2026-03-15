@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "o0nudlq55NtQThtlSg4eB"
+uri = "file://magnet-export.zip"
+type = "unspecified"
+title = "Magnet — project source (no node_modules)"
