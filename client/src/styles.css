@@ -4354,3 +4354,216 @@ button {
     width: 100%;
   }
 }
+
+/* ── Prompt recommendations ── */
+.prompt-rec-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.prompt-rec-item {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.prompt-rec-current {
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.03);
+}
+
+.prompt-rec-divider {
+  height: 1px;
+  background: var(--border);
+}
+
+.prompt-rec-issue {
+  padding: 12px 14px;
+  background: rgba(248,113,113,0.04);
+}
+
+.prompt-rec-suggestion {
+  padding: 12px 14px;
+  background: rgba(99,102,241,0.04);
+  border-top: 1px solid var(--border);
+}
+
+.prompt-rec-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.prompt-rec-label.issue-label {
+  color: #f87171;
+}
+
+.prompt-rec-label.suggest-label {
+  color: #818cf8;
+}
+
+.prompt-rec-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.prompt-rec-issue-text {
+  font-size: 13px;
+  color: #fca5a5;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.prompt-rec-suggest-text {
+  font-size: 13px;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── Photo swap thumbnails ── */
+.swap-photo-thumbs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.photo-thumb-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.photo-thumb {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+}
+
+.photo-thumb-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+.swap-thumb-arrow {
+  color: var(--text-muted);
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+
+/* ── Photo order section ── */
+.photo-order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.photo-order-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.photo-order-item:last-child {
+  border-bottom: none;
+}
+
+.photo-order-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(99,102,241,0.15);
+  color: #818cf8;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.photo-order-thumb {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.photo-order-placeholder {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+
+.photo-order-ref {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  font-family: monospace;
+  flex: 1;
+}
+
+.photo-order-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.first-badge {
+  background: rgba(250,204,21,0.1);
+  color: #facc15;
+  border: 1px solid rgba(250,204,21,0.2);
+}
+
+.new-badge {
+  background: rgba(74,222,128,0.1);
+  color: #4ade80;
+  border: 1px solid rgba(74,222,128,0.2);
+}
+
+@media (max-width: 640px) {
+  .photo-thumb {
+    width: 60px;
+    height: 60px;
+  }
+
+  .photo-order-thumb {
+    width: 44px;
+    height: 44px;
+  }
+
+  .prompt-rec-text,
+  .prompt-rec-issue-text,
+  .prompt-rec-suggest-text {
+    font-size: 12px;
+  }
+}

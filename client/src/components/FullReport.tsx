@@ -1,4 +1,4 @@
-import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight, ArrowLeftRight, PlusCircle, MinusCircle, MoveVertical } from "lucide-react";
+import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight, ArrowLeftRight, PlusCircle, MinusCircle, MoveVertical, ListOrdered, MessageSquare, AlertCircle, Lightbulb } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 import { FeedbackSurvey } from "./FeedbackSurvey";
@@ -9,17 +9,62 @@ interface Props {
   onBack: () => void;
 }
 
+function parsePhotoData(raw: string): { data: string; mimeType: string } | null {
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed.data && parsed.mimeType) return parsed;
+  } catch {}
+  return null;
+}
+
+function PhotoThumb({ raw, label }: { raw: string; label: string }) {
+  const parsed = parsePhotoData(raw);
+  if (!parsed) return null;
+  return (
+    <div className="photo-thumb-wrap">
+      <img
+        src={`data:${parsed.mimeType};base64,${parsed.data}`}
+        alt={label}
+        className="photo-thumb"
+      />
+      <span className="photo-thumb-label">{label}</span>
+    </div>
+  );
+}
+
 export function FullReport({ result, profileInput, onBack }: Props) {
   const { score, feedback } = result;
   const platform = profileInput.platform || "dating app";
+  const platformLabel = platform.charAt(0).toUpperCase() + platform.slice(1);
 
   const scoreCategories = [
-    { key: "photoQuality" as const, label: "Photo Quality", icon: Camera },
-    { key: "attractionSignals" as const, label: "Attraction Signals", icon: Zap },
-    { key: "personalitySignals" as const, label: "Personality Signals", icon: Type },
-    { key: "matchTargeting" as const, label: "Match Targeting", icon: Layout },
-    { key: "firstImpression" as const, label: "First Impression", icon: FileText },
+    { key: "photoQuality" as const, label: "Photo Quality", icon: Camera, analysisKey: "photoQuality" as const },
+    { key: "attractionSignals" as const, label: "Attraction Signals", icon: Zap, analysisKey: "attractionSignals" as const },
+    { key: "personalitySignals" as const, label: "Personality Signals", icon: Type, analysisKey: "personalitySignals" as const },
+    { key: "matchTargeting" as const, label: "Match Targeting", icon: Layout, analysisKey: "matchTargeting" as const },
+    { key: "firstImpression" as const, label: "First Impression", icon: FileText, analysisKey: "firstImpression" as const },
   ];
+
+  const FALLBACK_ANALYSIS: Record<string, string> = {
+    photoQuality: "Your photos were evaluated for lighting, composition, resolution, and variety. A strong profile needs 4–6 high-quality photos showing different sides of your life.",
+    attractionSignals: "We looked at body language, eye contact, smile authenticity, and overall confidence conveyed through your photos and bio.",
+    personalitySignals: "Your prompts, bio, and photos were analyzed for depth, humor, and authenticity. Generic content scores low here.",
+    matchTargeting: "How well does your profile speak to the type of person you want to attract? Broad, unfocused profiles underperform targeted ones.",
+    firstImpression: "Your lead photo and opening line are everything. We evaluated the first 2 seconds of your profile experience.",
+  };
+
+  const FALLBACK_FIX: Record<string, string> = {
+    photoQuality: "Replace blurry, dark, or group-heavy photos. Lead with a clear, well-lit solo shot. Add variety — hobbies, travel, social settings.",
+    attractionSignals: "Use photos where you're genuinely smiling and making eye contact. Avoid crossed arms or sunglasses as your main photo.",
+    personalitySignals: "Rewrite generic prompts with specific stories. 'I once got lost in Tokyo for 6 hours and it was the best day' beats 'I love adventure.'",
+    matchTargeting: "Define who you want to attract and tailor your content. If you want someone active, show yourself being active — not just saying you like hiking.",
+    firstImpression: "Your first photo should be a clear headshot or upper body shot with good lighting. No sunglasses, no group photos, no heavy filters.",
+  };
+
+  const hasCurrentPhotos = profileInput.currentPhotos?.length > 0;
+  const hasAdditionalPhotos = profileInput.additionalPhotos?.length > 0;
+  const hasPrompts = profileInput.prompts?.some(p => p.trim());
+  const hasBio = !!profileInput.bio?.trim();
 
   return (
     <div className="results-page">
@@ -33,19 +78,24 @@ export function FullReport({ result, profileInput, onBack }: Props) {
         <div className="report-hero">
           <div className="report-hero-badge">Full Report</div>
           <h2 className="report-hero-title">
-            Your {platform.charAt(0).toUpperCase() + platform.slice(1)} Profile Report
+            Your {platformLabel} Profile Report
           </h2>
           <p className="report-hero-subtitle">
-            Detailed analysis with actionable fixes to improve your Magnet Score.
+            Detailed analysis with specific fixes for every part of your profile.
           </p>
           <div className="report-hero-score">
             <ScoreRing score={score.overall} size={120} />
           </div>
         </div>
 
+        {/* ── Score category breakdown cards ── */}
         {scoreCategories.map((cat) => {
           const Icon = cat.icon;
           const catScore = score[cat.key];
+          const aiAnalysis = feedback.categoryAnalysis?.[cat.analysisKey];
+          const analysisText = aiAnalysis || FALLBACK_ANALYSIS[cat.key];
+          const scoreClass = catScore >= 70 ? "good" : catScore >= 40 ? "mid" : "low";
+
           return (
             <div key={cat.key} className="report-section-card">
               <div className="report-section-header">
@@ -53,28 +103,16 @@ export function FullReport({ result, profileInput, onBack }: Props) {
                   <Icon size={18} />
                 </div>
                 <h3>{cat.label}</h3>
-                <span className={`report-section-score ${catScore >= 70 ? "good" : catScore >= 40 ? "mid" : "low"}`}>
+                <span className={`report-section-score ${scoreClass}`}>
                   {catScore}/100
                 </span>
               </div>
               <div className="report-section-body">
-                <p className="report-section-analysis">
-                  {cat.key === "photoQuality" && "Your photos were evaluated for lighting, composition, resolution, and variety. A strong profile needs at least 4-6 high-quality photos showing different sides of your life."}
-                  {cat.key === "attractionSignals" && "We looked at body language, eye contact, smile authenticity, and overall confidence conveyed through your photos and bio."}
-                  {cat.key === "personalitySignals" && "Your prompts, bio, and photos were analyzed for personality depth, humor, and authenticity. Generic content scores low here."}
-                  {cat.key === "matchTargeting" && "How well does your profile speak to the type of person you want to attract? Broad, unfocused profiles perform worse than targeted ones."}
-                  {cat.key === "firstImpression" && "Your lead photo and opening line are everything. We evaluated the first 2 seconds of your profile experience."}
-                </p>
+                <p className="report-section-analysis">{analysisText}</p>
                 {catScore < 70 && (
                   <div className="report-fix-box">
                     <p className="report-fix-title">How to improve</p>
-                    <p className="report-fix-text">
-                      {cat.key === "photoQuality" && "Replace any blurry, dark, or group-heavy photos. Lead with a clear, well-lit solo shot. Add variety — show hobbies, travel, social settings."}
-                      {cat.key === "attractionSignals" && "Use photos where you're genuinely smiling and making eye contact. Avoid crossed arms or sunglasses in your main photo."}
-                      {cat.key === "personalitySignals" && "Rewrite generic prompts ('I love to travel') with specific stories. Show don't tell — 'I once got lost in Tokyo for 6 hours and it was the best day' beats 'I love adventure.'"}
-                      {cat.key === "matchTargeting" && "Define who you want to attract and tailor your content. If you want someone active, show yourself being active — not just saying you like hiking."}
-                      {cat.key === "firstImpression" && "Your first photo should be a clear headshot or upper body shot with good lighting. No sunglasses, no group photos, no heavy filters."}
-                    </p>
+                    <p className="report-fix-text">{FALLBACK_FIX[cat.key]}</p>
                   </div>
                 )}
               </div>
@@ -82,22 +120,72 @@ export function FullReport({ result, profileInput, onBack }: Props) {
           );
         })}
 
-        {profileInput.additionalPhotos && profileInput.additionalPhotos.length > 0 && (
-          <div className="report-section-card photo-swap-card">
+        {/* ── Prompt recommendations ── */}
+        {(hasPrompts || hasBio) && (
+          <div className="report-section-card">
+            <div className="report-section-header">
+              <div className="report-section-icon">
+                <MessageSquare size={18} />
+              </div>
+              <h3>Prompt & Bio Coaching</h3>
+              {feedback.promptRecommendations && feedback.promptRecommendations.length > 0 && (
+                <span className="report-section-badge">
+                  {feedback.promptRecommendations.length} issue{feedback.promptRecommendations.length > 1 ? "s" : ""} found
+                </span>
+              )}
+            </div>
+            <div className="report-section-body">
+              {feedback.promptRecommendations && feedback.promptRecommendations.length > 0 ? (
+                <div className="prompt-rec-list">
+                  {feedback.promptRecommendations.map((rec, i) => (
+                    <div key={i} className="prompt-rec-item">
+                      <div className="prompt-rec-current">
+                        <span className="prompt-rec-label"><AlertCircle size={12} /> Current prompt {rec.promptIndex}</span>
+                        <p className="prompt-rec-text">"{rec.currentPrompt}"</p>
+                      </div>
+                      <div className="prompt-rec-divider" />
+                      <div className="prompt-rec-issue">
+                        <span className="prompt-rec-label issue-label"><AlertCircle size={12} /> Problem</span>
+                        <p className="prompt-rec-issue-text">{rec.issue}</p>
+                      </div>
+                      <div className="prompt-rec-suggestion">
+                        <span className="prompt-rec-label suggest-label"><Lightbulb size={12} /> Direction</span>
+                        <p className="prompt-rec-suggest-text">{rec.suggestion}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="report-fix-box">
+                  <p className="report-fix-title">General guidance</p>
+                  <p className="report-fix-text">
+                    Lead with a hook, add a specific detail or story, and end with something that invites conversation. Avoid listing traits — show, don't tell.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Photo swap recommendations ── */}
+        {hasAdditionalPhotos && (
+          <div className="report-section-card">
             <div className="report-section-header">
               <div className="report-section-icon">
                 <Camera size={18} />
               </div>
               <h3>Photo Swap Recommendations</h3>
-              <span className="report-section-badge">{profileInput.additionalPhotos.length} extra photo{profileInput.additionalPhotos.length > 1 ? "s" : ""} reviewed</span>
+              <span className="report-section-badge">
+                {profileInput.additionalPhotos.length} extra photo{profileInput.additionalPhotos.length > 1 ? "s" : ""} reviewed
+              </span>
             </div>
             <div className="report-section-body">
               <p className="report-section-analysis">
-                Your additional photos were compared against your current lineup. Here's what to swap, add, or remove to maximize your profile's impact.
+                Your additional photos were compared against your current lineup. Here's exactly what to swap to maximize your profile's impact.
               </p>
-              {result.feedback.photoSwapRecommendations && result.feedback.photoSwapRecommendations.length > 0 ? (
+              {feedback.photoSwapRecommendations && feedback.photoSwapRecommendations.length > 0 ? (
                 <div className="swap-recommendations">
-                  {result.feedback.photoSwapRecommendations.map((rec, i) => {
+                  {feedback.photoSwapRecommendations.map((rec, i) => {
                     const actionIcon = rec.action === "swap" ? <ArrowLeftRight size={14} />
                       : rec.action === "add" ? <PlusCircle size={14} />
                       : rec.action === "remove" ? <MinusCircle size={14} />
@@ -106,24 +194,42 @@ export function FullReport({ result, profileInput, onBack }: Props) {
                       : rec.action === "add" ? "Add"
                       : rec.action === "remove" ? "Remove"
                       : "Reorder";
+
+                    const currentIdx = rec.currentPhoto
+                      ? parseInt(rec.currentPhoto.replace(/\D/g, "")) - 1
+                      : -1;
+                    const additionalIdx = rec.additionalPhoto
+                      ? rec.additionalPhoto.toUpperCase().charCodeAt(rec.additionalPhoto.length - 1) - 65
+                      : -1;
+
+                    const currentPhotoRaw = currentIdx >= 0 ? profileInput.currentPhotos?.[currentIdx] : null;
+                    const additionalPhotoRaw = additionalIdx >= 0 ? profileInput.additionalPhotos?.[additionalIdx] : null;
+
                     return (
                       <div key={i} className="swap-rec-item">
                         <div className="swap-rec-header">
                           <span className={`swap-action-badge swap-action-${rec.action}`}>
                             {actionIcon} {actionLabel}
                           </span>
-                          {rec.currentPhoto && rec.additionalPhoto && (
-                            <span className="swap-photo-label">
-                              {rec.currentPhoto} → {rec.additionalPhoto}
-                            </span>
-                          )}
-                          {rec.currentPhoto && !rec.additionalPhoto && (
-                            <span className="swap-photo-label">{rec.currentPhoto}</span>
-                          )}
-                          {rec.additionalPhoto && !rec.currentPhoto && (
-                            <span className="swap-photo-label">{rec.additionalPhoto}</span>
-                          )}
+                          {rec.currentPhoto && <span className="swap-photo-label">{rec.currentPhoto}</span>}
+                          {rec.currentPhoto && rec.additionalPhoto && <ArrowRight size={12} style={{ opacity: 0.4 }} />}
+                          {rec.additionalPhoto && <span className="swap-photo-label">{rec.additionalPhoto}</span>}
                         </div>
+
+                        {(currentPhotoRaw || additionalPhotoRaw) && (
+                          <div className="swap-photo-thumbs">
+                            {currentPhotoRaw && (
+                              <PhotoThumb raw={currentPhotoRaw} label={rec.currentPhoto || "Current"} />
+                            )}
+                            {currentPhotoRaw && additionalPhotoRaw && (
+                              <div className="swap-thumb-arrow"><ArrowRight size={16} /></div>
+                            )}
+                            {additionalPhotoRaw && (
+                              <PhotoThumb raw={additionalPhotoRaw} label={rec.additionalPhoto || "New"} />
+                            )}
+                          </div>
+                        )}
+
                         <p className="swap-rec-reason">{rec.reason}</p>
                       </div>
                     );
@@ -133,7 +239,7 @@ export function FullReport({ result, profileInput, onBack }: Props) {
                 <div className="report-fix-box">
                   <p className="report-fix-title">General recommendation</p>
                   <p className="report-fix-text">
-                    Compare your additional photos against your current profile. Swap in photos with better lighting, clearer expressions, and more variety. Your strongest photo should always be first.
+                    Compare your additional photos against your current lineup. Swap in photos with better lighting, clearer expressions, and more variety. Your strongest photo should always be first.
                   </p>
                 </div>
               )}
@@ -141,25 +247,60 @@ export function FullReport({ result, profileInput, onBack }: Props) {
           </div>
         )}
 
-        <div className="report-section-card">
-          <div className="report-section-header">
-            <div className="report-section-icon">
-              <Type size={18} />
+        {/* ── Photo order recommendation ── */}
+        {hasCurrentPhotos && feedback.photoOrderRecommendation && (
+          <div className="report-section-card">
+            <div className="report-section-header">
+              <div className="report-section-icon">
+                <ListOrdered size={18} />
+              </div>
+              <h3>Optimal Photo Order</h3>
             </div>
-            <h3>Bio & Prompt Rewrites</h3>
-          </div>
-          <div className="report-section-body">
-            <p className="report-section-analysis">
-              Your current bio and prompts were analyzed for engagement potential. Below are optimized versions tailored to {platform}.
-            </p>
-            <div className="report-fix-box">
-              <p className="report-fix-title">Optimized approach</p>
-              <p className="report-fix-text">
-                Lead with a hook, add humor or a specific detail, and end with something that invites conversation. Avoid listing traits — tell a micro-story instead.
+            <div className="report-section-body">
+              <p className="report-section-analysis">
+                The order of your photos determines first impressions and swiping momentum. Here's the sequence that will perform best:
               </p>
+              <div className="photo-order-list">
+                {feedback.photoOrderRecommendation.suggestedOrder.map((photoRef, i) => {
+                  const isExtra = photoRef.toLowerCase().includes("extra");
+                  const currentIdx = !isExtra ? parseInt(photoRef.replace(/\D/g, "")) - 1 : -1;
+                  const additionalIdx = isExtra
+                    ? photoRef.toUpperCase().charCodeAt(photoRef.length - 1) - 65
+                    : -1;
+                  const rawPhoto = isExtra
+                    ? profileInput.additionalPhotos?.[additionalIdx]
+                    : profileInput.currentPhotos?.[currentIdx];
+
+                  return (
+                    <div key={i} className="photo-order-item">
+                      <div className="photo-order-num">{i + 1}</div>
+                      {rawPhoto ? (
+                        <img
+                          src={`data:${parsePhotoData(rawPhoto)?.mimeType};base64,${parsePhotoData(rawPhoto)?.data}`}
+                          alt={photoRef}
+                          className="photo-order-thumb"
+                        />
+                      ) : (
+                        <div className="photo-order-placeholder">
+                          <Camera size={16} />
+                        </div>
+                      )}
+                      <span className="photo-order-ref">{photoRef}</span>
+                      {i === 0 && <span className="photo-order-badge first-badge">Lead photo</span>}
+                      {isExtra && <span className="photo-order-badge new-badge">New addition</span>}
+                    </div>
+                  );
+                })}
+              </div>
+              {feedback.photoOrderRecommendation.reason && (
+                <div className="report-fix-box" style={{ marginTop: 14 }}>
+                  <p className="report-fix-title">Why this order works</p>
+                  <p className="report-fix-text">{feedback.photoOrderRecommendation.reason}</p>
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        )}
 
         <FeedbackSurvey
           page="full-report"

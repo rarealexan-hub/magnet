@@ -27,12 +27,35 @@ export interface PhotoSwapRecommendation {
   reason: string;
 }
 
+export interface PromptRecommendation {
+  promptIndex: number;
+  currentPrompt: string;
+  issue: string;
+  suggestion: string;
+}
+
+export interface PhotoOrderRecommendation {
+  suggestedOrder: string[];
+  reason: string;
+}
+
+export interface CategoryAnalysis {
+  photoQuality: string;
+  attractionSignals: string;
+  personalitySignals: string;
+  matchTargeting: string;
+  firstImpression: string;
+}
+
 export interface ProfileFeedback {
   roast: string;
   mistakes: string[];
   profileType: "high-signal" | "generic" | "entertainment";
   profileTypeExplanation: string;
   photoSwapRecommendations?: PhotoSwapRecommendation[];
+  promptRecommendations?: PromptRecommendation[];
+  photoOrderRecommendation?: PhotoOrderRecommendation;
+  categoryAnalysis?: CategoryAnalysis;
 }
 
 export interface ProfileResult {

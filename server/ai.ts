@@ -168,46 +168,67 @@ function buildProfileText(input: ProfileInput): string {
   return message;
 }
 
-const ANALYZE_PROMPT = `Analyze this dating profile and give a Magnet Score with analysis. Be entertaining and shareable — this is the viral hook.
-
-If the user uploaded photos, evaluate them as part of the analysis. Consider photo quality, order, energy, and signals.
+const ANALYZE_PROMPT = `Analyze this dating profile and give a Magnet Score with detailed, actionable analysis. Be specific, witty, and genuinely helpful — this analysis is the product.
 
 Respond in this exact JSON format:
 {
   "score": {
     "overall": <0-100>,
-    "photoQuality": <0-100 how good the photos are — lighting, energy, variety, attractiveness>,
-    "attractionSignals": <0-100 how many signals of desirability and lifestyle the profile sends>,
-    "personalitySignals": <0-100 how clearly the personality comes through — specificity, authenticity, humor>,
-    "matchTargeting": <0-100 how well the profile attracts the right type of person>,
-    "firstImpression": <0-100 how strong the first 3 seconds are — lead photo + opening line>
+    "photoQuality": <0-100>,
+    "attractionSignals": <0-100>,
+    "personalitySignals": <0-100>,
+    "matchTargeting": <0-100>,
+    "firstImpression": <0-100>
   },
   "feedback": {
-    "roast": "<2-3 sentence witty roast of the profile that's entertaining but not mean — make it shareable on TikTok>",
-    "mistakes": ["<specific issue detected — e.g. 'Weak first photo', 'Low social proof', 'Missing lifestyle signal'>", "<issue 2>", "<issue 3>"],
+    "roast": "<2-3 sentence witty roast — entertaining, slightly teasing, shareable on TikTok>",
+    "mistakes": ["<short punchy issue label>", "<issue 2>", "<issue 3>"],
     "profileType": "<high-signal | generic | entertainment>",
-    "profileTypeExplanation": "<1-2 sentences explaining why they fall in this category>",
+    "profileTypeExplanation": "<1-2 sentences>",
+    "categoryAnalysis": {
+      "photoQuality": "<2-3 sentences specifically about THIS person's photos — lighting, composition, variety, what's working and what isn't. Be specific to what you see, not generic.>",
+      "attractionSignals": "<2-3 sentences about what attraction signals this profile sends — body language, lifestyle cues, eye contact, energy. Specific to their actual content.>",
+      "personalitySignals": "<2-3 sentences about how clearly their personality comes through — what works, what's generic, what's missing. Reference their actual prompts/bio if provided.>",
+      "matchTargeting": "<2-3 sentences about how well this profile speaks to their target type. Is there alignment between their content and who they want to attract?>",
+      "firstImpression": "<2-3 sentences about the first 2 seconds of their profile — lead photo strength, opening hook. What's the first thing someone sees and what does it communicate?>"
+    },
+    "promptRecommendations": [
+      {
+        "promptIndex": <1-based index of the prompt>,
+        "currentPrompt": "<quote their exact prompt text>",
+        "issue": "<specific problem with this prompt — e.g. 'Too vague to start a conversation', 'Sounds like every other profile', 'Lists traits instead of showing personality'>",
+        "suggestion": "<specific, actionable rewrite direction — e.g. 'Replace with a specific story or opinion. Instead of \"love traveling\" try describing your most unexpected trip moment.' Do NOT write the full prompt for them — give them the direction and a micro-example.>"
+      }
+    ],
     "photoSwapRecommendations": [
       {
         "action": "<swap | add | remove | reorder>",
-        "currentPhoto": "<e.g. 'Photo #2' or null if not a swap>",
-        "additionalPhoto": "<e.g. 'Extra Photo B' or null if not applicable>",
-        "reason": "<specific, actionable reason — e.g. 'Extra Photo B has better lighting and a genuine smile vs Photo #2 which looks forced'>"
+        "currentPhoto": "<e.g. 'Photo #2' — reference by number>",
+        "additionalPhoto": "<e.g. 'Extra Photo B' — reference by letter>",
+        "reason": "<specific reason referencing what you see in both photos>"
       }
-    ]
+    ],
+    "photoOrderRecommendation": {
+      "suggestedOrder": ["<e.g. 'Photo #3'>", "<'Photo #1'>", "<'Extra Photo B'>", "<'Photo #2'>"],
+      "reason": "<explain why this order works — what signal each position sends>"
+    }
   }
 }
 
-IMPORTANT PHOTO SWAP RULES:
-- Only include photoSwapRecommendations if additional candidate photos were provided. If no additional photos, omit this field entirely or return an empty array.
-- Be specific: reference exact photo numbers (Photo #1, Photo #2) and extra photo letters (Extra Photo A, Extra Photo B).
-- Give a clear, concrete reason for each recommendation — what's better about the swap and why.
-- Consider: first photo impact, variety, lighting, expression, energy, and what each photo communicates.
-- Max 5 recommendations. Prioritize the highest-impact swaps.
+RULES:
 
-IMPORTANT: Format the "mistakes" as short, punchy issue labels (e.g. "Weak first photo", "Low social proof", "Missing lifestyle signal", "Generic bio", "No conversation hooks"). These show up as "Issues detected" in the UI.
+categoryAnalysis: Always include all 5 fields. Write about THIS specific profile — not generic advice. If no photos were uploaded, focus on what you can infer from bio/prompts.
 
-Remember: The roast should make someone want to share their Magnet Score. Think "this bio could belong to 4.7 million people" energy.`;
+promptRecommendations: Only include prompts that were actually provided. If no prompts/bio were given, omit this field or return empty array. Give the direction, not the full rewrite — we want to coach, not ghostwrite. 1-3 sentences per suggestion max.
+
+photoSwapRecommendations: Only include if additional candidate photos were provided. Reference exact photo numbers (Photo #1) and extra photo letters (Extra Photo A). Max 5 items.
+
+photoOrderRecommendation: Only include if current profile photos were provided. Suggest the optimal order using the exact same photo references. If additional photos are available and should be included, reference them too.
+
+mistakes: Short, punchy issue labels (3-6 words max). These show as "Issues detected" chips in the UI.
+
+roast: Make someone want to share their score. Entertaining but never cruel.`;
+
 
 async function callWithRetry(
   fn: () => Promise<any>,
@@ -267,6 +288,23 @@ export async function analyzeProfile(input: ProfileInput): Promise<ProfileResult
         ? parsed.feedback.profileType
         : "generic",
       profileTypeExplanation: parsed.feedback?.profileTypeExplanation ?? "",
+      categoryAnalysis: parsed.feedback?.categoryAnalysis
+        ? {
+            photoQuality: parsed.feedback.categoryAnalysis.photoQuality ?? "",
+            attractionSignals: parsed.feedback.categoryAnalysis.attractionSignals ?? "",
+            personalitySignals: parsed.feedback.categoryAnalysis.personalitySignals ?? "",
+            matchTargeting: parsed.feedback.categoryAnalysis.matchTargeting ?? "",
+            firstImpression: parsed.feedback.categoryAnalysis.firstImpression ?? "",
+          }
+        : undefined,
+      promptRecommendations: Array.isArray(parsed.feedback?.promptRecommendations)
+        ? parsed.feedback.promptRecommendations.map((r: any) => ({
+            promptIndex: r.promptIndex ?? 1,
+            currentPrompt: r.currentPrompt ?? "",
+            issue: r.issue ?? "",
+            suggestion: r.suggestion ?? "",
+          }))
+        : undefined,
       photoSwapRecommendations: Array.isArray(parsed.feedback?.photoSwapRecommendations)
         ? parsed.feedback.photoSwapRecommendations.map((r: any) => ({
             action: ["swap", "add", "remove", "reorder"].includes(r.action) ? r.action : "swap",
@@ -274,6 +312,12 @@ export async function analyzeProfile(input: ProfileInput): Promise<ProfileResult
             additionalPhoto: r.additionalPhoto ?? undefined,
             reason: r.reason ?? "",
           }))
+        : undefined,
+      photoOrderRecommendation: parsed.feedback?.photoOrderRecommendation?.suggestedOrder?.length
+        ? {
+            suggestedOrder: parsed.feedback.photoOrderRecommendation.suggestedOrder,
+            reason: parsed.feedback.photoOrderRecommendation.reason ?? "",
+          }
         : undefined,
     },
   };
