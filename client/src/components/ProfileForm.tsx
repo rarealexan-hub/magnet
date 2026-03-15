@@ -477,6 +477,14 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
                 "Analyze My Profile →"
               )}
             </button>
+            <button
+              type="button"
+              className="taste-none-btn"
+              disabled={loading}
+              onClick={() => runAnalysis([])}
+            >
+              None of these appeal to me
+            </button>
             <button type="button" className="taste-back-btn" onClick={() => setStep("form")}>
               ← Back to profile
             </button>
