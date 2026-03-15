@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Plus, X, Loader2, Upload, Type, Camera, GripVertical, ImagePlus, ChevronUp, ChevronDown } from "lucide-react";
 import heic2any from "heic2any";
-import { TARGET_TYPES } from "@shared/types";
+import { TARGET_TYPES, SEXUAL_ORIENTATIONS, PARTNER_PREFERENCES } from "@shared/types";
 import type { ProfileInput, ProfileResult } from "@shared/types";
 
 interface Props {
@@ -104,6 +104,14 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
   const [additionalPhotos, setAdditionalPhotos] = useState<UploadedPhoto[]>([]);
   const [targetType, setTargetType] = useState("");
   const [customTarget, setCustomTarget] = useState("");
+  const [sexualOrientation, setSexualOrientation] = useState("");
+  const [partnerPreferences, setPartnerPreferences] = useState<string[]>([]);
+
+  const togglePartnerPref = (id: string) => {
+    setPartnerPreferences((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+    );
+  };
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -316,6 +324,8 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
       if (targetType === "custom" && customTarget) {
         formData.append("customTarget", customTarget);
       }
+      if (sexualOrientation) formData.append("sexualOrientation", sexualOrientation);
+      partnerPreferences.forEach((p) => formData.append("partnerPreferences", p));
       prompts.filter((p) => p.trim()).forEach((p) => formData.append("prompts", p));
       photoDescriptions.filter((p) => p.trim()).forEach((p) => formData.append("photoDescriptions", p));
 
@@ -359,6 +369,8 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
         additionalPhotos: [],
         targetType,
         customTarget: targetType === "custom" ? customTarget : undefined,
+        sexualOrientation: sexualOrientation || undefined,
+        partnerPreferences: partnerPreferences.length > 0 ? partnerPreferences : undefined,
       };
       onResult(data, input);
     } catch (err: any) {
@@ -392,6 +404,41 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
                   onClick={() => setPlatform(p)}
                 >
                   {p.charAt(0).toUpperCase() + p.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-section">
+            <label className="form-label">Your sexual orientation</label>
+            <p className="form-hint">Helps the AI give context-relevant feedback for your platform and audience.</p>
+            <div className="orientation-grid">
+              {SEXUAL_ORIENTATIONS.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  className={`orientation-btn ${sexualOrientation === o.id ? "active" : ""}`}
+                  onClick={() => setSexualOrientation(sexualOrientation === o.id ? "" : o.id)}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-section">
+            <label className="form-label">Who are you attracted to?</label>
+            <p className="form-hint">Select all that apply — the AI will tailor match targeting advice accordingly.</p>
+            <div className="pref-grid">
+              {PARTNER_PREFERENCES.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`pref-btn ${partnerPreferences.includes(p.id) ? "active" : ""}`}
+                  onClick={() => togglePartnerPref(p.id)}
+                >
+                  {partnerPreferences.includes(p.id) && <span className="pref-check">✓</span>}
+                  {p.label}
                 </button>
               ))}
             </div>

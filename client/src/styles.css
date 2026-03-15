@@ -4804,3 +4804,86 @@ button {
   border: 1px solid rgba(99,102,241,0.25);
   white-space: nowrap;
 }
+
+/* ── Orientation selector ── */
+.orientation-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.orientation-btn {
+  padding: 8px 16px;
+  border-radius: 30px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.orientation-btn:hover {
+  border-color: rgba(99,102,241,0.4);
+  color: var(--text);
+  background: rgba(99,102,241,0.06);
+}
+
+.orientation-btn.active {
+  border-color: #6366f1;
+  background: rgba(99,102,241,0.15);
+  color: #a5b4fc;
+  font-weight: 600;
+}
+
+/* ── Partner preference selector (multi-select) ── */
+.pref-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pref-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 30px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.pref-btn:hover {
+  border-color: rgba(99,102,241,0.4);
+  color: var(--text);
+  background: rgba(99,102,241,0.06);
+}
+
+.pref-btn.active {
+  border-color: #6366f1;
+  background: rgba(99,102,241,0.15);
+  color: #a5b4fc;
+  font-weight: 600;
+}
+
+.pref-check {
+  font-size: 11px;
+  font-weight: 800;
+  color: #818cf8;
+}
+
+@media (max-width: 640px) {
+  .orientation-btn,
+  .pref-btn {
+    font-size: 12px;
+    padding: 7px 13px;
+  }
+}

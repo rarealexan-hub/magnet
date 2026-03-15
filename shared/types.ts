@@ -9,7 +9,28 @@ export interface ProfileInput {
   additionalPhotos: string[];
   targetType: string;
   customTarget?: string;
+  sexualOrientation?: string;
+  partnerPreferences?: string[];
 }
+
+export const SEXUAL_ORIENTATIONS = [
+  { id: "straight", label: "Straight" },
+  { id: "gay", label: "Gay / Lesbian" },
+  { id: "bisexual", label: "Bisexual" },
+  { id: "pansexual", label: "Pansexual" },
+  { id: "queer", label: "Queer" },
+  { id: "prefer-not-to-say", label: "Prefer not to say" },
+] as const;
+
+export const PARTNER_PREFERENCES = [
+  { id: "men", label: "Men" },
+  { id: "women", label: "Women" },
+  { id: "non-binary", label: "Non-binary people" },
+  { id: "trans-men", label: "Trans men" },
+  { id: "trans-women", label: "Trans women" },
+  { id: "genderfluid", label: "Genderfluid people" },
+  { id: "any-gender", label: "Any gender" },
+] as const;
 
 export interface ProfileScore {
   overall: number;

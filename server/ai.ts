@@ -161,6 +161,14 @@ function buildProfileText(input: ProfileInput): string {
     }
   }
 
+  if (input.sexualOrientation && input.sexualOrientation !== "prefer-not-to-say") {
+    message += `\nUser's sexual orientation: ${input.sexualOrientation}\n`;
+  }
+
+  if (input.partnerPreferences && input.partnerPreferences.length > 0) {
+    message += `\nUser is attracted to: ${input.partnerPreferences.join(", ")}\n`;
+  }
+
   if (input.targetType) {
     message += `\nTarget match type: ${input.customTarget || input.targetType}\n`;
   }

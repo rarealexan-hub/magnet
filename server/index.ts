@@ -371,6 +371,12 @@ app.post(
         : [];
       const targetType = body.targetType || "";
       const customTarget = body.customTarget;
+      const sexualOrientation = body.sexualOrientation || "";
+      const partnerPreferences = body.partnerPreferences
+        ? Array.isArray(body.partnerPreferences)
+          ? body.partnerPreferences
+          : [body.partnerPreferences]
+        : [];
       const screenshotLabels = body.screenshotLabels
         ? Array.isArray(body.screenshotLabels)
           ? body.screenshotLabels
@@ -429,6 +435,8 @@ app.post(
         additionalPhotos: filesToBase64Strings(additionalPhotoFiles),
         targetType,
         customTarget,
+        sexualOrientation: sexualOrientation || undefined,
+        partnerPreferences: partnerPreferences.length > 0 ? partnerPreferences : undefined,
       };
 
       const isAuthenticated = !!req.user;
