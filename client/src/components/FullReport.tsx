@@ -61,8 +61,6 @@ export function FullReport({ result, profileInput, onBack }: Props) {
     firstImpression: "Your first photo should be a clear headshot or upper body shot with good lighting. No sunglasses, no group photos, no heavy filters.",
   };
 
-  const hasCurrentPhotos = profileInput.currentPhotos?.length > 0;
-  const hasAdditionalPhotos = profileInput.additionalPhotos?.length > 0;
   const hasPrompts = profileInput.prompts?.some(p => p.trim());
   const hasBio = !!profileInput.bio?.trim();
 

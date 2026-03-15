@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type RefObject } from "react";
 import { Star, X, Send, Check, ChevronDown } from "lucide-react";
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
   magnetScore?: number;
   email?: string;
   defaultOpen?: boolean;
-  surveyRef?: React.RefObject<HTMLDivElement>;
+  surveyRef?: RefObject<HTMLDivElement>;
 }
 
 const IMPROVEMENT_OPTIONS = [

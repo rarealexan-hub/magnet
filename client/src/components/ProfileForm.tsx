@@ -108,9 +108,6 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
   const [partnerPreferences, setPartnerPreferences] = useState<string[]>([]);
   const [step, setStep] = useState<"form" | "taste">("form");
   const [tasteSelections, setTasteSelections] = useState<string[]>([]);
-  const pendingFormData = useRef<FormData | null>(null);
-  const pendingInputMeta = useRef<Omit<ProfileInput, "screenshots" | "currentPhotos" | "additionalPhotos" | "photoTasteSelections"> | null>(null);
-
   const togglePartnerPref = (id: string) => {
     setPartnerPreferences((prev) =>
       prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
