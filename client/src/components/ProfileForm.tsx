@@ -584,10 +584,13 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
           </div>
 
           <div className="form-section photos-section">
-            <label className="form-label">Additional Photos</label>
+            <div className="form-label-row">
+              <label className="form-label">Additional Photos</label>
+              <span className="form-label-badge">Used in $2.99 Full Report</span>
+            </div>
             <p className="form-hint">
-              Upload up to {MAX_ADDITIONAL_PHOTOS} extra photos of yourself — group shots, candids, anything.
-              The AI will tell you which ones to use and which to swap in.
+              Upload extra photos you haven't used yet — candids, group shots, travel, anything.
+              The Full Report will compare them against your current lineup and tell you <strong>exactly which ones to swap in and where</strong>, with side-by-side previews.
             </p>
             <input
               ref={additionalPhotosRef}

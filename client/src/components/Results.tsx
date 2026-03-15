@@ -217,7 +217,7 @@ export function Results({ result, profileInput, onStartOver, onFullReport, fullR
                 <ul className="pricing-features">
                   <li><Zap size={14} /> Per-photo breakdown — exactly what each photo signals</li>
                   <li><Zap size={14} /> Prompt coaching — what's wrong with each one & how to fix it</li>
-                  <li><Zap size={14} /> Photo swap picks — which of your extras to swap in and where</li>
+                  <li><Zap size={14} /> Photo swap picks — your uploaded extras compared to your current lineup, with exact swap suggestions and side-by-side previews</li>
                   <li><Zap size={14} /> Optimal photo order — ranked 1–6 with reasoning</li>
                   <li><Zap size={14} /> Category-level AI analysis written about your profile</li>
                 </ul>
