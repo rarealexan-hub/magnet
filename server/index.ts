@@ -389,7 +389,7 @@ app.post(
           : [body.screenshotLabels]
         : [];
 
-      const validPlatforms = ["hinge", "tinder", "bumble", "other"];
+      const validPlatforms = ["hinge","tinder","bumble","okcupid","coffee-meets-bagel","match","happn","the-league","feeld","hily","plenty-of-fish","zoosk","grindr","badoo","blk","her","other"];
       if (!platform || !validPlatforms.includes(platform)) {
         res.status(400).json({ error: "Invalid platform" });
         return;
@@ -407,19 +407,17 @@ app.post(
       const currentPhotoFiles = files?.currentPhotos || [];
       const additionalPhotoFiles = files?.additionalPhotos || [];
 
-      const hasTextContent =
-        bio.trim() || prompts.some((p: string) => p.trim());
-      const hasScreenshots = screenshotFiles.length > 0;
-
-      if (!hasTextContent && !hasScreenshots) {
-        res
-          .status(400)
-          .json({
-            error:
-              "Please provide at least a bio, one prompt, or upload a screenshot",
-          });
-        return;
-      }
+      const relationshipIntent = body.relationshipIntent || "";
+      const interests = body.interests
+        ? Array.isArray(body.interests) ? body.interests : [body.interests]
+        : [];
+      const partnerNonNegotiables = body.partnerNonNegotiables
+        ? Array.isArray(body.partnerNonNegotiables) ? body.partnerNonNegotiables : [body.partnerNonNegotiables]
+        : [];
+      const idealPartnerDescription = body.idealPartnerDescription || "";
+      const datingHistory = body.datingHistory || "";
+      const datingStruggle = body.datingStruggle || "";
+      const additionalContext = body.additionalContext || "";
 
       const screenshotStrings = screenshotFiles.map((f, i) => {
         const data = f.buffer.toString("base64");
@@ -445,6 +443,13 @@ app.post(
         sexualOrientation: sexualOrientation || undefined,
         partnerPreferences: partnerPreferences.length > 0 ? partnerPreferences : undefined,
         photoTasteSelections: photoTasteSelections.length > 0 ? photoTasteSelections : undefined,
+        relationshipIntent: relationshipIntent || undefined,
+        interests: interests.length > 0 ? interests : undefined,
+        partnerNonNegotiables: partnerNonNegotiables.length > 0 ? partnerNonNegotiables : undefined,
+        idealPartnerDescription: idealPartnerDescription || undefined,
+        datingHistory: datingHistory || undefined,
+        datingStruggle: datingStruggle || undefined,
+        additionalContext: additionalContext || undefined,
       };
 
       const isAuthenticated = !!req.user;

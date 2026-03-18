@@ -193,6 +193,34 @@ function buildProfileText(input: ProfileInput): string {
     message += `\nTarget match type: ${input.customTarget || input.targetType}\n`;
   }
 
+  if (input.relationshipIntent) {
+    message += `\nWhat they're looking for: ${input.relationshipIntent}\n`;
+  }
+
+  if (input.interests && input.interests.length > 0) {
+    message += `\nUser's interests & hobbies: ${input.interests.join(", ")}\n`;
+  }
+
+  if (input.partnerNonNegotiables && input.partnerNonNegotiables.length > 0) {
+    message += `\nNon-negotiables in a partner: ${input.partnerNonNegotiables.join(", ")}\n`;
+  }
+
+  if (input.idealPartnerDescription) {
+    message += `\nIdeal partner description: "${input.idealPartnerDescription}"\n`;
+  }
+
+  if (input.datingHistory) {
+    message += `\nPast relationship experience: "${input.datingHistory}"\n`;
+  }
+
+  if (input.datingStruggle) {
+    message += `\nBiggest dating app struggle: "${input.datingStruggle}"\n`;
+  }
+
+  if (input.additionalContext) {
+    message += `\nAdditional context: "${input.additionalContext}"\n`;
+  }
+
   return message;
 }
 

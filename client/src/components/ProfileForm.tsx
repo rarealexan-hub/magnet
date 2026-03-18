@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Plus, X, Loader2, Upload, Type, Camera, GripVertical, ImagePlus, ChevronUp, ChevronDown } from "lucide-react";
 import heic2any from "heic2any";
-import { TARGET_TYPES, GENDER_OPTIONS, SEXUAL_ORIENTATIONS, PARTNER_PREFERENCES, PLATFORMS, PLATFORM_COLOR, PLATFORM_PROMPTS } from "@shared/types";
+import { TARGET_TYPES, GENDER_OPTIONS, SEXUAL_ORIENTATIONS, PARTNER_PREFERENCES, PLATFORMS, PLATFORM_PROMPTS, RELATIONSHIP_INTENTS, INTERESTS, PARTNER_NON_NEGOTIABLES } from "@shared/types";
 import type { ProfileInput, ProfileResult, PlatformId } from "@shared/types";
 
 interface Props {
@@ -112,6 +112,13 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
   const [gender, setGender] = useState("");
   const [sexualOrientation, setSexualOrientation] = useState("");
   const [partnerPreferences, setPartnerPreferences] = useState<string[]>([]);
+  const [relationshipIntent, setRelationshipIntent] = useState("");
+  const [interests, setInterests] = useState<string[]>([]);
+  const [partnerNonNegotiables, setPartnerNonNegotiables] = useState<string[]>([]);
+  const [idealPartnerDescription, setIdealPartnerDescription] = useState("");
+  const [datingHistory, setDatingHistory] = useState("");
+  const [datingStruggle, setDatingStruggle] = useState("");
+  const [additionalContext, setAdditionalContext] = useState("");
   const [step, setStep] = useState<Step>("form");
   const [tasteSelections, setTasteSelections] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -325,6 +332,13 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     selectedPrompts
       .filter((sp) => sp.answer.trim())
       .forEach((sp) => fd.append("prompts", `${sp.question}: ${sp.answer}`));
+    if (relationshipIntent) fd.append("relationshipIntent", relationshipIntent);
+    interests.forEach((i) => fd.append("interests", i));
+    partnerNonNegotiables.forEach((n) => fd.append("partnerNonNegotiables", n));
+    if (idealPartnerDescription) fd.append("idealPartnerDescription", idealPartnerDescription);
+    if (datingHistory) fd.append("datingHistory", datingHistory);
+    if (datingStruggle) fd.append("datingStruggle", datingStruggle);
+    if (additionalContext) fd.append("additionalContext", additionalContext);
     screenshots.forEach((s) => { fd.append("screenshots", s.file); fd.append("screenshotLabels", s.label || ""); });
     currentPhotos.forEach((p) => fd.append("currentPhotos", p.file));
     additionalPhotos.forEach((p) => fd.append("additionalPhotos", p.file));
@@ -393,12 +407,6 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
   };
 
   const handlePromptsNext = () => {
-    const hasScreenshots = screenshots.length > 0;
-    const hasTextContent = bio.trim() || selectedPrompts.some((sp) => sp.answer.trim());
-    if (!hasScreenshots && !hasTextContent) {
-      setError("Upload a screenshot or enter your profile content to continue.");
-      return;
-    }
     setError("");
     setStep("photos");
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -938,6 +946,103 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
                 onChange={(e) => setCustomTarget(e.target.value)}
               />
             )}
+          </div>
+
+          <div className="form-section">
+            <label className="form-label">What are you looking for?</label>
+            <div className="orientation-grid">
+              {RELATIONSHIP_INTENTS.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  className={`orientation-btn ${relationshipIntent === r.id ? "active" : ""}`}
+                  onClick={() => setRelationshipIntent(relationshipIntent === r.id ? "" : r.id)}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-section">
+            <label className="form-label">Your Interests &amp; Hobbies <span className="form-label-optional">select all that apply</span></label>
+            <div className="tag-select-grid">
+              {INTERESTS.map((interest) => (
+                <button
+                  key={interest}
+                  type="button"
+                  className={`tag-select-btn ${interests.includes(interest) ? "active" : ""}`}
+                  onClick={() => setInterests((prev) => prev.includes(interest) ? prev.filter((i) => i !== interest) : [...prev, interest])}
+                >
+                  {interest}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-section">
+            <label className="form-label">Non-Negotiables in a Partner <span className="form-label-optional">select what matters most</span></label>
+            <div className="tag-select-grid">
+              {PARTNER_NON_NEGOTIABLES.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  className={`tag-select-btn ${partnerNonNegotiables.includes(item) ? "active" : ""}`}
+                  onClick={() => setPartnerNonNegotiables((prev) => prev.includes(item) ? prev.filter((n) => n !== item) : [...prev, item])}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-section">
+            <label className="form-label">Describe Your Ideal Partner</label>
+            <textarea
+              className="form-textarea"
+              rows={3}
+              placeholder="What kind of person are you hoping to meet? Describe personality, values, lifestyle, energy — be as specific as you want..."
+              value={idealPartnerDescription}
+              onChange={(e) => setIdealPartnerDescription(e.target.value)}
+            />
+          </div>
+
+          <div className="form-section ideal-match-optional-section">
+            <div className="form-label-row">
+              <label className="form-label">Help us understand your dating history</label>
+              <span className="form-label-badge">optional</span>
+            </div>
+            <p className="form-hint">The more context the AI has, the more targeted your feedback will be.</p>
+            <label className="form-sublabel">Past relationship experience</label>
+            <textarea
+              className="form-textarea"
+              rows={2}
+              placeholder="e.g. One long-term relationship (3 years), been single for 6 months. Learned I need better communication..."
+              value={datingHistory}
+              onChange={(e) => setDatingHistory(e.target.value)}
+            />
+            <label className="form-sublabel" style={{ marginTop: 10 }}>What's been your biggest dating app struggle?</label>
+            <textarea
+              className="form-textarea"
+              rows={2}
+              placeholder="e.g. I get matches but conversations die out. Or: I barely get any likes. Or: I attract the wrong type of person..."
+              value={datingStruggle}
+              onChange={(e) => setDatingStruggle(e.target.value)}
+            />
+          </div>
+
+          <div className="form-section">
+            <div className="form-label-row">
+              <label className="form-label">Anything Else?</label>
+              <span className="form-label-badge">optional</span>
+            </div>
+            <textarea
+              className="form-textarea"
+              rows={2}
+              placeholder="Any other context, goals, or specific things you want us to know..."
+              value={additionalContext}
+              onChange={(e) => setAdditionalContext(e.target.value)}
+            />
           </div>
 
           <div className="form-section">

@@ -38,6 +38,13 @@ export interface ProfileInput {
   sexualOrientation?: string;
   partnerPreferences?: string[];
   photoTasteSelections?: string[];
+  relationshipIntent?: string;
+  interests?: string[];
+  partnerNonNegotiables?: string[];
+  idealPartnerDescription?: string;
+  datingHistory?: string;
+  datingStruggle?: string;
+  additionalContext?: string;
 }
 
 export const GENDER_OPTIONS = [
@@ -231,6 +238,29 @@ export const PLATFORM_PROMPTS: Record<string, string[]> = {
     "I'm most passionate about",
   ],
 };
+
+export const RELATIONSHIP_INTENTS = [
+  { id: "long-term",        label: "Long-term relationship" },
+  { id: "short-term",       label: "Short-term / casual" },
+  { id: "open-to-both",     label: "Open to both" },
+  { id: "marriage-minded",  label: "Marriage-minded" },
+  { id: "figuring-it-out",  label: "Still figuring it out" },
+] as const;
+
+export const INTERESTS = [
+  "Fitness / Gym", "Hiking / Outdoors", "Travel", "Cooking / Foodie",
+  "Music / Concerts", "Reading", "Gaming", "Art / Design", "Photography",
+  "Movies / TV", "Dancing", "Yoga / Meditation", "Sports", "Pets / Animals",
+  "Wine / Cocktails", "Coffee Culture", "Board Games", "Volunteering",
+  "Tech / Startups", "Fashion / Style",
+] as const;
+
+export const PARTNER_NON_NEGOTIABLES = [
+  "Emotional maturity", "Good communicator", "Ambitious / Driven", "Sense of humor",
+  "Physically active", "Family-oriented", "Financially stable", "Shares my values",
+  "No smoking", "No heavy drinking", "Must love pets", "Wants kids",
+  "Doesn't want kids", "Supportive of my career", "Politically aligned",
+] as const;
 
 export const TARGET_TYPES = [
   { id: "ambitious-professionals", label: "Ambitious Professionals", description: "Career-driven, motivated, goal-oriented" },
