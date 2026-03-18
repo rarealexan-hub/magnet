@@ -853,7 +853,10 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
 
         <form onSubmit={handleSubmit}>
           <div className="form-section">
-            <label className="form-label">Which app?</label>
+            <div className="form-label-row">
+              <label className="form-label">Which app?</label>
+              <span className="platform-limit-note">Pick one · <span className="platform-upgrade-link">Upgrade for multi-app</span></span>
+            </div>
             <div className="platform-select">
               {PLATFORMS.map((p) => (
                 <button
