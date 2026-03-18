@@ -440,6 +440,9 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     return (
       <div className="form-page">
         <div className="form-container">
+          <button type="button" className="step-back-btn" onClick={() => { setStep("photos"); window.scrollTo({ top: 0, behavior: "instant" }); }}>
+            ← Back
+          </button>
           <div className="form-header">
             <h2>What draws you in?</h2>
             <p>Pick the 2 photo styles you find most attractive. This helps us tailor your profile advice.</p>
@@ -516,6 +519,9 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     return (
       <div className="form-page">
         <div className="form-container">
+          <button type="button" className="step-back-btn" onClick={() => { setStep("prompts"); window.scrollTo({ top: 0, behavior: "instant" }); }}>
+            ← Back
+          </button>
           <div className="form-header">
             <h2>Your Photos</h2>
             <p>Photos are the #1 factor in matches. Upload them in the order they appear on your profile.</p>
@@ -669,6 +675,9 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     return (
       <div className="form-page">
         <div className="form-container">
+          <button type="button" className="step-back-btn" onClick={() => { setStep("form"); window.scrollTo({ top: 0, behavior: "instant" }); }}>
+            ← Back
+          </button>
           <div className="form-header">
             <div className="step-platform-badge">
               <span className="platform-btn-dot" style={{ background: platformInfo?.color ?? "#6366f1" }} />
