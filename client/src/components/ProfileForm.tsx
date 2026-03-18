@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Plus, X, Loader2, Upload, Type, Camera, GripVertical, ImagePlus, ChevronUp, ChevronDown } from "lucide-react";
 import heic2any from "heic2any";
-import { TARGET_TYPES, GENDER_OPTIONS, SEXUAL_ORIENTATIONS, PARTNER_PREFERENCES, PLATFORMS, PLATFORM_PROMPTS, RELATIONSHIP_INTENTS, INTERESTS, PARTNER_NON_NEGOTIABLES } from "@shared/types";
+import { TARGET_TYPES, TARGET_QUALITIES, GENDER_OPTIONS, SEXUAL_ORIENTATIONS, PARTNER_PREFERENCES, PLATFORMS, PLATFORM_PROMPTS, RELATIONSHIP_INTENTS, INTERESTS, PARTNER_NON_NEGOTIABLES } from "@shared/types";
 import type { ProfileInput, ProfileResult, PlatformId } from "@shared/types";
 
 interface Props {
@@ -107,7 +107,7 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
   const [screenshots, setScreenshots] = useState<ScreenshotFile[]>([]);
   const [currentPhotos, setCurrentPhotos] = useState<UploadedPhoto[]>([]);
   const [additionalPhotos, setAdditionalPhotos] = useState<UploadedPhoto[]>([]);
-  const [targetType, setTargetType] = useState("");
+  const [targetQualities, setTargetQualities] = useState<string[]>([]);
   const [customTarget, setCustomTarget] = useState("");
   const [gender, setGender] = useState("");
   const [sexualOrientation, setSexualOrientation] = useState("");
@@ -323,8 +323,8 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     fd.append("platform", platform);
     fd.append("email", email.trim());
     fd.append("bio", bio);
-    fd.append("targetType", targetType);
-    if (targetType === "custom" && customTarget) fd.append("customTarget", customTarget);
+    targetQualities.forEach((q) => fd.append("targetQualities", q));
+    if (customTarget.trim()) fd.append("customTarget", customTarget);
     if (gender) fd.append("gender", gender);
     if (sexualOrientation) fd.append("sexualOrientation", sexualOrientation);
     partnerPreferences.forEach((p) => fd.append("partnerPreferences", p));
@@ -372,8 +372,8 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
         prompts: selectedPrompts.filter((sp) => sp.answer.trim()).map((sp) => `${sp.question}: ${sp.answer}`),
         photoDescriptions: [],
         screenshots: [], currentPhotos: [], additionalPhotos: [],
-        targetType,
-        customTarget: targetType === "custom" ? customTarget : undefined,
+        targetType: targetQualities.join(", "),
+        customTarget: customTarget || undefined,
         gender: gender || undefined,
         sexualOrientation: sexualOrientation || undefined,
         partnerPreferences: partnerPreferences.length > 0 ? partnerPreferences : undefined,
@@ -395,10 +395,6 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     e.preventDefault();
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setError("Please enter a valid email address.");
-      return;
-    }
-    if (!targetType) {
-      setError("Choose who you want to attract.");
       return;
     }
     setError("");
@@ -925,30 +921,49 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
           </div>
 
           <div className="form-section">
-            <label className="form-label">Who are you trying to attract?</label>
-            <p className="form-hint">This is the killer feature. Generic profiles get generic matches.</p>
-            <div className="target-grid">
-              {TARGET_TYPES.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  className={`target-card ${targetType === t.id ? "active" : ""}`}
-                  onClick={() => setTargetType(t.id)}
-                >
-                  <span className="target-label">{t.label}</span>
-                  <span className="target-desc">{t.description}</span>
-                </button>
-              ))}
+            <div className="form-label-row">
+              <label className="form-label">Who are you trying to attract?</label>
+              <span className="form-label-optional">
+                {targetQualities.length}/10 selected
+              </span>
             </div>
-            {targetType === "custom" && (
+            <p className="form-hint">Pick up to 10 qualities. The more specific, the better the AI can calibrate your profile.</p>
+            <div className="tag-select-grid">
+              {TARGET_QUALITIES.map((q) => {
+                const selected = targetQualities.includes(q);
+                const maxed = targetQualities.length >= 10 && !selected;
+                return (
+                  <button
+                    key={q}
+                    type="button"
+                    className={`tag-select-btn ${selected ? "active" : ""} ${maxed ? "maxed" : ""}`}
+                    onClick={() => {
+                      if (selected) {
+                        setTargetQualities((prev) => prev.filter((x) => x !== q));
+                      } else if (targetQualities.length < 10) {
+                        setTargetQualities((prev) => [...prev, q]);
+                      }
+                    }}
+                  >
+                    {q}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="custom-target-block">
+              <div className="custom-target-header">
+                <span className="custom-target-title">Describe in your own words</span>
+                <span className="form-label-badge">optional</span>
+              </div>
+              <p className="form-hint" style={{ marginTop: 4, marginBottom: 8 }}>Go beyond the tags — personality, energy, lifestyle, whatever matters to you.</p>
               <textarea
                 className="form-textarea"
                 rows={3}
-                placeholder="Describe your ideal match — personality, interests, vibe..."
+                placeholder="e.g. Someone who can match my ambition but also knows how to unwind. Into travel, has a weird sense of humor, and can hold a real conversation..."
                 value={customTarget}
                 onChange={(e) => setCustomTarget(e.target.value)}
               />
-            )}
+            </div>
           </div>
 
           <div className="form-section">

@@ -369,7 +369,10 @@ app.post(
           ? body.photoDescriptions
           : [body.photoDescriptions]
         : [];
-      const targetType = body.targetType || "";
+      const targetQualities = body.targetQualities
+        ? Array.isArray(body.targetQualities) ? body.targetQualities : [body.targetQualities]
+        : [];
+      const targetType = targetQualities.length > 0 ? targetQualities.join(", ") : (body.targetType || "");
       const customTarget = body.customTarget;
       const gender = body.gender || "";
       const sexualOrientation = body.sexualOrientation || "";
@@ -398,11 +401,6 @@ app.post(
         res.status(400).json({ error: "Please provide a valid email address" });
         return;
       }
-      if (!targetType.trim()) {
-        res.status(400).json({ error: "Please select a target match type" });
-        return;
-      }
-
       const screenshotFiles = files?.screenshots || [];
       const currentPhotoFiles = files?.currentPhotos || [];
       const additionalPhotoFiles = files?.additionalPhotos || [];

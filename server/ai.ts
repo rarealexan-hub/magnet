@@ -190,7 +190,10 @@ function buildProfileText(input: ProfileInput): string {
   }
 
   if (input.targetType) {
-    message += `\nTarget match type: ${input.customTarget || input.targetType}\n`;
+    message += `\nIdeal match qualities: ${input.targetType}\n`;
+  }
+  if (input.customTarget && input.customTarget !== input.targetType) {
+    message += `Ideal match description: ${input.customTarget}\n`;
   }
 
   if (input.relationshipIntent) {

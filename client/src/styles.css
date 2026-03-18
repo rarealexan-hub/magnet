@@ -645,6 +645,32 @@ h1 {
   color: var(--accent-light);
 }
 
+.tag-select-btn.maxed {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.custom-target-block {
+  margin-top: 16px;
+  padding: 16px 18px;
+  background: var(--surface-2);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+
+.custom-target-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.custom-target-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
 .form-label-optional {
   font-size: 12px;
   font-weight: 400;
