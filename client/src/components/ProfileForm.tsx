@@ -115,7 +115,6 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
   const [relationshipIntent, setRelationshipIntent] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
   const [partnerNonNegotiables, setPartnerNonNegotiables] = useState<string[]>([]);
-  const [idealPartnerDescription, setIdealPartnerDescription] = useState("");
   const [datingHistory, setDatingHistory] = useState("");
   const [datingStruggle, setDatingStruggle] = useState("");
   const [additionalContext, setAdditionalContext] = useState("");
@@ -335,7 +334,6 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     if (relationshipIntent) fd.append("relationshipIntent", relationshipIntent);
     interests.forEach((i) => fd.append("interests", i));
     partnerNonNegotiables.forEach((n) => fd.append("partnerNonNegotiables", n));
-    if (idealPartnerDescription) fd.append("idealPartnerDescription", idealPartnerDescription);
     if (datingHistory) fd.append("datingHistory", datingHistory);
     if (datingStruggle) fd.append("datingStruggle", datingStruggle);
     if (additionalContext) fd.append("additionalContext", additionalContext);
@@ -1012,17 +1010,6 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
                 </button>
               ))}
             </div>
-          </div>
-
-          <div className="form-section">
-            <label className="form-label">Describe Your Ideal Partner</label>
-            <textarea
-              className="form-textarea"
-              rows={3}
-              placeholder="What kind of person are you hoping to meet? Describe personality, values, lifestyle, energy — be as specific as you want..."
-              value={idealPartnerDescription}
-              onChange={(e) => setIdealPartnerDescription(e.target.value)}
-            />
           </div>
 
           <div className="form-section ideal-match-optional-section">
