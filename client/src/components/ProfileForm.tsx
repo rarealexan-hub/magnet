@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Plus, X, Loader2, Upload, Type, Camera, GripVertical, ImagePlus, ChevronUp, ChevronDown } from "lucide-react";
 import heic2any from "heic2any";
-import { TARGET_TYPES, GENDER_OPTIONS, SEXUAL_ORIENTATIONS, PARTNER_PREFERENCES, PLATFORMS, PLATFORM_COLOR } from "@shared/types";
+import { TARGET_TYPES, GENDER_OPTIONS, SEXUAL_ORIENTATIONS, PARTNER_PREFERENCES, PLATFORMS, PLATFORM_COLOR, PLATFORM_PROMPTS } from "@shared/types";
 import type { ProfileInput, ProfileResult, PlatformId } from "@shared/types";
 
 interface Props {
@@ -11,6 +11,7 @@ interface Props {
 }
 
 type InputMode = "type" | "screenshot";
+type Step = "form" | "prompts" | "photos" | "taste";
 
 interface UploadedPhoto {
   file: File;
@@ -21,6 +22,11 @@ interface ScreenshotFile {
   file: File;
   preview: string;
   label: string;
+}
+
+interface SelectedPrompt {
+  question: string;
+  answer: string;
 }
 
 const MAX_SCREENSHOTS = 6;
@@ -91,14 +97,13 @@ function compressImage(file: File, maxDim = 1600, quality = 0.75): Promise<File>
 }
 
 export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props) {
-  const [platform, setPlatform] = useState<ProfileInput["platform"]>(
-    (preselectedPlatform as ProfileInput["platform"]) || "hinge" as ProfileInput["platform"]
+  const [platform, setPlatform] = useState<PlatformId>(
+    (preselectedPlatform as PlatformId) || "hinge"
   );
   const [email, setEmail] = useState(userEmail || "");
   const [inputMode, setInputMode] = useState<InputMode>("screenshot");
   const [bio, setBio] = useState("");
-  const [prompts, setPrompts] = useState<string[]>([""]);
-  const [photoDescriptions, setPhotoDescriptions] = useState<string[]>([""]);
+  const [selectedPrompts, setSelectedPrompts] = useState<SelectedPrompt[]>([]);
   const [screenshots, setScreenshots] = useState<ScreenshotFile[]>([]);
   const [currentPhotos, setCurrentPhotos] = useState<UploadedPhoto[]>([]);
   const [additionalPhotos, setAdditionalPhotos] = useState<UploadedPhoto[]>([]);
@@ -107,22 +112,8 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
   const [gender, setGender] = useState("");
   const [sexualOrientation, setSexualOrientation] = useState("");
   const [partnerPreferences, setPartnerPreferences] = useState<string[]>([]);
-  const [step, setStep] = useState<"form" | "taste">("form");
+  const [step, setStep] = useState<Step>("form");
   const [tasteSelections, setTasteSelections] = useState<string[]>([]);
-  const togglePartnerPref = (id: string) => {
-    setPartnerPreferences((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
-    );
-  };
-
-  const toggleTaste = (id: string) => {
-    setTasteSelections((prev) => {
-      if (prev.includes(id)) return prev.filter((p) => p !== id);
-      if (prev.length >= 2) return prev;
-      return [...prev, id];
-    });
-  };
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -137,20 +128,38 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
   const currentPhotosRef = useRef<HTMLInputElement>(null);
   const additionalPhotosRef = useRef<HTMLInputElement>(null);
 
-  const addPrompt = () => setPrompts([...prompts, ""]);
-  const removePrompt = (i: number) => setPrompts(prompts.filter((_, idx) => idx !== i));
-  const updatePrompt = (i: number, val: string) => {
-    const updated = [...prompts];
-    updated[i] = val;
-    setPrompts(updated);
+  const togglePartnerPref = (id: string) => {
+    setPartnerPreferences((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+    );
   };
 
-  const addPhotoDesc = () => setPhotoDescriptions([...photoDescriptions, ""]);
-  const removePhotoDesc = (i: number) => setPhotoDescriptions(photoDescriptions.filter((_, idx) => idx !== i));
-  const updatePhotoDesc = (i: number, val: string) => {
-    const updated = [...photoDescriptions];
-    updated[i] = val;
-    setPhotoDescriptions(updated);
+  const toggleTaste = (id: string) => {
+    setTasteSelections((prev) => {
+      if (prev.includes(id)) return prev.filter((p) => p !== id);
+      if (prev.length >= 2) return prev;
+      return [...prev, id];
+    });
+  };
+
+  const toggleSelectedPrompt = (question: string) => {
+    setSelectedPrompts((prev) => {
+      const exists = prev.find((sp) => sp.question === question);
+      if (exists) return prev.filter((sp) => sp.question !== question);
+      return [...prev, { question, answer: "" }];
+    });
+  };
+
+  const updatePromptAnswer = (index: number, answer: string) => {
+    setSelectedPrompts((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], answer };
+      return updated;
+    });
+  };
+
+  const removeSelectedPrompt = (index: number) => {
+    setSelectedPrompts((prev) => prev.filter((_, i) => i !== index));
   };
 
   const processFiles = useCallback(
@@ -165,10 +174,8 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
         setError(`Maximum ${max} photos allowed in this section.`);
         return;
       }
-
       const newPhotos: UploadedPhoto[] = [];
       const skipped: string[] = [];
-
       const filesToProcess = Array.from(files).slice(0, remaining);
       for (const file of filesToProcess) {
         let processed: File;
@@ -192,7 +199,6 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
         processed = await compressImage(processed);
         newPhotos.push({ file: processed, preview: URL.createObjectURL(processed) });
       }
-
       if (skipped.length > 0) setError(`Skipped: ${skipped.join(", ")}`);
       setter((prev) => [...prev, ...newPhotos]);
     },
@@ -316,8 +322,9 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     if (sexualOrientation) fd.append("sexualOrientation", sexualOrientation);
     partnerPreferences.forEach((p) => fd.append("partnerPreferences", p));
     tasteVibes.forEach((v) => fd.append("photoTasteSelections", v));
-    prompts.filter((p) => p.trim()).forEach((p) => fd.append("prompts", p));
-    photoDescriptions.filter((p) => p.trim()).forEach((p) => fd.append("photoDescriptions", p));
+    selectedPrompts
+      .filter((sp) => sp.answer.trim())
+      .forEach((sp) => fd.append("prompts", `${sp.question}: ${sp.answer}`));
     screenshots.forEach((s) => { fd.append("screenshots", s.file); fd.append("screenshotLabels", s.label || ""); });
     currentPhotos.forEach((p) => fd.append("currentPhotos", p.file));
     additionalPhotos.forEach((p) => fd.append("additionalPhotos", p.file));
@@ -348,8 +355,8 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
       const data = await res.json();
       const input: ProfileInput = {
         platform, email: email.trim(), bio,
-        prompts: prompts.filter((p) => p.trim()),
-        photoDescriptions: photoDescriptions.filter((p) => p.trim()),
+        prompts: selectedPrompts.filter((sp) => sp.answer.trim()).map((sp) => `${sp.question}: ${sp.answer}`),
+        photoDescriptions: [],
         screenshots: [], currentPhotos: [], additionalPhotos: [],
         targetType,
         customTarget: targetType === "custom" ? customTarget : undefined,
@@ -372,14 +379,8 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const hasTextContent = bio.trim() || prompts.some((p) => p.trim());
-    const hasScreenshots = screenshots.length > 0;
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setError("Please enter a valid email address.");
-      return;
-    }
-    if (!hasTextContent && !hasScreenshots) {
-      setError("Add at least your bio, a prompt, or upload a screenshot to get started.");
       return;
     }
     if (!targetType) {
@@ -387,8 +388,19 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
       return;
     }
     setError("");
-    setTasteSelections([]);
-    setStep("taste");
+    setStep("prompts");
+    window.scrollTo({ top: 0, behavior: "instant" });
+  };
+
+  const handlePromptsNext = () => {
+    const hasScreenshots = screenshots.length > 0;
+    const hasTextContent = bio.trim() || selectedPrompts.some((sp) => sp.answer.trim());
+    if (!hasScreenshots && !hasTextContent) {
+      setError("Upload a screenshot or enter your profile content to continue.");
+      return;
+    }
+    setError("");
+    setStep("photos");
     window.scrollTo({ top: 0, behavior: "instant" });
   };
 
@@ -418,6 +430,9 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
       url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=500&fit=crop&auto=format&q=80",
     },
   ] as const;
+
+  const platformInfo = PLATFORMS.find((p) => p.id === platform);
+  const platformPrompts = PLATFORM_PROMPTS[platform] ?? null;
 
   if (step === "taste") {
     return (
@@ -485,10 +500,335 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
             >
               None of these appeal to me
             </button>
-            <button type="button" className="taste-back-btn" onClick={() => setStep("form")}>
-              ← Back to profile
+            <button type="button" className="taste-back-btn" onClick={() => setStep("photos")}>
+              ← Back to photos
             </button>
             {error && <div className="form-error">{error}</div>}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "photos") {
+    return (
+      <div className="form-page">
+        <div className="form-container">
+          <div className="form-header">
+            <h2>Your Photos</h2>
+            <p>Photos are the #1 factor in matches. Upload them in the order they appear on your profile.</p>
+          </div>
+
+          <input
+            ref={currentPhotosRef}
+            type="file"
+            accept="image/*,.heic,.heif"
+            multiple
+            onChange={handleCurrentPhotos}
+            style={{ display: "none" }}
+          />
+          <input
+            ref={additionalPhotosRef}
+            type="file"
+            accept="image/*,.heic,.heif"
+            multiple
+            onChange={handleAdditionalPhotos}
+            style={{ display: "none" }}
+          />
+
+          <div className="photos-platform-section">
+            <div className="photos-platform-header">
+              <span className="platform-btn-dot" style={{ background: platformInfo?.color ?? "#6366f1", width: 12, height: 12 }} />
+              <span className="photos-platform-name">{platformInfo?.label ?? platform}</span>
+            </div>
+            <p className="form-hint">Upload your {platformInfo?.label} profile photos in the order they appear.</p>
+
+            {currentPhotos.length > 0 && (
+              <div className="photo-grid sortable">
+                {currentPhotos.map((p, i) => (
+                  <div
+                    key={i}
+                    className={`photo-card ${dragIndex === i ? "dragging" : ""} ${dragOverIndex === i ? "drag-over" : ""}`}
+                    {...(!isTouchDevice ? {
+                      draggable: true,
+                      onDragStart: () => handleDragStart(i),
+                      onDragOver: (e: React.DragEvent) => handleDragOver(e, i),
+                      onDragEnd: handleDragEnd
+                    } : {})}
+                  >
+                    <div className="photo-card-img">
+                      <img src={p.preview} alt={`Photo ${i + 1}`} />
+                      <div className="photo-position-badge">{i + 1}</div>
+                      <button type="button" className="screenshot-remove" onClick={() => removeCurrentPhoto(i)}>
+                        <X size={14} />
+                      </button>
+                      <div className="drag-handle desktop-only">
+                        <GripVertical size={14} />
+                      </div>
+                    </div>
+                    {currentPhotos.length > 1 && (
+                      <div className="mobile-reorder">
+                        <button type="button" className="reorder-btn" onClick={() => movePhoto(i, "up")} disabled={i === 0} aria-label="Move up">
+                          <ChevronUp size={14} />
+                        </button>
+                        <button type="button" className="reorder-btn" onClick={() => movePhoto(i, "down")} disabled={i === currentPhotos.length - 1} aria-label="Move down">
+                          <ChevronDown size={14} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="upload-btn"
+              onClick={() => currentPhotosRef.current?.click()}
+            >
+              <ImagePlus size={18} />
+              <div className="upload-btn-text">
+                <span className="upload-btn-title">
+                  {currentPhotos.length === 0
+                    ? `Upload ${platformInfo?.label} photos`
+                    : `${currentPhotos.length} photo${currentPhotos.length !== 1 ? "s" : ""} — add more`}
+                </span>
+                <span className="upload-btn-hint">PNG, JPG, WEBP up to 10MB each</span>
+              </div>
+            </button>
+          </div>
+
+          <div className="photos-platform-section">
+            <div className="photos-platform-header">
+              <span className="platform-btn-dot" style={{ background: "#888", width: 12, height: 12 }} />
+              <span className="photos-platform-name">Additional Photos</span>
+              <span className="form-label-badge" style={{ marginLeft: "auto" }}>Used in $2.99 Full Report</span>
+            </div>
+            <p className="form-hint">
+              Other photos we might suggest — candids, activities, travel, etc. The Full Report will tell you exactly which ones to swap in.
+            </p>
+
+            {additionalPhotos.length > 0 && (
+              <div className="photo-grid">
+                {additionalPhotos.map((p, i) => (
+                  <div key={i} className="photo-card">
+                    <div className="photo-card-img">
+                      <img src={p.preview} alt={`Additional ${i + 1}`} />
+                      <button type="button" className="screenshot-remove" onClick={() => removeAdditionalPhoto(i)}>
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="upload-btn"
+              onClick={() => additionalPhotosRef.current?.click()}
+            >
+              <ImagePlus size={18} />
+              <div className="upload-btn-text">
+                <span className="upload-btn-title">
+                  {additionalPhotos.length === 0
+                    ? "Upload additional photos"
+                    : `${additionalPhotos.length} photo${additionalPhotos.length !== 1 ? "s" : ""} — add more`}
+                </span>
+                <span className="upload-btn-hint">Group photos, candids, selfies (up to {MAX_ADDITIONAL_PHOTOS})</span>
+              </div>
+            </button>
+          </div>
+
+          {error && <div className="form-error">{error}</div>}
+
+          <div className="step-nav">
+            <button type="button" className="step-back-btn" onClick={() => { setStep("prompts"); window.scrollTo({ top: 0, behavior: "instant" }); }}>
+              ← Back
+            </button>
+            <button
+              type="button"
+              className="submit-btn step-continue-btn"
+              onClick={() => {
+                setTasteSelections([]);
+                setStep("taste");
+                window.scrollTo({ top: 0, behavior: "instant" });
+              }}
+            >
+              Continue →
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "prompts") {
+    return (
+      <div className="form-page">
+        <div className="form-container">
+          <div className="form-header">
+            <div className="step-platform-badge">
+              <span className="platform-btn-dot" style={{ background: platformInfo?.color ?? "#6366f1" }} />
+              <span style={{ color: platformInfo?.color ?? "#6366f1", fontWeight: 600 }}>{platformInfo?.label ?? platform}</span>
+            </div>
+            <h2>Your Profile Content</h2>
+            <p>
+              {platformPrompts
+                ? `${platformInfo?.label} is prompt-driven — click the prompts you use and type your answers.`
+                : "Share your bio so the AI can give you feedback."}
+            </p>
+          </div>
+
+          <div className="mode-toggle">
+            <button
+              type="button"
+              className={`mode-btn ${inputMode === "screenshot" ? "active" : ""}`}
+              onClick={() => setInputMode("screenshot")}
+            >
+              <Camera size={16} />
+              Upload Screenshots
+            </button>
+            <button
+              type="button"
+              className={`mode-btn ${inputMode === "type" ? "active" : ""}`}
+              onClick={() => setInputMode("type")}
+            >
+              <Type size={16} />
+              Type / Paste
+            </button>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.heic,.heif"
+            multiple
+            onChange={handleScreenshotSelect}
+            style={{ display: "none" }}
+          />
+
+          {inputMode === "screenshot" ? (
+            <div className="form-section">
+              <label className="form-label">Profile Screenshots</label>
+              <p className="form-hint">
+                Upload screenshots of your dating profile — bio, prompts, anything you want reviewed. The AI reads everything from the images.
+              </p>
+              {screenshots.length > 0 && (
+                <div className="screenshot-grid">
+                  {screenshots.map((s, i) => (
+                    <div key={i} className="screenshot-card">
+                      <div className="screenshot-preview">
+                        <img src={s.preview} alt={`Screenshot ${i + 1}`} />
+                        <button type="button" className="screenshot-remove" onClick={() => removeScreenshot(i)}>
+                          <X size={14} />
+                        </button>
+                      </div>
+                      <input
+                        className="form-input screenshot-label"
+                        placeholder={`What's this? (e.g. "my bio", "prompt 1")`}
+                        value={s.label}
+                        onChange={(e) => updateScreenshotLabel(i, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button type="button" className="upload-btn" onClick={() => fileInputRef.current?.click()}>
+                <Upload size={18} />
+                <div className="upload-btn-text">
+                  <span className="upload-btn-title">
+                    {screenshots.length === 0 ? "Upload screenshots" : "Add more screenshots"}
+                  </span>
+                  <span className="upload-btn-hint">PNG, JPG, HEIC — up to 20MB each</span>
+                </div>
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="form-section">
+                <label className="form-label">
+                  {platformPrompts ? "About / Bio" : "Your Bio"}
+                </label>
+                <textarea
+                  className="form-textarea"
+                  rows={3}
+                  placeholder={
+                    platformPrompts
+                      ? "Paste any bio or about section (optional for prompt-based apps)..."
+                      : 'e.g. "I love traveling, good food, and hanging out with friends"'
+                  }
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                />
+              </div>
+
+              {platformPrompts && (
+                <div className="form-section">
+                  <div className="form-label-row">
+                    <label className="form-label">Voice Prompts &amp; Written Prompts</label>
+                    {selectedPrompts.length > 0 && (
+                      <span className="prompt-selected-badge">{selectedPrompts.length} selected</span>
+                    )}
+                  </div>
+                  <p className="form-hint">Click a prompt to select it, then type your answer below.</p>
+
+                  {selectedPrompts.length > 0 && (
+                    <div className="selected-prompts-list">
+                      {selectedPrompts.map((sp, i) => (
+                        <div key={i} className="prompt-answer-item">
+                          <div className="prompt-answer-header">
+                            <span className="prompt-answer-question">{sp.question}</span>
+                            <button
+                              type="button"
+                              className="prompt-answer-remove"
+                              onClick={() => removeSelectedPrompt(i)}
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                          <textarea
+                            className="form-textarea prompt-answer-textarea"
+                            rows={2}
+                            placeholder="Your answer..."
+                            value={sp.answer}
+                            onChange={(e) => updatePromptAnswer(i, e.target.value)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="prompt-picker-grid">
+                    {platformPrompts.map((prompt) => {
+                      const isSelected = selectedPrompts.some((sp) => sp.question === prompt);
+                      return (
+                        <button
+                          key={prompt}
+                          type="button"
+                          className={`prompt-pill ${isSelected ? "selected" : ""}`}
+                          onClick={() => toggleSelectedPrompt(prompt)}
+                        >
+                          {prompt}
+                          {isSelected && <span className="prompt-pill-check">✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {error && <div className="form-error">{error}</div>}
+
+          <div className="step-nav">
+            <button type="button" className="step-back-btn" onClick={() => { setStep("form"); window.scrollTo({ top: 0, behavior: "instant" }); }}>
+              ← Back
+            </button>
+            <button type="button" className="submit-btn step-continue-btn" onClick={handlePromptsNext}>
+              Continue →
+            </button>
           </div>
         </div>
       </div>
@@ -499,8 +839,8 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     <div className="form-page">
       <div className="form-container">
         <div className="form-header">
-          <h2>Paste Your Profile</h2>
-          <p>The more you share, the better the analysis. We don't store anything.</p>
+          <h2>Let's get to know you</h2>
+          <p>Tell us about yourself so the AI gives you targeted, relevant feedback.</p>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -512,7 +852,7 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
                   key={p.id}
                   type="button"
                   className={`platform-btn ${platform === p.id ? "active" : ""}`}
-                  onClick={() => setPlatform(p.id as ProfileInput["platform"])}
+                  onClick={() => setPlatform(p.id as PlatformId)}
                 >
                   <span className="platform-btn-dot" style={{ background: p.color }} />
                   {p.label}
@@ -574,240 +914,6 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
           </div>
 
           <div className="form-section">
-            <label className="form-label">Your email</label>
-            <p className="form-hint">{userEmail ? "Signed in — using your account email." : "We'll send your results here so you don't lose them."}</p>
-            <input
-              type="email"
-              className="form-input"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              readOnly={!!userEmail}
-              style={userEmail ? { opacity: 0.7, cursor: "default" } : undefined}
-            />
-          </div>
-
-          <div className="form-section">
-            <label className="form-label">How do you want to share your profile?</label>
-            <div className="mode-toggle">
-              <button
-                type="button"
-                className={`mode-btn ${inputMode === "screenshot" ? "active" : ""}`}
-                onClick={() => setInputMode("screenshot")}
-              >
-                <Camera size={16} />
-                Upload screenshots
-              </button>
-              <button
-                type="button"
-                className={`mode-btn ${inputMode === "type" ? "active" : ""}`}
-                onClick={() => setInputMode("type")}
-              >
-                <Type size={16} />
-                Type it out
-              </button>
-            </div>
-          </div>
-
-          {inputMode === "screenshot" ? (
-            <div className="form-section">
-              <label className="form-label">Profile Screenshots</label>
-              <p className="form-hint">
-                Upload screenshots of your dating profile — bio, prompts, anything you want reviewed.
-                The AI will read everything from the images.
-              </p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,.heic,.heif"
-                multiple
-                onChange={handleScreenshotSelect}
-                style={{ display: "none" }}
-              />
-              {screenshots.length > 0 && (
-                <div className="screenshot-grid">
-                  {screenshots.map((s, i) => (
-                    <div key={i} className="screenshot-card">
-                      <div className="screenshot-preview">
-                        <img src={s.preview} alt={`Screenshot ${i + 1}`} />
-                        <button type="button" className="screenshot-remove" onClick={() => removeScreenshot(i)}>
-                          <X size={14} />
-                        </button>
-                      </div>
-                      <input
-                        className="form-input screenshot-label"
-                        placeholder={`What's this? (e.g. "my bio", "prompt 1")`}
-                        value={s.label}
-                        onChange={(e) => updateScreenshotLabel(i, e.target.value)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-              <button type="button" className="upload-btn" onClick={() => fileInputRef.current?.click()}>
-                <Upload size={18} />
-                <div className="upload-btn-text">
-                  <span className="upload-btn-title">
-                    {screenshots.length === 0 ? "Upload screenshots" : "Add more screenshots"}
-                  </span>
-                  <span className="upload-btn-hint">PNG, JPG, HEIC — up to 20MB each</span>
-                </div>
-              </button>
-            </div>
-          ) : (
-            <div className="form-section">
-              <label className="form-label">Your Bio</label>
-              <textarea
-                className="form-textarea"
-                rows={4}
-                placeholder='e.g. "I love traveling, good food, and hanging out with friends"'
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-              />
-            </div>
-          )}
-
-          <div className="form-section">
-            <label className="form-label">Prompts & Answers</label>
-            <p className="form-hint">Paste your prompt responses (e.g. "A life goal of mine is...")</p>
-            {prompts.map((prompt, i) => (
-              <div key={i} className="input-row">
-                <input
-                  className="form-input"
-                  placeholder={`Prompt ${i + 1}`}
-                  value={prompt}
-                  onChange={(e) => updatePrompt(i, e.target.value)}
-                />
-                {prompts.length > 1 && (
-                  <button type="button" className="remove-btn" onClick={() => removePrompt(i)}>
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
-            ))}
-            <button type="button" className="add-btn" onClick={addPrompt}>
-              <Plus size={16} /> Add Prompt
-            </button>
-          </div>
-
-          <div className="form-section photos-section">
-            <label className="form-label">Your Current Profile Photos</label>
-            <p className="form-hint">
-              Upload the photos currently on your profile, in the order they appear.
-              Drag to reorder them.
-            </p>
-            <input
-              ref={currentPhotosRef}
-              type="file"
-              accept="image/*,.heic,.heif"
-              multiple
-              onChange={handleCurrentPhotos}
-              style={{ display: "none" }}
-            />
-            {currentPhotos.length > 0 && (
-              <div className="photo-grid sortable">
-                {currentPhotos.map((p, i) => (
-                  <div
-                    key={i}
-                    className={`photo-card ${dragIndex === i ? "dragging" : ""} ${dragOverIndex === i ? "drag-over" : ""}`}
-                    {...(!isTouchDevice ? {
-                      draggable: true,
-                      onDragStart: () => handleDragStart(i),
-                      onDragOver: (e: React.DragEvent) => handleDragOver(e, i),
-                      onDragEnd: handleDragEnd
-                    } : {})}
-                  >
-                    <div className="photo-card-img">
-                      <img src={p.preview} alt={`Photo ${i + 1}`} />
-                      <div className="photo-position-badge">{i + 1}</div>
-                      <button type="button" className="screenshot-remove" onClick={() => removeCurrentPhoto(i)}>
-                        <X size={14} />
-                      </button>
-                      <div className="drag-handle desktop-only">
-                        <GripVertical size={14} />
-                      </div>
-                    </div>
-                    {currentPhotos.length > 1 && (
-                      <div className="mobile-reorder">
-                        <button type="button" className="reorder-btn" onClick={() => movePhoto(i, "up")} disabled={i === 0} aria-label="Move up">
-                          <ChevronUp size={14} />
-                        </button>
-                        <button type="button" className="reorder-btn" onClick={() => movePhoto(i, "down")} disabled={i === currentPhotos.length - 1} aria-label="Move down">
-                          <ChevronDown size={14} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-            <button
-              type="button"
-              className="upload-btn"
-              onClick={() => currentPhotosRef.current?.click()}
-            >
-              <ImagePlus size={18} />
-              <div className="upload-btn-text">
-                <span className="upload-btn-title">
-                  {currentPhotos.length === 0
-                    ? "Upload your current profile photos"
-                    : `${currentPhotos.length} photo${currentPhotos.length !== 1 ? "s" : ""} — add more`}
-                </span>
-                <span className="upload-btn-hint">Upload them in the order they appear on your profile (up to {MAX_CURRENT_PHOTOS})</span>
-              </div>
-            </button>
-          </div>
-
-          <div className="form-section photos-section">
-            <div className="form-label-row">
-              <label className="form-label">Additional Photos</label>
-              <span className="form-label-badge">Used in $2.99 Full Report</span>
-            </div>
-            <p className="form-hint">
-              Upload extra photos you haven't used yet — candids, group shots, travel, anything.
-              The Full Report will compare them against your current lineup and tell you <strong>exactly which ones to swap in and where</strong>, with side-by-side previews.
-            </p>
-            <input
-              ref={additionalPhotosRef}
-              type="file"
-              accept="image/*,.heic,.heif"
-              multiple
-              onChange={handleAdditionalPhotos}
-              style={{ display: "none" }}
-            />
-            {additionalPhotos.length > 0 && (
-              <div className="photo-grid">
-                {additionalPhotos.map((p, i) => (
-                  <div key={i} className="photo-card">
-                    <div className="photo-card-img">
-                      <img src={p.preview} alt={`Additional ${i + 1}`} />
-                      <button type="button" className="screenshot-remove" onClick={() => removeAdditionalPhoto(i)}>
-                        <X size={14} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            <button
-              type="button"
-              className="upload-btn"
-              onClick={() => additionalPhotosRef.current?.click()}
-            >
-              <ImagePlus size={18} />
-              <div className="upload-btn-text">
-                <span className="upload-btn-title">
-                  {additionalPhotos.length === 0
-                    ? "Upload additional photos"
-                    : `${additionalPhotos.length} photo${additionalPhotos.length !== 1 ? "s" : ""} — add more`}
-                </span>
-                <span className="upload-btn-hint">Group photos, candids, selfies — the AI picks the best ones (up to {MAX_ADDITIONAL_PHOTOS})</span>
-              </div>
-            </button>
-          </div>
-
-          <div className="form-section">
             <label className="form-label">Who are you trying to attract?</label>
             <p className="form-hint">This is the killer feature. Generic profiles get generic matches.</p>
             <div className="target-grid">
@@ -834,6 +940,21 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
             )}
           </div>
 
+          <div className="form-section">
+            <label className="form-label">Your email</label>
+            <p className="form-hint">{userEmail ? "Signed in — using your account email." : "We'll send your results here so you don't lose them."}</p>
+            <input
+              type="email"
+              className="form-input"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              readOnly={!!userEmail}
+              style={userEmail ? { opacity: 0.7, cursor: "default" } : undefined}
+            />
+          </div>
+
           {error && <div className="form-error">{error}</div>}
 
           <button type="submit" className="submit-btn" disabled={loading}>
@@ -843,7 +964,7 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
                 Analyzing your profile...
               </>
             ) : (
-              "Analyze My Profile"
+              "Continue →"
             )}
           </button>
         </form>
