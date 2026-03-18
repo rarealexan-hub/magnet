@@ -1,5 +1,6 @@
 import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight, ArrowLeftRight, PlusCircle, MinusCircle, MoveVertical, ListOrdered, MessageSquare, AlertCircle, Lightbulb, Sparkles, Quote } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
+import { PLATFORM_COLOR } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 import { FeedbackSurvey } from "./FeedbackSurvey";
 
@@ -34,8 +35,8 @@ function PhotoThumb({ raw, label }: { raw: string; label: string }) {
 
 export function FullReport({ result, profileInput, onBack }: Props) {
   const { score, feedback } = result;
-  const platform = profileInput.platform || "dating app";
-  const platformLabel = platform.charAt(0).toUpperCase() + platform.slice(1);
+  const platform = profileInput.platform || "other";
+  const platformLabel = PLATFORM_LABEL[platform] ?? platform;
 
   const scoreCategories = [
     { key: "photoQuality" as const, label: "Photo Quality", icon: Camera, analysisKey: "photoQuality" as const },
@@ -315,10 +316,7 @@ export function FullReport({ result, profileInput, onBack }: Props) {
             <div className="report-section-body">
               <div className="sample-profile-mock">
                 <div className="sample-mock-header" style={{
-                  borderColor: platform === "hinge" ? "#e8472f"
-                    : platform === "tinder" ? "#fd5564"
-                    : platform === "bumble" ? "#f8b916"
-                    : "#6366f1"
+                  borderColor: PLATFORM_COLOR[platform] ?? "#6366f1"
                 }}>
                   <span className="sample-mock-platform">{platformLabel}</span>
                   <span className="sample-mock-headline">{feedback.sampleProfile.headline}</span>

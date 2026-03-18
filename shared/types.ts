@@ -1,5 +1,30 @@
+export const PLATFORMS = [
+  { id: "hinge",              label: "Hinge",             color: "#e8472f" },
+  { id: "tinder",             label: "Tinder",            color: "#fd5564" },
+  { id: "bumble",             label: "Bumble",            color: "#f8b916" },
+  { id: "okcupid",            label: "OkCupid",           color: "#4a90d9" },
+  { id: "coffee-meets-bagel", label: "Coffee Meets Bagel",color: "#c8563a" },
+  { id: "match",              label: "Match",             color: "#e8212f" },
+  { id: "happn",              label: "Happn",             color: "#dd335c" },
+  { id: "the-league",         label: "The League",        color: "#b9935a" },
+  { id: "feeld",              label: "Feeld",             color: "#b97fb7" },
+  { id: "hily",               label: "Hily",              color: "#ff6b35" },
+  { id: "plenty-of-fish",     label: "Plenty of Fish",    color: "#00a4c4" },
+  { id: "zoosk",              label: "Zoosk",             color: "#e04c14" },
+  { id: "grindr",             label: "Grindr",            color: "#f5a623" },
+  { id: "badoo",              label: "Badoo",             color: "#7436e3" },
+  { id: "blk",                label: "BLK",               color: "#888888" },
+  { id: "her",                label: "HER",               color: "#d63384" },
+  { id: "other",              label: "Other",             color: "#6366f1" },
+] as const;
+
+export type PlatformId = typeof PLATFORMS[number]["id"];
+
+export const PLATFORM_LABEL: Record<string, string> = Object.fromEntries(PLATFORMS.map(p => [p.id, p.label]));
+export const PLATFORM_COLOR: Record<string, string> = Object.fromEntries(PLATFORMS.map(p => [p.id, p.color]));
+
 export interface ProfileInput {
-  platform: "hinge" | "tinder" | "bumble" | "other";
+  platform: PlatformId;
   email: string;
   bio: string;
   prompts: string[];

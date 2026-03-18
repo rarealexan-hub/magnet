@@ -1,8 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Plus, X, Loader2, Upload, Type, Camera, GripVertical, ImagePlus, ChevronUp, ChevronDown } from "lucide-react";
 import heic2any from "heic2any";
-import { TARGET_TYPES, GENDER_OPTIONS, SEXUAL_ORIENTATIONS, PARTNER_PREFERENCES } from "@shared/types";
-import type { ProfileInput, ProfileResult } from "@shared/types";
+import { TARGET_TYPES, GENDER_OPTIONS, SEXUAL_ORIENTATIONS, PARTNER_PREFERENCES, PLATFORMS, PLATFORM_COLOR } from "@shared/types";
+import type { ProfileInput, ProfileResult, PlatformId } from "@shared/types";
 
 interface Props {
   onResult: (data: ProfileResult, input: ProfileInput) => void;
@@ -92,7 +92,7 @@ function compressImage(file: File, maxDim = 1600, quality = 0.75): Promise<File>
 
 export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props) {
   const [platform, setPlatform] = useState<ProfileInput["platform"]>(
-    (preselectedPlatform as ProfileInput["platform"]) || "hinge"
+    (preselectedPlatform as ProfileInput["platform"]) || "hinge" as ProfileInput["platform"]
   );
   const [email, setEmail] = useState(userEmail || "");
   const [inputMode, setInputMode] = useState<InputMode>("screenshot");
@@ -507,14 +507,15 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
           <div className="form-section">
             <label className="form-label">Which app?</label>
             <div className="platform-select">
-              {(["hinge", "tinder", "bumble", "other"] as const).map((p) => (
+              {PLATFORMS.map((p) => (
                 <button
-                  key={p}
+                  key={p.id}
                   type="button"
-                  className={`platform-btn ${platform === p ? "active" : ""}`}
-                  onClick={() => setPlatform(p)}
+                  className={`platform-btn ${platform === p.id ? "active" : ""}`}
+                  onClick={() => setPlatform(p.id as ProfileInput["platform"])}
                 >
-                  {p.charAt(0).toUpperCase() + p.slice(1)}
+                  <span className="platform-btn-dot" style={{ background: p.color }} />
+                  {p.label}
                 </button>
               ))}
             </div>

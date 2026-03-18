@@ -5,6 +5,7 @@ import {
   Camera, Crosshair, Zap, Star, ChevronRight, Minus
 } from "lucide-react";
 import type { DashboardData, AnalysisRecord } from "@shared/types";
+import { PLATFORM_COLOR, PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 import { FeedbackSurvey } from "./FeedbackSurvey";
 
@@ -15,20 +16,6 @@ interface Props {
   userEmail?: string;
   token?: string;
 }
-
-const PLATFORM_LABELS: Record<string, string> = {
-  hinge: "Hinge",
-  tinder: "Tinder",
-  bumble: "Bumble",
-  other: "Other",
-};
-
-const PLATFORM_COLORS: Record<string, string> = {
-  hinge: "#e8472f",
-  tinder: "#fd5564",
-  bumble: "#f8b916",
-  other: "#6366f1",
-};
 
 const CATEGORY_META = [
   { key: "photoQuality", label: "Photo Quality", icon: Camera },
@@ -249,7 +236,7 @@ export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }:
                 <div className="dash-card-header">
                   <span className="dash-card-title">Latest Analysis</span>
                   <span className="dash-card-meta">
-                    {PLATFORM_LABELS[latest.platform] || latest.platform} · {timeAgo(latest.created_at)}
+                    {PLATFORM_LABEL[latest.platform] || latest.platform} · {timeAgo(latest.created_at)}
                   </span>
                 </div>
                 <div className="dash-latest-body">
@@ -314,8 +301,8 @@ export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }:
                               }}
                             />
                           </div>
-                          <span className="dash-bar-label" title={PLATFORM_LABELS[a.platform] || a.platform}>
-                            {(PLATFORM_LABELS[a.platform] || a.platform).slice(0, 1)}
+                          <span className="dash-bar-label" title={PLATFORM_LABEL[a.platform] || a.platform}>
+                            {(PLATFORM_LABEL[a.platform] || a.platform).slice(0, 1)}
                           </span>
                         </div>
                       ))}
@@ -343,8 +330,8 @@ export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }:
                 {platforms.map((p) => (
                   <div key={p.platform} className="dash-platform-card">
                     <div className="dash-platform-top">
-                      <div className="dash-platform-dot" style={{ background: PLATFORM_COLORS[p.platform] ?? "#6366f1" }} />
-                      <span className="dash-platform-name">{PLATFORM_LABELS[p.platform]}</span>
+                      <div className="dash-platform-dot" style={{ background: PLATFORM_COLOR[p.platform] ?? "#6366f1" }} />
+                      <span className="dash-platform-name">{PLATFORM_LABEL[p.platform]}</span>
                       {p.analysisCount > 0 && (
                         <span className="dash-platform-count">{p.analysisCount} scan{p.analysisCount > 1 ? "s" : ""}</span>
                       )}
@@ -395,9 +382,9 @@ export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }:
                         <div className="dash-history-top">
                           <span
                             className="dash-history-platform"
-                            style={{ color: PLATFORM_COLORS[a.platform] ?? "#6366f1" }}
+                            style={{ color: PLATFORM_COLOR[a.platform] ?? "#6366f1" }}
                           >
-                            {PLATFORM_LABELS[a.platform] || a.platform}
+                            {PLATFORM_LABEL[a.platform] || a.platform}
                           </span>
                           <span className="dash-history-date">{timeAgo(a.created_at)}</span>
                         </div>
