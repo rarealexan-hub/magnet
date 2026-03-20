@@ -130,7 +130,8 @@ async function buildUserContent(input: ProfileInput, promptText: string): Promis
       const raw = parseImagePayload(input.additionalPhotos[i]);
       if (!raw) continue;
       const img = await compressImage(raw.data);
-      parts.push({ type: "text", text: `Extra Photo ${String.fromCharCode(65 + i)}:` });
+      const photoLabel = raw.label ? `Extra Photo ${String.fromCharCode(65 + i)} (${raw.label}):` : `Extra Photo ${String.fromCharCode(65 + i)}:`;
+      parts.push({ type: "text", text: photoLabel });
       parts.push({
         type: "image_url",
         image_url: { url: `data:${img.mimeType};base64,${img.data}`, detail: "auto" },

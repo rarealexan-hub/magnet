@@ -5563,3 +5563,167 @@ button {
   opacity: 0.7;
   font-style: italic;
 }
+
+/* ── Lead photo slot ── */
+.lead-photo-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 200px;
+  border: 2px dashed var(--border);
+  border-radius: 16px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  padding: 28px 20px;
+  margin-bottom: 0;
+}
+
+.lead-photo-dropzone:hover {
+  border-color: var(--accent);
+  background: rgba(59, 130, 246, 0.04);
+  color: var(--text);
+}
+
+.lead-photo-preview {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.lead-photo-preview img {
+  width: 100%;
+  height: 340px;
+  object-fit: cover;
+  display: block;
+}
+
+.change-lead-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(9, 9, 11, 0.75);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+  backdrop-filter: blur(6px);
+}
+
+.change-lead-btn:hover {
+  background: rgba(59, 130, 246, 0.6);
+}
+
+.photo-score-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 20px;
+  background: rgba(59, 130, 246, 0.12);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  white-space: nowrap;
+}
+
+/* ── Additional category photos ── */
+.photos-additional-section {
+  margin-bottom: 0;
+}
+
+.category-photo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.category-photo-row {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.category-photo-row:last-child {
+  border-bottom: none;
+}
+
+.category-photo-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.category-photo-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.category-photo-hint {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.category-photo-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.category-photo-thumb {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.category-photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.category-photo-remove {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 18px;
+  height: 18px;
+  background: rgba(9, 9, 11, 0.8);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s;
+}
+
+.category-photo-remove:hover {
+  background: rgba(239, 68, 68, 0.8);
+}

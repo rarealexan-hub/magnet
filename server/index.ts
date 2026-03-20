@@ -391,6 +391,11 @@ app.post(
           ? body.screenshotLabels
           : [body.screenshotLabels]
         : [];
+      const additionalPhotoLabels: string[] = body.additionalPhotoLabels
+        ? Array.isArray(body.additionalPhotoLabels)
+          ? body.additionalPhotoLabels
+          : [body.additionalPhotoLabels]
+        : [];
 
       const validPlatforms = ["hinge","tinder","bumble","okcupid","coffee-meets-bagel","match","happn","the-league","feeld","hily","plenty-of-fish","zoosk","grindr","badoo","blk","her","other"];
       if (!platform || !validPlatforms.includes(platform)) {
@@ -434,7 +439,12 @@ app.post(
         ),
         screenshots: screenshotStrings,
         currentPhotos: filesToBase64Strings(currentPhotoFiles),
-        additionalPhotos: filesToBase64Strings(additionalPhotoFiles),
+        additionalPhotos: additionalPhotoFiles.map((f, i) => {
+          const data = f.buffer.toString("base64");
+          const mimeType = f.mimetype || "image/jpeg";
+          const label = additionalPhotoLabels[i] || "";
+          return JSON.stringify({ data, mimeType, label });
+        }),
         targetType,
         customTarget,
         gender: gender || undefined,

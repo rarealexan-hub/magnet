@@ -104,7 +104,10 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
   const [selectedPrompts, setSelectedPrompts] = useState<SelectedPrompt[]>([]);
   const [screenshots, setScreenshots] = useState<ScreenshotFile[]>([]);
   const [currentPhotos, setCurrentPhotos] = useState<UploadedPhoto[]>([]);
-  const [additionalPhotos, setAdditionalPhotos] = useState<UploadedPhoto[]>([]);
+  const [friendsPhotos, setFriendsPhotos] = useState<UploadedPhoto[]>([]);
+  const [selfiePhotos, setSelfiePhotos] = useState<UploadedPhoto[]>([]);
+  const [familyPhotos, setFamilyPhotos] = useState<UploadedPhoto[]>([]);
+  const [activitiesPhotos, setActivitiesPhotos] = useState<UploadedPhoto[]>([]);
   const [targetQualities, setTargetQualities] = useState<string[]>([]);
   const [customTarget, setCustomTarget] = useState("");
   const [gender, setGender] = useState("");
@@ -122,14 +125,12 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
   }, [userEmail]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const leadPhotoRef = useRef<HTMLInputElement>(null);
   const currentPhotosRef = useRef<HTMLInputElement>(null);
-  const additionalPhotosRef = useRef<HTMLInputElement>(null);
-
-  const togglePartnerPref = (id: string) => {
-    setPartnerPreferences((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
-    );
-  };
+  const friendsRef = useRef<HTMLInputElement>(null);
+  const selfiesRef = useRef<HTMLInputElement>(null);
+  const familyRef = useRef<HTMLInputElement>(null);
+  const activitiesRef = useRef<HTMLInputElement>(null);
 
   const toggleTaste = (id: string) => {
     setTasteSelections((prev) => {
@@ -207,20 +208,49 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     if (currentPhotosRef.current) currentPhotosRef.current.value = "";
   };
 
-  const handleAdditionalPhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) processFiles(e.target.files, setAdditionalPhotos, additionalPhotos, MAX_ADDITIONAL_PHOTOS);
-    if (additionalPhotosRef.current) additionalPhotosRef.current.value = "";
+  const handleLeadPhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (leadPhotoRef.current) leadPhotoRef.current.value = "";
+    if (!file) return;
+    let processed: File;
+    if (isHeic(file)) {
+      try { processed = await convertHeicToJpeg(file); }
+      catch { setError("Couldn't convert this HEIC file."); return; }
+    } else if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+      setError("Use JPG, PNG, WebP, or HEIC."); return;
+    } else {
+      processed = file;
+    }
+    if (processed.size > MAX_FILE_SIZE) { setError("File is over 20MB."); return; }
+    processed = await compressImage(processed);
+    const newPhoto = { file: processed, preview: URL.createObjectURL(processed) };
+    setCurrentPhotos((prev) => {
+      if (prev[0]) URL.revokeObjectURL(prev[0].preview);
+      return [newPhoto, ...prev.slice(1)];
+    });
   };
 
-  const removeCurrentPhoto = (i: number) => {
-    setCurrentPhotos((prev) => {
+  const makeCategoryHandler = (
+    setter: React.Dispatch<React.SetStateAction<UploadedPhoto[]>>,
+    current: UploadedPhoto[],
+    ref: React.RefObject<HTMLInputElement | null>
+  ) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) processFiles(e.target.files, setter, current, 5);
+    if (ref.current) ref.current.value = "";
+  };
+
+  const removeCategoryPhoto = (
+    setter: React.Dispatch<React.SetStateAction<UploadedPhoto[]>>,
+    i: number
+  ) => {
+    setter((prev) => {
       URL.revokeObjectURL(prev[i].preview);
       return prev.filter((_, idx) => idx !== i);
     });
   };
 
-  const removeAdditionalPhoto = (i: number) => {
-    setAdditionalPhotos((prev) => {
+  const removeCurrentPhoto = (i: number) => {
+    setCurrentPhotos((prev) => {
       URL.revokeObjectURL(prev[i].preview);
       return prev.filter((_, idx) => idx !== i);
     });
@@ -322,7 +352,13 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
       .forEach((sp) => fd.append("prompts", `${sp.question}: ${sp.answer}`));
     screenshots.forEach((s) => { fd.append("screenshots", s.file); fd.append("screenshotLabels", s.label || ""); });
     currentPhotos.forEach((p) => fd.append("currentPhotos", p.file));
-    additionalPhotos.forEach((p) => fd.append("additionalPhotos", p.file));
+    const addLabeled = (photos: UploadedPhoto[], label: string) => {
+      photos.forEach((p) => { fd.append("additionalPhotos", p.file); fd.append("additionalPhotoLabels", label); });
+    };
+    addLabeled(friendsPhotos, "With friends");
+    addLabeled(selfiePhotos, "Selfie");
+    addLabeled(familyPhotos, "Family");
+    addLabeled(activitiesPhotos, "Activity / hobby");
     return fd;
   };
 
@@ -496,91 +532,127 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
   }
 
   if (step === "photos") {
+    const leadPhoto = currentPhotos[0] ?? null;
+    const otherPhotos = currentPhotos.slice(1);
+    const CATEGORIES = [
+      { key: "friends", label: "With friends", hint: "Social proof — shows you have a life", ref: friendsRef, photos: friendsPhotos, setter: setFriendsPhotos },
+      { key: "selfies", label: "Selfies", hint: "Up-close, face clearly visible", ref: selfiesRef, photos: selfiePhotos, setter: setSelfiePhotos },
+      { key: "family", label: "Family", hint: "Shows warmth, values, and roots", ref: familyRef, photos: familyPhotos, setter: setFamilyPhotos },
+      { key: "activities", label: "Activities & hobbies", hint: "You doing things you love", ref: activitiesRef, photos: activitiesPhotos, setter: setActivitiesPhotos },
+    ] as const;
+
     return (
       <div className="form-page">
         <div className="form-container">
           <div className="form-header">
             <h2>Your photos are everything.</h2>
-            <p>Upload your profile photos in order. The AI analyzes each one — what it signals, what to fix, and what to replace.</p>
+            <p>The AI analyzes each photo — what it signals, what to fix, and what to swap in.</p>
           </div>
 
+          <input ref={leadPhotoRef} type="file" accept="image/*,.heic,.heif" onChange={handleLeadPhotoSelect} style={{ display: "none" }} />
           <input ref={currentPhotosRef} type="file" accept="image/*,.heic,.heif" multiple onChange={handleCurrentPhotos} style={{ display: "none" }} />
-          <input ref={additionalPhotosRef} type="file" accept="image/*,.heic,.heif" multiple onChange={handleAdditionalPhotos} style={{ display: "none" }} />
+          <input ref={friendsRef} type="file" accept="image/*,.heic,.heif" multiple onChange={makeCategoryHandler(setFriendsPhotos, friendsPhotos, friendsRef)} style={{ display: "none" }} />
+          <input ref={selfiesRef} type="file" accept="image/*,.heic,.heif" multiple onChange={makeCategoryHandler(setSelfiePhotos, selfiePhotos, selfiesRef)} style={{ display: "none" }} />
+          <input ref={familyRef} type="file" accept="image/*,.heic,.heif" multiple onChange={makeCategoryHandler(setFamilyPhotos, familyPhotos, familyRef)} style={{ display: "none" }} />
+          <input ref={activitiesRef} type="file" accept="image/*,.heic,.heif" multiple onChange={makeCategoryHandler(setActivitiesPhotos, activitiesPhotos, activitiesRef)} style={{ display: "none" }} />
 
-          {currentPhotos.length === 0 ? (
-            <button type="button" className="photos-hero-dropzone" onClick={() => currentPhotosRef.current?.click()}>
-              <ImagePlus size={36} strokeWidth={1.5} />
-              <span className="photos-hero-title">Upload your profile photos</span>
-              <span className="photos-hero-hint">Add them in the order they appear on your profile · PNG, JPG, HEIC</span>
-            </button>
-          ) : (
-            <div className="photos-hero-section">
-              <div className="photos-hero-label-row">
-                <span className="form-label">Profile photos <span className="form-label-optional">in order</span></span>
-                <button type="button" className="photos-add-more-btn" onClick={() => currentPhotosRef.current?.click()}>
-                  <Plus size={14} /> Add more
-                </button>
+          {/* Lead photo */}
+          <div className="photos-section">
+            <div className="form-label-row">
+              <label className="form-label">Lead photo</label>
+              <span className="photo-score-badge">30% of your score</span>
+            </div>
+            <p className="form-hint">The first photo on your profile. This is the one that gets you the swipe — or doesn't.</p>
+            {leadPhoto ? (
+              <div className="lead-photo-preview">
+                <img src={leadPhoto.preview} alt="Lead photo" />
+                <div className="photo-position-badge">1</div>
+                <button type="button" className="screenshot-remove" onClick={() => removeCurrentPhoto(0)}><X size={14} /></button>
+                <button type="button" className="change-lead-btn" onClick={() => leadPhotoRef.current?.click()}>Change</button>
               </div>
-              <div className="photo-grid sortable">
-                {currentPhotos.map((p, i) => (
+            ) : (
+              <button type="button" className="lead-photo-dropzone" onClick={() => leadPhotoRef.current?.click()}>
+                <ImagePlus size={32} strokeWidth={1.5} />
+                <span className="photos-hero-title">Upload lead photo</span>
+                <span className="photos-hero-hint">PNG, JPG, HEIC · this one matters most</span>
+              </button>
+            )}
+          </div>
+
+          {/* Other profile photos */}
+          <div className="photos-section">
+            <label className="form-label">Other profile photos <span className="form-label-optional">in order</span></label>
+            <p className="form-hint">Add the rest of your photos as they appear on your profile.</p>
+            {otherPhotos.length > 0 && (
+              <div className="photo-grid sortable" style={{ marginBottom: 12 }}>
+                {otherPhotos.map((p, i) => (
                   <div
                     key={i}
-                    className={`photo-card ${dragIndex === i ? "dragging" : ""} ${dragOverIndex === i ? "drag-over" : ""}`}
+                    className={`photo-card ${dragIndex === i + 1 ? "dragging" : ""} ${dragOverIndex === i + 1 ? "drag-over" : ""}`}
                     {...(!isTouchDevice ? {
                       draggable: true,
-                      onDragStart: () => handleDragStart(i),
-                      onDragOver: (e: React.DragEvent) => handleDragOver(e, i),
-                      onDragEnd: handleDragEnd
+                      onDragStart: () => handleDragStart(i + 1),
+                      onDragOver: (e: React.DragEvent) => handleDragOver(e, i + 1),
+                      onDragEnd: handleDragEnd,
                     } : {})}
                   >
                     <div className="photo-card-img">
-                      <img src={p.preview} alt={`Photo ${i + 1}`} />
-                      <div className="photo-position-badge">{i + 1}</div>
-                      <button type="button" className="screenshot-remove" onClick={() => removeCurrentPhoto(i)}><X size={14} /></button>
+                      <img src={p.preview} alt={`Photo ${i + 2}`} />
+                      <div className="photo-position-badge">{i + 2}</div>
+                      <button type="button" className="screenshot-remove" onClick={() => removeCurrentPhoto(i + 1)}><X size={14} /></button>
                       <div className="drag-handle desktop-only"><GripVertical size={14} /></div>
                     </div>
-                    {currentPhotos.length > 1 && (
+                    {otherPhotos.length > 1 && (
                       <div className="mobile-reorder">
-                        <button type="button" className="reorder-btn" onClick={() => movePhoto(i, "up")} disabled={i === 0}><ChevronUp size={14} /></button>
-                        <button type="button" className="reorder-btn" onClick={() => movePhoto(i, "down")} disabled={i === currentPhotos.length - 1}><ChevronDown size={14} /></button>
+                        <button type="button" className="reorder-btn" onClick={() => movePhoto(i + 1, "up")} disabled={i === 0}><ChevronUp size={14} /></button>
+                        <button type="button" className="reorder-btn" onClick={() => movePhoto(i + 1, "down")} disabled={i === otherPhotos.length - 1}><ChevronDown size={14} /></button>
                       </div>
                     )}
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          <div className="photos-extra-section">
-            <div className="photos-extra-label-row">
-              <span className="form-label" style={{ fontSize: 13 }}>Got more photos to compare? <span className="form-label-optional">optional · used in full report</span></span>
-              {additionalPhotos.length > 0 && (
-                <button type="button" className="photos-add-more-btn" onClick={() => additionalPhotosRef.current?.click()}>
-                  <Plus size={14} /> Add more
-                </button>
-              )}
-            </div>
-            {additionalPhotos.length > 0 && (
-              <div className="photo-grid">
-                {additionalPhotos.map((p, i) => (
-                  <div key={i} className="photo-card">
-                    <div className="photo-card-img">
-                      <img src={p.preview} alt={`Extra ${i + 1}`} />
-                      <button type="button" className="screenshot-remove" onClick={() => removeAdditionalPhoto(i)}><X size={14} /></button>
-                    </div>
-                  </div>
-                ))}
+            )}
+            <button type="button" className="upload-btn" onClick={() => currentPhotosRef.current?.click()}>
+              <Plus size={16} />
+              <div className="upload-btn-text">
+                <span className="upload-btn-title">{otherPhotos.length === 0 ? "Add other profile photos" : `${otherPhotos.length} added — add more`}</span>
+                <span className="upload-btn-hint">PNG, JPG, HEIC · up to 9 total profile photos</span>
               </div>
-            )}
-            {additionalPhotos.length === 0 && (
-              <button type="button" className="upload-btn" onClick={() => additionalPhotosRef.current?.click()}>
-                <Upload size={16} />
-                <div className="upload-btn-text">
-                  <span className="upload-btn-title">Upload extra photos</span>
-                  <span className="upload-btn-hint">Candids, travel, activities — the AI will say which ones are worth swapping in</span>
+            </button>
+          </div>
+
+          {/* Specific additional photos */}
+          <div className="photos-section photos-additional-section">
+            <div className="form-label-row">
+              <label className="form-label">Additional photos</label>
+              <span className="form-label-badge">optional · full report</span>
+            </div>
+            <p className="form-hint">Upload specific types of photos you have. The AI will tell you which ones are worth swapping in and why.</p>
+            <div className="category-photo-list">
+              {CATEGORIES.map(({ key, label, hint, ref, photos, setter }) => (
+                <div key={key} className="category-photo-row">
+                  <div className="category-photo-header">
+                    <div>
+                      <span className="category-photo-label">{label}</span>
+                      <span className="category-photo-hint">{hint}</span>
+                    </div>
+                    <button type="button" className="photos-add-more-btn" onClick={() => ref.current?.click()}>
+                      <Plus size={13} /> Add
+                    </button>
+                  </div>
+                  {photos.length > 0 && (
+                    <div className="category-photo-thumbs">
+                      {photos.map((p, i) => (
+                        <div key={i} className="category-photo-thumb">
+                          <img src={p.preview} alt={`${label} ${i + 1}`} />
+                          <button type="button" className="category-photo-remove" onClick={() => removeCategoryPhoto(setter, i)}><X size={11} /></button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </button>
-            )}
+              ))}
+            </div>
           </div>
 
           {error && <div className="form-error">{error}</div>}
