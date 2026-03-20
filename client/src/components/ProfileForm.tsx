@@ -706,45 +706,6 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
           </div>
 
           <div className="form-section">
-            <div className="form-label-row">
-              <label className="form-label">Who are you trying to attract?</label>
-              <span className="form-label-optional">{targetQualities.length}/5 · optional</span>
-            </div>
-            <div className="tag-select-grid">
-              {TARGET_QUALITIES.map((q) => {
-                const selected = targetQualities.includes(q);
-                const maxed = targetQualities.length >= 5 && !selected;
-                return (
-                  <button
-                    key={q}
-                    type="button"
-                    className={`tag-select-btn ${selected ? "active" : ""} ${maxed ? "maxed" : ""}`}
-                    onClick={() => {
-                      if (selected) setTargetQualities((prev) => prev.filter((x) => x !== q));
-                      else if (targetQualities.length < 5) setTargetQualities((prev) => [...prev, q]);
-                    }}
-                  >
-                    {q}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="custom-target-block">
-              <div className="custom-target-header">
-                <span className="custom-target-title">Describe in your own words</span>
-                <span className="form-label-badge">optional</span>
-              </div>
-              <textarea
-                className="form-textarea"
-                rows={2}
-                placeholder="e.g. Ambitious but laid-back, loves travel, has a weird sense of humor..."
-                value={customTarget}
-                onChange={(e) => setCustomTarget(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="form-section">
             <button type="button" className="context-toggle-btn" onClick={() => setContextOpen(!contextOpen)}>
               <span>What's the first text someone sees on your profile?</span>
               <span className="form-label-badge">optional</span>
@@ -794,6 +755,45 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
                 )}
               </div>
             )}
+          </div>
+
+          <div className="form-section">
+            <div className="form-label-row">
+              <label className="form-label">Who are you trying to attract?</label>
+              <span className="form-label-optional">{targetQualities.length}/5 · optional</span>
+            </div>
+            <div className="tag-select-grid">
+              {TARGET_QUALITIES.map((q) => {
+                const selected = targetQualities.includes(q);
+                const maxed = targetQualities.length >= 5 && !selected;
+                return (
+                  <button
+                    key={q}
+                    type="button"
+                    className={`tag-select-btn ${selected ? "active" : ""} ${maxed ? "maxed" : ""}`}
+                    onClick={() => {
+                      if (selected) setTargetQualities((prev) => prev.filter((x) => x !== q));
+                      else if (targetQualities.length < 5) setTargetQualities((prev) => [...prev, q]);
+                    }}
+                  >
+                    {q}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="custom-target-block">
+              <div className="custom-target-header">
+                <span className="custom-target-title">Describe in your own words</span>
+                <span className="form-label-badge">optional</span>
+              </div>
+              <textarea
+                className="form-textarea"
+                rows={2}
+                placeholder="e.g. Ambitious but laid-back, loves travel, has a weird sense of humor..."
+                value={customTarget}
+                onChange={(e) => setCustomTarget(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="form-section">
