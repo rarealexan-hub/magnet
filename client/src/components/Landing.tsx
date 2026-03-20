@@ -1,4 +1,4 @@
-import { ArrowRight, Magnet as MagnetIcon, Target, Sparkles, TrendingUp, Zap, Shield } from "lucide-react";
+import { ArrowRight, Magnet as MagnetIcon, Target, Sparkles, TrendingUp, Zap, Shield, FlaskConical } from "lucide-react";
 
 interface Props {
   onStart: () => void;
@@ -31,6 +31,26 @@ export function Landing({ onStart }: Props) {
           <Shield size={14} />
           Built using behavioral patterns from high-performing profiles
         </p>
+      </div>
+
+      <div className="stats-strip">
+        <div className="stats-strip-label">
+          <FlaskConical size={13} />
+          Science-backed metrics
+        </div>
+        <div className="stats-strip-divider" />
+        <div className="stat-pill">
+          <span className="stat-number">+14%</span>
+          <span className="stat-desc">more likes with a smiling lead photo</span>
+        </div>
+        <div className="stat-pill">
+          <span className="stat-number">3×</span>
+          <span className="stat-desc">more comments with activity photos</span>
+        </div>
+        <div className="stat-pill">
+          <span className="stat-number">+49%</span>
+          <span className="stat-desc">more matches with optimized photos</span>
+        </div>
       </div>
 
       <div className="features-grid">
