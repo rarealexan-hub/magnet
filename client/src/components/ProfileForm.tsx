@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Plus, X, Loader2, Upload, GripVertical, ImagePlus, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, X, Loader2, Upload, GripVertical, ImagePlus, ChevronUp, ChevronDown, Camera } from "lucide-react";
 import heic2any from "heic2any";
 import { TARGET_QUALITIES, GENDER_OPTIONS, PARTNER_PREFERENCES, PLATFORMS, PLATFORM_PROMPTS } from "@shared/types";
 import type { ProfileInput, ProfileResult, PlatformId } from "@shared/types";
@@ -620,6 +620,14 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
             <p className="form-hint" style={{ marginTop: 6 }}>Could be your age, job, a prompt answer — whatever shows up first.</p>
             {contextOpen && (
               <div className="context-toggle-body">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.heic,.heif"
+                  multiple
+                  style={{ display: "none" }}
+                  onChange={handleScreenshotSelect}
+                />
                 <p className="form-hint">Add your bio or prompts and the AI will factor them into your feedback.</p>
                 <label className="form-sublabel">Bio / About</label>
                 <textarea
@@ -629,6 +637,22 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                 />
+                <div className="bio-screenshot-row">
+                  {screenshots.map((s, i) => (
+                    <div key={i} className="bio-screenshot-thumb">
+                      <img src={s.preview} alt={`screenshot ${i + 1}`} />
+                      <button type="button" className="bio-screenshot-remove" onClick={() => removeScreenshot(i)}>
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  {screenshots.length < MAX_SCREENSHOTS && (
+                    <button type="button" className="bio-screenshot-add" onClick={() => fileInputRef.current?.click()}>
+                      <Camera size={15} />
+                      Upload screenshot
+                    </button>
+                  )}
+                </div>
                 {platformPrompts && (
                   <>
                     <div className="form-label-row" style={{ marginTop: 14 }}>
