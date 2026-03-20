@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Plus, X, Loader2, Upload, GripVertical, ImagePlus, ChevronUp, ChevronDown } from "lucide-react";
 import heic2any from "heic2any";
-import { TARGET_QUALITIES, GENDER_OPTIONS, PLATFORMS, PLATFORM_PROMPTS } from "@shared/types";
+import { TARGET_QUALITIES, GENDER_OPTIONS, PARTNER_PREFERENCES, PLATFORMS, PLATFORM_PROMPTS } from "@shared/types";
 import type { ProfileInput, ProfileResult, PlatformId } from "@shared/types";
 
 interface Props {
@@ -111,6 +111,7 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
   const [targetQualities, setTargetQualities] = useState<string[]>([]);
   const [customTarget, setCustomTarget] = useState("");
   const [gender, setGender] = useState("");
+  const [attractedTo, setAttractedTo] = useState<string[]>([]);
   const [step, setStep] = useState<Step>("photos");
   const [contextOpen, setContextOpen] = useState(false);
   const [tasteSelections, setTasteSelections] = useState<string[]>([]);
@@ -346,6 +347,7 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     targetQualities.forEach((q) => fd.append("targetQualities", q));
     if (customTarget.trim()) fd.append("customTarget", customTarget);
     if (gender) fd.append("gender", gender);
+    attractedTo.forEach((p) => fd.append("partnerPreferences", p));
     tasteVibes.forEach((v) => fd.append("photoTasteSelections", v));
     selectedPrompts
       .filter((sp) => sp.answer.trim())
@@ -700,6 +702,24 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
               {GENDER_OPTIONS.map((g) => (
                 <button key={g.id} type="button" className={`orientation-btn ${gender === g.id ? "active" : ""}`} onClick={() => setGender(gender === g.id ? "" : g.id)}>
                   {g.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-section">
+            <label className="form-label">Gender you're trying to attract <span className="form-label-optional">optional · pick all that apply</span></label>
+            <div className="orientation-grid">
+              {PARTNER_PREFERENCES.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`orientation-btn ${attractedTo.includes(p.id) ? "active" : ""}`}
+                  onClick={() => setAttractedTo((prev) =>
+                    prev.includes(p.id) ? prev.filter((x) => x !== p.id) : [...prev, p.id]
+                  )}
+                >
+                  {p.label}
                 </button>
               ))}
             </div>
