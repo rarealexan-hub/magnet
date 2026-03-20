@@ -435,7 +435,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
             <p>The AI analyzes each photo — what it signals, what to fix, and what to swap in.</p>
           </div>
 
-          <input ref={leadPhotoRef} type="file" accept="image/*,.heic,.heif" onChange={handleLeadPhotoSelect} style={{ display: "none" }} />
+          <input id="lead-photo-input" ref={leadPhotoRef} type="file" accept="image/*,.heic,.heif" onChange={handleLeadPhotoSelect} style={{ display: "none" }} />
           <input ref={currentPhotosRef} type="file" accept="image/*,.heic,.heif" multiple onChange={handleCurrentPhotos} style={{ display: "none" }} />
           <input ref={friendsRef} type="file" accept="image/*,.heic,.heif" multiple onChange={makeCategoryHandler(setFriendsPhotos, friendsPhotos, friendsRef)} style={{ display: "none" }} />
           <input ref={selfiesRef} type="file" accept="image/*,.heic,.heif" multiple onChange={makeCategoryHandler(setSelfiePhotos, selfiePhotos, selfiesRef)} style={{ display: "none" }} />
@@ -454,14 +454,14 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 <img src={leadPhoto.preview} alt="Lead photo" />
                 <div className="photo-position-badge">1</div>
                 <button type="button" className="screenshot-remove" onClick={() => removeCurrentPhoto(0)}><X size={14} /></button>
-                <button type="button" className="change-lead-btn" onClick={() => leadPhotoRef.current?.click()}>Change</button>
+                <label htmlFor="lead-photo-input" className="change-lead-btn">Change</label>
               </div>
             ) : (
-              <button type="button" className="lead-photo-dropzone" onClick={() => leadPhotoRef.current?.click()}>
+              <label htmlFor="lead-photo-input" className="lead-photo-dropzone">
                 <ImagePlus size={32} strokeWidth={1.5} />
                 <span className="photos-hero-title">Upload lead photo</span>
                 <span className="photos-hero-hint">Screenshots work too · PNG, JPG, HEIC</span>
-              </button>
+              </label>
             )}
           </div>
 

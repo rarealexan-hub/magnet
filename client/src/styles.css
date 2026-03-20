@@ -5725,6 +5725,8 @@ button {
   transition: border-color 0.2s, background 0.2s;
   padding: 28px 20px;
   margin-bottom: 0;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .lead-photo-dropzone:hover {
