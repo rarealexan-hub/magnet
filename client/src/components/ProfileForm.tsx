@@ -576,7 +576,7 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
               <button type="button" className="lead-photo-dropzone" onClick={() => leadPhotoRef.current?.click()}>
                 <ImagePlus size={32} strokeWidth={1.5} />
                 <span className="photos-hero-title">Upload lead photo</span>
-                <span className="photos-hero-hint">PNG, JPG, HEIC · this one matters most</span>
+                <span className="photos-hero-hint">Screenshots work too · PNG, JPG, HEIC</span>
               </button>
             )}
           </div>
@@ -618,7 +618,7 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
               <Plus size={16} />
               <div className="upload-btn-text">
                 <span className="upload-btn-title">{otherPhotos.length === 0 ? "Add other profile photos" : `${otherPhotos.length} added — add more`}</span>
-                <span className="upload-btn-hint">PNG, JPG, HEIC · up to 9 total profile photos</span>
+                <span className="upload-btn-hint">Screenshots of your profile work great · PNG, JPG, HEIC</span>
               </div>
             </button>
           </div>
