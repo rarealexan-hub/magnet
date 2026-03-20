@@ -6,6 +6,7 @@ import type { ProfileInput, ProfileResult, PlatformId } from "@shared/types";
 
 interface Props {
   onResult: (data: ProfileResult, input: ProfileInput) => void;
+  onBack?: () => void;
   userEmail?: string;
   preselectedPlatform?: string;
 }
@@ -95,7 +96,7 @@ function compressImage(file: File, maxDim = 1600, quality = 0.75): Promise<File>
   });
 }
 
-export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props) {
+export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }: Props) {
   const [platform, setPlatform] = useState<PlatformId>(
     (preselectedPlatform as PlatformId) || "hinge"
   );
@@ -547,6 +548,11 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
               ? `Continue with ${currentPhotos.length} photo${currentPhotos.length !== 1 ? "s" : ""} →`
               : "Continue →"}
           </button>
+          {onBack && (
+            <button type="button" className="step-back-btn bottom" onClick={onBack}>
+              ← Back
+            </button>
+          )}
         </div>
       </div>
     );
@@ -556,9 +562,6 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     return (
       <div className="form-page">
         <div className="form-container">
-          <button type="button" className="step-back-btn" onClick={() => { setStep("photos"); window.scrollTo({ top: 0, behavior: "instant" }); }}>
-            ← Back
-          </button>
           <div className="form-header">
             <h2>Quick profile details</h2>
             <p>A few things to help the AI give you accurate, targeted feedback.</p>
@@ -718,6 +721,9 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
 
           <button type="button" className="submit-btn" onClick={handleDetailsNext}>
             Continue →
+          </button>
+          <button type="button" className="step-back-btn bottom" onClick={() => { setStep("photos"); window.scrollTo({ top: 0, behavior: "instant" }); }}>
+            ← Back to photos
           </button>
         </div>
       </div>

@@ -92,6 +92,7 @@ export default function App() {
       {view === "form" && (
         <ProfileForm
           onResult={handleResult}
+          onBack={() => setView("landing")}
           userEmail={user?.email}
           preselectedPlatform={preselectedPlatform}
         />
