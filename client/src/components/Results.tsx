@@ -280,16 +280,6 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
               <FileText size={15} /> View Full Report
             </button>
           )}
-          <div className="reanalyze-cta" onClick={onStartOver}>
-            <div className="reanalyze-cta-left">
-              <div className="reanalyze-cta-icon"><ArrowRight size={14} /></div>
-              <div>
-                <p className="reanalyze-cta-title">Analyze another profile</p>
-                <p className="reanalyze-cta-sub">Run a full analysis on a new or updated profile</p>
-              </div>
-            </div>
-            <span className="reanalyze-price-badge">$2.99</span>
-          </div>
         </div>
 
         <FeedbackSurvey
