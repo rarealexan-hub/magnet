@@ -560,7 +560,7 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
           <div className="photos-section">
             <div className="form-label-row">
               <label className="form-label">Lead photo</label>
-              <span className="photo-score-badge">30% of your score</span>
+              <span className="photo-score-badge">60% of your score</span>
             </div>
             <p className="form-hint">The first photo on your profile. This is the one that gets you the swipe — or doesn't.</p>
             {leadPhoto ? (
