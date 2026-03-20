@@ -629,7 +629,7 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
               <label className="form-label">Photos not on your profile yet</label>
               <span className="form-label-badge">optional · full report</span>
             </div>
-            <p className="form-hint">Got photos sitting in your camera roll? Upload them here — the AI will tell you which ones are worth swapping in and why.</p>
+            <p className="form-hint">Go through your favorites album and upload some that didn't make the cut the first time around.</p>
             <div className="category-photo-list">
               {CATEGORIES.map(({ key, label, hint, ref, photos, setter }) => (
                 <div key={key} className="category-photo-row">
