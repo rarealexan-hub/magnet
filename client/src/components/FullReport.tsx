@@ -1,6 +1,6 @@
 import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight, ArrowLeftRight, PlusCircle, MinusCircle, MoveVertical, ListOrdered, MessageSquare, AlertCircle, Lightbulb, Sparkles, Quote } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
-import { PLATFORM_COLOR } from "@shared/types";
+import { PLATFORM_COLOR, PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 import { FeedbackSurvey } from "./FeedbackSurvey";
 
