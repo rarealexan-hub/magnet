@@ -10,7 +10,7 @@ interface Props {
   preselectedPlatform?: string;
 }
 
-type Step = "photos" | "details" | "taste";
+type Step = "photos" | "details";
 
 interface UploadedPhoto {
   file: File;
@@ -114,7 +114,6 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
   const [attractedTo, setAttractedTo] = useState<string[]>([]);
   const [step, setStep] = useState<Step>("photos");
   const [contextOpen, setContextOpen] = useState(false);
-  const [tasteSelections, setTasteSelections] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -132,14 +131,6 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
   const selfiesRef = useRef<HTMLInputElement>(null);
   const familyRef = useRef<HTMLInputElement>(null);
   const activitiesRef = useRef<HTMLInputElement>(null);
-
-  const toggleTaste = (id: string) => {
-    setTasteSelections((prev) => {
-      if (prev.includes(id)) return prev.filter((p) => p !== id);
-      if (prev.length >= 2) return prev;
-      return [...prev, id];
-    });
-  };
 
   const toggleSelectedPrompt = (question: string) => {
     setSelectedPrompts((prev) => {
@@ -339,7 +330,7 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     });
   };
 
-  const buildFormData = (tasteVibes: string[]) => {
+  const buildFormData = () => {
     const fd = new FormData();
     fd.append("platform", platform);
     fd.append("email", email.trim());
@@ -348,7 +339,6 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     if (customTarget.trim()) fd.append("customTarget", customTarget);
     if (gender) fd.append("gender", gender);
     attractedTo.forEach((p) => fd.append("partnerPreferences", p));
-    tasteVibes.forEach((v) => fd.append("photoTasteSelections", v));
     selectedPrompts
       .filter((sp) => sp.answer.trim())
       .forEach((sp) => fd.append("prompts", `${sp.question}: ${sp.answer}`));
@@ -364,11 +354,11 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     return fd;
   };
 
-  const runAnalysis = async (tasteVibes: string[]) => {
+  const runAnalysis = async () => {
     setLoading(true);
     setError("");
     try {
-      const formData = buildFormData(tasteVibes);
+      const formData = buildFormData();
       const authToken = localStorage.getItem("magnet_token");
       const headers: Record<string, string> = {};
       if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
@@ -394,7 +384,6 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
         targetType: targetQualities.join(", "),
         customTarget: customTarget || undefined,
         gender: gender || undefined,
-        photoTasteSelections: tasteVibes.length > 0 ? tasteVibes : undefined,
       };
       onResult(data, input);
     } catch (err: any) {
@@ -420,118 +409,12 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
       return;
     }
     setError("");
-    setStep("taste");
-    window.scrollTo({ top: 0, behavior: "instant" });
+    runAnalysis();
   };
-
-  const TASTE_PHOTOS = [
-    {
-      id: "adventurous",
-      label: "Adventurous & Active",
-      description: "Outdoors, travel, high energy",
-      url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=500&fit=crop&auto=format&q=80",
-    },
-    {
-      id: "sophisticated",
-      label: "Polished & Confident",
-      description: "Stylish, refined, put-together",
-      url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop&auto=format&q=80",
-    },
-    {
-      id: "candid",
-      label: "Natural & Authentic",
-      description: "Genuine moments, real smiles",
-      url: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&h=500&fit=crop&auto=format&q=80",
-    },
-    {
-      id: "playful",
-      label: "Fun & Playful",
-      description: "Lighthearted, laughing, expressive",
-      url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=500&fit=crop&auto=format&q=80",
-    },
-  ] as const;
 
   const platformInfo = PLATFORMS.find((p) => p.id === platform);
   const platformPrompts = PLATFORM_PROMPTS[platform] ?? null;
 
-  if (step === "taste") {
-    return (
-      <div className="form-page">
-        <div className="form-container">
-          <button type="button" className="step-back-btn" onClick={() => { setStep("photos"); window.scrollTo({ top: 0, behavior: "instant" }); }}>
-            ← Back
-          </button>
-          <div className="form-header">
-            <h2>What draws you in?</h2>
-            <p>Pick the 2 photo styles you find most attractive. This helps us tailor your profile advice.</p>
-          </div>
-          <div className="taste-grid">
-            {TASTE_PHOTOS.map((photo) => {
-              const selected = tasteSelections.includes(photo.id);
-              const maxed = tasteSelections.length >= 2 && !selected;
-              return (
-                <button
-                  key={photo.id}
-                  type="button"
-                  className={`taste-card ${selected ? "selected" : ""} ${maxed ? "dimmed" : ""}`}
-                  onClick={() => toggleTaste(photo.id)}
-                >
-                  <div className="taste-img-wrap">
-                    <img src={photo.url} alt={photo.label} className="taste-img" loading="lazy" />
-                    {selected && (
-                      <div className="taste-check">
-                        <span>✓</span>
-                      </div>
-                    )}
-                    {!selected && tasteSelections.indexOf(photo.id) === -1 && !maxed && (
-                      <div className="taste-number">
-                        {tasteSelections.length === 0 ? "1st" : "2nd"}
-                      </div>
-                    )}
-                  </div>
-                  <div className="taste-card-body">
-                    <p className="taste-label">{photo.label}</p>
-                    <p className="taste-desc">{photo.description}</p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-          <div className="taste-footer">
-            <p className="taste-progress">
-              {tasteSelections.length === 0 && "Select 2 photos to continue"}
-              {tasteSelections.length === 1 && "Select 1 more to continue"}
-              {tasteSelections.length === 2 && "Ready — let's analyze your profile"}
-            </p>
-            <button
-              type="button"
-              className="submit-btn"
-              disabled={tasteSelections.length < 2 || loading}
-              onClick={() => runAnalysis(tasteSelections)}
-            >
-              {loading ? (
-                <><Loader2 size={20} className="spin" /> Analyzing your profile...</>
-              ) : (
-                "Analyze My Profile →"
-              )}
-            </button>
-            <button
-              type="button"
-              className="taste-none-btn"
-              disabled={loading}
-              onClick={() => runAnalysis(["none"])}
-            >
-              None of these appeal to me
-            </button>
-            <button type="button" className="taste-back-btn" onClick={() => setStep("photos")}>
-              ← Back to photos
-            </button>
-            {error && <div className="form-error">{error}</div>}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (step === "photos") {
     const leadPhoto = currentPhotos[0] ?? null;
