@@ -746,7 +746,7 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
 
           <div className="form-section">
             <button type="button" className="context-toggle-btn" onClick={() => setContextOpen(!contextOpen)}>
-              <span>Add profile text</span>
+              <span>What's the first text someone sees on your profile?</span>
               <span className="form-label-badge">optional</span>
               {contextOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
