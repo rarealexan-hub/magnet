@@ -535,10 +535,10 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
     const leadPhoto = currentPhotos[0] ?? null;
     const otherPhotos = currentPhotos.slice(1);
     const CATEGORIES = [
-      { key: "friends", label: "With friends", hint: "Social proof — shows you have a life", ref: friendsRef, photos: friendsPhotos, setter: setFriendsPhotos },
-      { key: "selfies", label: "Selfies", hint: "Up-close, face clearly visible", ref: selfiesRef, photos: selfiePhotos, setter: setSelfiePhotos },
-      { key: "family", label: "Family", hint: "Shows warmth, values, and roots", ref: familyRef, photos: familyPhotos, setter: setFamilyPhotos },
-      { key: "activities", label: "Activities & hobbies", hint: "You doing things you love", ref: activitiesRef, photos: activitiesPhotos, setter: setActivitiesPhotos },
+      { key: "friends", label: "Full-body shots", hint: "Profiles hiding their body get 40%+ fewer matches", ref: friendsRef, photos: friendsPhotos, setter: setFriendsPhotos },
+      { key: "selfies", label: "Activities & hobbies", hint: "Gets 3× more comments on Hinge than standard posed shots", ref: selfiesRef, photos: selfiePhotos, setter: setSelfiePhotos },
+      { key: "family", label: "Travel & adventure", hint: "Outperforms gym selfies — shows an interesting life", ref: familyRef, photos: familyPhotos, setter: setFamilyPhotos },
+      { key: "activities", label: "With friends", hint: "Social proof — 1 group shot max, never as your lead", ref: activitiesRef, photos: activitiesPhotos, setter: setActivitiesPhotos },
     ] as const;
 
     return (
