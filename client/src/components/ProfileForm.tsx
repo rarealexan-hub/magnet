@@ -731,6 +731,7 @@ export function ProfileForm({ onResult, userEmail, preselectedPlatform }: Props)
               <span className="form-label-badge">optional</span>
               {contextOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
+            <p className="form-hint" style={{ marginTop: 6 }}>Could be your age, job, a prompt answer — whatever shows up first.</p>
             {contextOpen && (
               <div className="context-toggle-body">
                 <p className="form-hint">Add your bio or prompts and the AI will factor them into your feedback.</p>
