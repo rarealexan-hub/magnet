@@ -103,6 +103,7 @@ export default function App() {
           profileInput={profileInput}
           onStartOver={handleStartOver}
           onFullReport={() => { setFullReportViewed(true); setView("full-report"); }}
+          onBundle={() => { setFullReportViewed(true); setView("full-report"); }}
           fullReportViewed={fullReportViewed}
         />
       )}

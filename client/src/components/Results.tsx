@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Copy, Check, AlertTriangle, Crosshair, ArrowRight, Share2, FileText, Zap, Lightbulb, Lock, MessageSquare } from "lucide-react";
+import { Copy, Check, AlertTriangle, Crosshair, ArrowRight, Share2, FileText, Zap, Lightbulb, Lock, MessageSquare, Layers } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 import { FeedbackSurvey } from "./FeedbackSurvey";
@@ -9,6 +9,7 @@ interface Props {
   profileInput: ProfileInput;
   onStartOver: () => void;
   onFullReport: () => void;
+  onBundle?: () => void;
   fullReportViewed?: boolean;
 }
 
@@ -77,7 +78,7 @@ function BasicSuggestions({ score }: { score: ProfileResult["score"] }) {
   );
 }
 
-export function Results({ result, profileInput, onStartOver, onFullReport, fullReportViewed }: Props) {
+export function Results({ result, profileInput, onStartOver, onFullReport, onBundle, fullReportViewed }: Props) {
   const [copied, setCopied] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const surveyRef = useRef<HTMLDivElement>(null);
@@ -208,6 +209,33 @@ export function Results({ result, profileInput, onStartOver, onFullReport, fullR
           </p>
 
           <div className="pricing-cards">
+            <div className="pricing-card featured">
+              <div className="pricing-badge">Best Value</div>
+              <div className="pricing-card-header">
+                <div className="pricing-icon featured-icon">
+                  <Layers size={22} />
+                </div>
+                <div>
+                  <h4>Profile Pack</h4>
+                  <p className="pricing-tagline">5 full reports · $1.40 each</p>
+                </div>
+              </div>
+              <div className="pricing-price">
+                <span className="price-amount">$6.99</span>
+                <span className="price-period">one time</span>
+              </div>
+              <ul className="pricing-features">
+                <li><Zap size={14} /> 5 full reports — use across any platform or profile</li>
+                <li><Zap size={14} /> Per-photo breakdown with exact swap suggestions</li>
+                <li><Zap size={14} /> Prompt coaching & optimal photo order</li>
+                <li><Zap size={14} /> Category-level AI analysis for each report</li>
+                <li><Zap size={14} /> Never expires — use whenever you update your profile</li>
+              </ul>
+              <button className="pricing-btn featured-btn" onClick={onBundle ?? onFullReport}>
+                Get Profile Pack <ArrowRight size={16} />
+              </button>
+            </div>
+
             {!fullReportViewed && (
               <div className="pricing-card">
                 <div className="pricing-card-header">
