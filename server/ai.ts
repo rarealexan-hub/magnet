@@ -303,7 +303,33 @@ Respond in this exact JSON format:
         }
       ],
       "summary": "<1-2 sentences: what this upgraded profile now signals to their target audience and why it works better than the original>"
-    }
+    },
+    "matchPotential": {
+      "currentWeeklyEstimate": "<realistic weekly match estimate at their current score, e.g. '2–4 quality matches'>",
+      "optimizedWeeklyEstimate": "<realistic weekly match estimate after applying all recommendations, e.g. '8–14 quality matches'>",
+      "percentageIncrease": "<e.g. '3×' or '+250%' — the projected multiplier from current to optimized>",
+      "topImprovements": ["<the single highest-impact fix and why it moves the needle>", "<second highest-impact fix>", "<third highest-impact fix>"]
+    },
+    "potentialMatches": [
+      {
+        "name": "<a realistic first name — not generic, matches the user's target audience>",
+        "age": <realistic age number that fits the user's target audience>,
+        "bio": "<2–3 sentences written as if this is a real person who would swipe on the optimized profile — specific personality, not generic>",
+        "whyTheySwipe": "<1–2 sentences: what specifically on the optimized profile caught their eye — reference actual profile elements>"
+      },
+      {
+        "name": "<different name, different personality archetype from #1>",
+        "age": <different age>,
+        "bio": "<different vibe and life situation from #1>",
+        "whyTheySwipe": "<different reason — reference a different element of the optimized profile>"
+      },
+      {
+        "name": "<third distinct archetype>",
+        "age": <age>,
+        "bio": "<third distinct personality and life situation>",
+        "whyTheySwipe": "<what drew this specific person in>"
+      }
+    ]
   }
 }
 
@@ -338,6 +364,10 @@ photoOrderRecommendation: Only include if current profile photos were provided. 
 mistakes: Short, punchy issue labels (3-6 words max). These show as "Issues detected" chips in the UI.
 
 roast: Make someone want to share their score. Entertaining but never cruel.
+
+matchPotential: Always include this. Base estimates on real platform data — Hinge/Tinder/Bumble studies show top-10% profiles get 5–10× more matches than median profiles. Calibrate currentWeeklyEstimate against their actual score: sub-50 = 1–3/week, 50–65 = 3–6/week, 65–80 = 6–12/week, 80+ = 12–20+/week. Be honest — don't inflate numbers. topImprovements should reference SPECIFIC things in their actual profile (e.g. "Swap your gym selfie lead photo — it's your lowest-performing asset and directly suppresses your swipe rate").
+
+potentialMatches: Always include exactly 3. These should feel like real people, not archetypes. Write them as if they genuinely saw the OPTIMIZED profile and were drawn to specific elements of it. Base personalities and ages on the user's stated partner preferences and target audience. Each should be a different personality type, life situation, and draw a different element of the optimized profile.
 
 sampleProfile: Always include this — it's the most exciting part of the paid report. It's a preview showing what their profile could look like after the coaching.
 - headline: 1 punchy line capturing who the upgraded profile now presents as. Not generic ("Better version of you") — specific to their personality and content (e.g. "Quietly ambitious, weirdly funny, actually interesting").

@@ -125,6 +125,20 @@ export interface SampleProfile {
   summary: string;
 }
 
+export interface PotentialMatch {
+  name: string;
+  age: number;
+  bio: string;
+  whyTheySwipe: string;
+}
+
+export interface MatchPotential {
+  currentWeeklyEstimate: string;
+  optimizedWeeklyEstimate: string;
+  percentageIncrease: string;
+  topImprovements: string[];
+}
+
 export interface ProfileFeedback {
   roast: string;
   mistakes: string[];
@@ -135,6 +149,8 @@ export interface ProfileFeedback {
   photoOrderRecommendation?: PhotoOrderRecommendation;
   categoryAnalysis?: CategoryAnalysis;
   sampleProfile?: SampleProfile;
+  potentialMatches?: PotentialMatch[];
+  matchPotential?: MatchPotential;
 }
 
 export interface ProfileResult {

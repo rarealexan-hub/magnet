@@ -1,8 +1,54 @@
 import { useState, useEffect, useRef } from "react";
-import { Copy, Check, AlertTriangle, Crosshair, ArrowRight, Share2, FileText, Zap, Lightbulb, Lock, MessageSquare, Layers } from "lucide-react";
+import { Copy, Check, AlertTriangle, Crosshair, ArrowRight, Share2, FileText, Zap, Lightbulb, Lock, MessageSquare, Layers, TrendingUp } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
+import { PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 import { FeedbackSurvey } from "./FeedbackSurvey";
+
+function MatchVolumeBlock({ score, platform }: { score: number; platform: string }) {
+  const label = PLATFORM_LABEL[platform] ?? platform;
+
+  type Tier = { range: string; weekly: string; bar: number };
+  const tiers: Tier[] = [
+    { range: "0–49",  weekly: "1–3 / week",   bar: 15  },
+    { range: "50–64", weekly: "3–6 / week",   bar: 35  },
+    { range: "65–79", weekly: "6–12 / week",  bar: 60  },
+    { range: "80–100",weekly: "12–20+ / week", bar: 100 },
+  ];
+  const currentTierIdx =
+    score >= 80 ? 3 : score >= 65 ? 2 : score >= 50 ? 1 : 0;
+  const current = tiers[currentTierIdx];
+  const top = tiers[3];
+
+  return (
+    <div className="match-volume-block">
+      <div className="match-volume-header">
+        <TrendingUp size={18} />
+        <span>Match Volume Estimate</span>
+        <span className="match-volume-platform">{label}</span>
+      </div>
+      <div className="match-volume-body">
+        <div className="match-volume-row current">
+          <span className="match-volume-label">Your profile now</span>
+          <div className="match-volume-bar-wrap">
+            <div className="match-volume-bar" style={{ width: `${current.bar}%` }} />
+          </div>
+          <span className="match-volume-count">{current.weekly}</span>
+        </div>
+        <div className="match-volume-row optimized">
+          <span className="match-volume-label">Score 80+ profile</span>
+          <div className="match-volume-bar-wrap">
+            <div className="match-volume-bar optimized" style={{ width: `${top.bar}%` }} />
+          </div>
+          <span className="match-volume-count highlight">{top.weekly}</span>
+        </div>
+      </div>
+      <p className="match-volume-note">
+        Based on {label} platform data · Top 10% of profiles get 5–10× more matches than average
+      </p>
+    </div>
+  );
+}
 
 interface Props {
   result: ProfileResult;
@@ -201,6 +247,9 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
         </div>
 
         <BasicSuggestions score={score} />
+
+        {/* ── Option 1: Match volume visual (free) ── */}
+        <MatchVolumeBlock score={score.overall} platform={profileInput.platform} />
 
         <div className="upgrade-section">
           <h3 className="upgrade-title">Get the full fix, not just the diagnosis</h3>

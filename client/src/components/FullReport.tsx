@@ -1,4 +1,4 @@
-import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight, ArrowLeftRight, PlusCircle, MinusCircle, MoveVertical, ListOrdered, MessageSquare, AlertCircle, Lightbulb, Sparkles, Quote } from "lucide-react";
+import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight, ArrowLeftRight, PlusCircle, MinusCircle, MoveVertical, ListOrdered, MessageSquare, AlertCircle, Lightbulb, Sparkles, Quote, TrendingUp, Users, ChevronRight } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { PLATFORM_COLOR, PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
@@ -351,6 +351,89 @@ export function FullReport({ result, profileInput, onBack }: Props) {
 
               <p className="sample-profile-disclaimer">
                 This is a directional sample — personalise it with your own voice and specifics before using it.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Option 3: Before / After match potential ── */}
+        {feedback.matchPotential && (
+          <div className="report-section-card">
+            <div className="report-section-header">
+              <div className="report-section-icon" style={{ background: "linear-gradient(135deg, #059669, #10b981)" }}>
+                <TrendingUp size={18} />
+              </div>
+              <div>
+                <h3>Your Match Potential</h3>
+                <p className="report-section-subhead">Current vs. optimized profile performance</p>
+              </div>
+            </div>
+            <div className="report-section-body">
+              <div className="match-potential-compare">
+                <div className="match-potential-box current">
+                  <p className="match-potential-box-label">Current profile</p>
+                  <p className="match-potential-box-count">{feedback.matchPotential.currentWeeklyEstimate}</p>
+                  <p className="match-potential-box-sub">estimated per week</p>
+                </div>
+                <div className="match-potential-arrow">
+                  <ChevronRight size={28} />
+                  <span className="match-potential-multiplier">{feedback.matchPotential.percentageIncrease}</span>
+                </div>
+                <div className="match-potential-box optimized">
+                  <p className="match-potential-box-label">After fixes</p>
+                  <p className="match-potential-box-count">{feedback.matchPotential.optimizedWeeklyEstimate}</p>
+                  <p className="match-potential-box-sub">estimated per week</p>
+                </div>
+              </div>
+              {feedback.matchPotential.topImprovements?.length > 0 && (
+                <div className="match-potential-improvements">
+                  <p className="match-potential-improvements-title">Highest-impact fixes</p>
+                  <ul>
+                    {feedback.matchPotential.topImprovements.map((item, i) => (
+                      <li key={i}>
+                        <span className="match-potential-rank">{i + 1}</span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Option 2: Potential match profiles ── */}
+        {feedback.potentialMatches && feedback.potentialMatches.length > 0 && (
+          <div className="report-section-card">
+            <div className="report-section-header">
+              <div className="report-section-icon" style={{ background: "linear-gradient(135deg, #db2777, #9333ea)" }}>
+                <Users size={18} />
+              </div>
+              <div>
+                <h3>Who You'd Attract</h3>
+                <p className="report-section-subhead">People who'd swipe on your optimized profile</p>
+              </div>
+            </div>
+            <div className="report-section-body">
+              <div className="potential-matches-grid">
+                {feedback.potentialMatches.map((match, i) => (
+                  <div key={i} className="potential-match-card">
+                    <div className="potential-match-avatar">
+                      {match.name.charAt(0)}
+                    </div>
+                    <div className="potential-match-body">
+                      <p className="potential-match-name">{match.name}, {match.age}</p>
+                      <p className="potential-match-bio">{match.bio}</p>
+                      <div className="potential-match-why">
+                        <Sparkles size={12} />
+                        <p>{match.whyTheySwipe}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="sample-profile-disclaimer" style={{ marginTop: 16 }}>
+                AI-generated examples based on your target audience and optimized profile — for illustration only.
               </p>
             </div>
           </div>
