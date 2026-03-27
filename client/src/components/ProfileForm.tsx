@@ -436,7 +436,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           </div>
 
           <input id="lead-photo-input" ref={leadPhotoRef} type="file" accept="image/*,.heic,.heif" onChange={handleLeadPhotoSelect} style={{ display: "none" }} />
-          <input ref={currentPhotosRef} type="file" accept="image/*,.heic,.heif" multiple onChange={handleCurrentPhotos} style={{ display: "none" }} />
+          <input id="other-photos-input" ref={currentPhotosRef} type="file" accept="image/*,.heic,.heif" multiple onChange={handleCurrentPhotos} style={{ display: "none" }} />
           <input ref={friendsRef} type="file" accept="image/*,.heic,.heif" multiple onChange={makeCategoryHandler(setFriendsPhotos, friendsPhotos, friendsRef)} style={{ display: "none" }} />
           <input ref={selfiesRef} type="file" accept="image/*,.heic,.heif" multiple onChange={makeCategoryHandler(setSelfiePhotos, selfiePhotos, selfiesRef)} style={{ display: "none" }} />
           <input ref={familyRef} type="file" accept="image/*,.heic,.heif" multiple onChange={makeCategoryHandler(setFamilyPhotos, familyPhotos, familyRef)} style={{ display: "none" }} />
@@ -498,13 +498,13 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 ))}
               </div>
             )}
-            <button type="button" className="upload-btn" onClick={() => currentPhotosRef.current?.click()}>
+            <label htmlFor="other-photos-input" className="upload-btn">
               <Plus size={16} />
               <div className="upload-btn-text">
                 <span className="upload-btn-title">{otherPhotos.length === 0 ? "Add other profile photos" : `${otherPhotos.length} added — add more`}</span>
                 <span className="upload-btn-hint">Screenshots of your profile work great · PNG, JPG, HEIC</span>
               </div>
-            </button>
+            </label>
           </div>
 
           {/* Specific additional photos */}

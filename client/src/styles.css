@@ -1224,7 +1224,7 @@ h1 {
 
 .photo-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin-bottom: 12px;
 }
@@ -2571,10 +2571,6 @@ h1 {
 
   .screenshot-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .photo-grid {
-    grid-template-columns: repeat(3, 1fr);
   }
 
   .drag-handle.desktop-only {
