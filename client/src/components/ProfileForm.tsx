@@ -736,9 +736,9 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
             <div className="upgrade-modal-pricing">
               <div className="upgrade-modal-price-row">
                 <span className="upgrade-modal-plan">Profile Pack</span>
-                <span className="upgrade-modal-amount">$6.99</span>
+                <span className="upgrade-modal-amount">$10.99</span>
               </div>
-              <p className="upgrade-modal-plan-desc">5 full analyses — use across any mix of platforms</p>
+              <p className="upgrade-modal-plan-desc">3 full reports — everything in the Full Report, for 3 separate dating app profiles</p>
             </div>
             <button className="upgrade-modal-cta" disabled>
               Coming soon — join the waitlist below

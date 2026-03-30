@@ -253,7 +253,7 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
                   </div>
                 </div>
                 <div className="pricing-price">
-                  <span className="price-amount">$2.99</span>
+                  <span className="price-amount">$4.99</span>
                   <span className="price-period">one time</span>
                 </div>
                 <ul className="pricing-features">
@@ -277,19 +277,20 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
                 </div>
                 <div>
                   <h4>Profile Pack</h4>
-                  <p className="pricing-tagline">5 full reports · $1.40 each</p>
+                  <p className="pricing-tagline">3 full reports · $3.66 each</p>
                 </div>
               </div>
               <div className="pricing-price">
-                <span className="price-amount">$6.99</span>
+                <span className="price-amount">$10.99</span>
                 <span className="price-period">one time</span>
               </div>
               <ul className="pricing-features">
-                <li><Zap size={14} /> 5 full reports — use across any platform or profile</li>
-                <li><Zap size={14} /> Per-photo breakdown with exact swap suggestions</li>
-                <li><Zap size={14} /> Prompt coaching & optimal photo order</li>
-                <li><Zap size={14} /> Category-level AI analysis for each report</li>
-                <li><Zap size={14} /> Never expires — use whenever you update your profile</li>
+                <li><Zap size={14} /> Everything in the Full Report — for 3 separate dating app profiles</li>
+                <li><Zap size={14} /> Per-photo breakdown with exact swap suggestions on each profile</li>
+                <li><Zap size={14} /> Prompt coaching & optimal photo order for each profile</li>
+                <li><Zap size={14} /> Category-level AI analysis written per profile</li>
+                <li><Zap size={14} /> Use across any platforms — Hinge, Tinder, Bumble & more</li>
+                <li><Zap size={14} /> Never expires — use whenever you update your profiles</li>
               </ul>
               <button className="pricing-btn featured-btn" onClick={onBundle ?? onFullReport}>
                 Get Profile Pack <ArrowRight size={16} />

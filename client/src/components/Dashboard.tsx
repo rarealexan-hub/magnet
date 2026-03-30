@@ -323,7 +323,7 @@ export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }:
               <div className="dash-section-header">
                 <h3>Platform Health</h3>
                 <button className="dash-new-btn" onClick={() => onAnalyze()}>
-                  <Plus size={12} /> New Analysis <span className="dash-price-pill">$2.99</span>
+                  <Plus size={12} /> New Analysis <span className="dash-price-pill">$4.99</span>
                 </button>
               </div>
               <div className="dash-platform-grid">
@@ -349,14 +349,14 @@ export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }:
                           </div>
                         </div>
                         <button className="dash-platform-action-btn" onClick={() => onAnalyze()}>
-                          Re-analyze <span className="dash-price-pill">$2.99</span>
+                          Re-analyze <span className="dash-price-pill">$4.99</span>
                         </button>
                       </>
                     ) : (
                       <div className="dash-platform-empty">
                         <p>Not analyzed yet</p>
                         <button className="dash-platform-action-btn" onClick={() => onAnalyze()}>
-                          Analyze <span className="dash-price-pill">$2.99</span>
+                          Analyze <span className="dash-price-pill">$4.99</span>
                         </button>
                       </div>
                     )}
