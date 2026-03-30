@@ -372,7 +372,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
         const errData = await res.json().catch(() => null);
         if (errData?.code === "AUDIT_LIMIT_REACHED") {
           setError(errData.error || "You've already used your free Magnet analysis.");
-          setStep("form");
+          setStep("photos");
           return;
         }
         throw new Error(errData?.error || "Analysis failed");
@@ -713,8 +713,8 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
 
           {error && <div className="form-error">{error}</div>}
 
-          <button type="button" className="submit-btn" onClick={handleDetailsNext}>
-            Continue →
+          <button type="button" className="submit-btn" onClick={handleDetailsNext} disabled={loading}>
+            {loading ? <><Loader2 size={18} className="spin" /> Analyzing your profile…</> : "Continue →"}
           </button>
           <button type="button" className="step-back-btn bottom" onClick={() => { setStep("photos"); window.scrollTo({ top: 0, behavior: "instant" }); }}>
             ← Back to photos
