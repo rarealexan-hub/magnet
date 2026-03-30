@@ -1,5 +1,5 @@
-import { useState, useEffect, type RefObject } from "react";
-import { Star, X, Send, Check, ChevronDown } from "lucide-react";
+import { useState, useEffect, useRef, type RefObject } from "react";
+import { Star, X, Send, Check, ChevronDown, Loader2 } from "lucide-react";
 
 interface Props {
   page: string;
@@ -19,23 +19,76 @@ const IMPROVEMENT_OPTIONS = [
   "Something else",
 ];
 
-type Step = "banner" | "form" | "done" | "dismissed";
+type Step = "banner" | "google-signin" | "form" | "done" | "dismissed";
 
-export function FeedbackSurvey({ page, platform, magnetScore, email, defaultOpen, surveyRef }: Props) {
-  const [step, setStep] = useState<Step>(defaultOpen ? "form" : "banner");
-
-  useEffect(() => {
-    if (defaultOpen && step !== "done" && step !== "dismissed") {
-      setStep("form");
-    }
-  }, [defaultOpen]);
+export function FeedbackSurvey({ page, platform, magnetScore, email: emailProp, defaultOpen, surveyRef }: Props) {
+  const [step, setStep] = useState<Step>(defaultOpen ? (emailProp ? "form" : "google-signin") : "banner");
+  const [userEmail, setUserEmail] = useState(emailProp ?? "");
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(0);
   const [wouldRecommend, setWouldRecommend] = useState<string>("");
   const [biggestImprovement, setBiggestImprovement] = useState("");
   const [openFeedback, setOpenFeedback] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+  const googleBtnRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (defaultOpen && step !== "done" && step !== "dismissed") {
+      setStep(emailProp ? "form" : "google-signin");
+    }
+  }, [defaultOpen]);
+
+  useEffect(() => {
+    if (emailProp) setUserEmail(emailProp);
+  }, [emailProp]);
+
+  useEffect(() => {
+    if (step !== "google-signin") return;
+    const clientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId || !(window as any).google?.accounts?.id || !googleBtnRef.current) return;
+
+    (window as any).google.accounts.id.initialize({
+      client_id: clientId,
+      callback: async (response: { credential: string }) => {
+        setGoogleLoading(true);
+        setError("");
+        try {
+          const res = await fetch("/api/auth/google", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ credential: response.credential }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Sign-in failed");
+          setUserEmail(data.user.email);
+          setStep("form");
+        } catch (err: any) {
+          setError(err.message || "Google sign-in failed. Please try again.");
+        } finally {
+          setGoogleLoading(false);
+        }
+      },
+    });
+
+    (window as any).google.accounts.id.renderButton(googleBtnRef.current, {
+      theme: "outline",
+      size: "large",
+      width: googleBtnRef.current.offsetWidth || 320,
+      text: "continue_with",
+      shape: "rectangular",
+      logo_alignment: "left",
+    });
+  }, [step, googleBtnRef.current]);
+
+  const handleGiveFeedback = () => {
+    if (userEmail) {
+      setStep("form");
+    } else {
+      setStep("google-signin");
+    }
+  };
 
   const submit = async () => {
     if (!rating) return;
@@ -53,7 +106,7 @@ export function FeedbackSurvey({ page, platform, magnetScore, email, defaultOpen
           page,
           platform: platform ?? "",
           magnetScore: magnetScore ?? "",
-          email: email ?? "",
+          email: userEmail ?? "",
         }),
       });
       if (!res.ok) throw new Error("Failed");
@@ -75,12 +128,42 @@ export function FeedbackSurvey({ page, platform, magnetScore, email, defaultOpen
             Got 30 seconds? Help us improve Magnet.
           </span>
           <div className="feedback-banner-actions">
-            <button className="feedback-open-btn" onClick={() => setStep("form")}>
+            <button className="feedback-open-btn" onClick={handleGiveFeedback}>
               Give Feedback
             </button>
             <button className="feedback-dismiss-btn" onClick={() => setStep("dismissed")}>
               <X size={16} />
             </button>
+          </div>
+        </div>
+      )}
+
+      {step === "google-signin" && (
+        <div className="feedback-form-wrap">
+          <div className="feedback-form">
+            <div className="feedback-form-header">
+              <h4>Quick Feedback</h4>
+              <button className="feedback-dismiss-btn" onClick={() => setStep("dismissed")}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <p className="feedback-signin-prompt">
+              Sign in with Google to leave feedback — it takes 30 seconds and helps us improve Magnet.
+            </p>
+
+            {error && <p className="feedback-error">{error}</p>}
+
+            <div className="feedback-google-wrap">
+              {googleLoading ? (
+                <div className="feedback-google-loading">
+                  <Loader2 size={18} className="spin" />
+                  <span>Signing in…</span>
+                </div>
+              ) : (
+                <div ref={googleBtnRef} className="feedback-google-btn" />
+              )}
+            </div>
           </div>
         </div>
       )}

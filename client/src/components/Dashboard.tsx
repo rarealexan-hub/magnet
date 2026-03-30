@@ -559,7 +559,7 @@ export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }:
               </div>
             )}
 
-            <FeedbackSurvey page="dashboard" />
+            <FeedbackSurvey page="dashboard" email={userEmail} />
           </>
         )}
       </div>

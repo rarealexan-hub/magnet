@@ -3456,6 +3456,31 @@ h1 {
   margin-bottom: 12px;
 }
 
+.feedback-signin-prompt {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.feedback-google-wrap {
+  width: 100%;
+}
+
+.feedback-google-btn {
+  width: 100%;
+  min-height: 44px;
+}
+
+.feedback-google-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-muted);
+  padding: 12px 0;
+}
+
 .feedback-form-footer {
   display: flex;
   justify-content: flex-end;

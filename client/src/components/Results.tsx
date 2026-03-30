@@ -348,6 +348,7 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
           page="results"
           platform={profileInput.platform}
           magnetScore={score.overall}
+          email={user?.email}
           defaultOpen={feedbackOpen}
           surveyRef={surveyRef}
         />
