@@ -669,37 +669,6 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                     </button>
                   )}
                 </div>
-                {platformPrompts && (
-                  <>
-                    <div className="form-label-row" style={{ marginTop: 14 }}>
-                      <label className="form-sublabel">Prompts &amp; answers</label>
-                      {selectedPrompts.length > 0 && <span className="prompt-selected-badge">{selectedPrompts.length} selected</span>}
-                    </div>
-                    {selectedPrompts.length > 0 && (
-                      <div className="selected-prompts-list">
-                        {selectedPrompts.map((sp, i) => (
-                          <div key={i} className="prompt-answer-item">
-                            <div className="prompt-answer-header">
-                              <span className="prompt-answer-question">{sp.question}</span>
-                              <button type="button" className="prompt-answer-remove" onClick={() => removeSelectedPrompt(i)}><X size={14} /></button>
-                            </div>
-                            <textarea className="form-textarea prompt-answer-textarea" rows={2} placeholder="Your answer..." value={sp.answer} onChange={(e) => updatePromptAnswer(i, e.target.value)} />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="prompt-picker-grid">
-                      {platformPrompts.map((prompt) => {
-                        const isSelected = selectedPrompts.some((sp) => sp.question === prompt);
-                        return (
-                          <button key={prompt} type="button" className={`prompt-pill ${isSelected ? "selected" : ""}`} onClick={() => toggleSelectedPrompt(prompt)}>
-                            {prompt}{isSelected && <span className="prompt-pill-check">✓</span>}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
               </div>
             )}
           </div>
