@@ -644,7 +644,6 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                   style={{ display: "none" }}
                   onChange={handleScreenshotSelect}
                 />
-                <p className="form-hint">Add your bio or prompts and the AI will factor them into your feedback.</p>
                 <div className="bio-screenshot-row">
                   {screenshots.map((s, i) => (
                     <div key={i} className="bio-screenshot-thumb">
@@ -657,11 +656,11 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                   {screenshots.length < MAX_SCREENSHOTS && (
                     <button type="button" className="bio-screenshot-add" onClick={() => fileInputRef.current?.click()}>
                       <Camera size={15} />
-                      Upload screenshot
+                      Upload screenshot of first prompt
                     </button>
                   )}
                 </div>
-                <label className="form-sublabel" style={{ marginTop: 12 }}>Bio / About</label>
+                <label className="form-sublabel" style={{ marginTop: 12 }}>Or type it out</label>
                 <textarea
                   className="form-textarea"
                   rows={3}
