@@ -645,14 +645,6 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                   onChange={handleScreenshotSelect}
                 />
                 <p className="form-hint">Add your bio or prompts and the AI will factor them into your feedback.</p>
-                <label className="form-sublabel">Bio / About</label>
-                <textarea
-                  className="form-textarea"
-                  rows={3}
-                  placeholder={platformPrompts ? "Any bio or about section (optional)..." : "Paste or type your bio here..."}
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                />
                 <div className="bio-screenshot-row">
                   {screenshots.map((s, i) => (
                     <div key={i} className="bio-screenshot-thumb">
@@ -669,6 +661,14 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                     </button>
                   )}
                 </div>
+                <label className="form-sublabel" style={{ marginTop: 12 }}>Bio / About</label>
+                <textarea
+                  className="form-textarea"
+                  rows={3}
+                  placeholder={platformPrompts ? "Any bio or about section (optional)..." : "Paste or type your bio here..."}
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                />
               </div>
             )}
           </div>
