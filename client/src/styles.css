@@ -1763,6 +1763,46 @@ h1 {
   flex-shrink: 0;
 }
 
+.mistakes-list-item--locked {
+  background: rgba(99, 102, 241, 0.04) !important;
+  border-color: rgba(99, 102, 241, 0.12) !important;
+  position: relative;
+  flex-wrap: wrap;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.fix-number--locked {
+  background: rgba(99, 102, 241, 0.2) !important;
+  color: var(--accent-light) !important;
+  opacity: 0.6;
+}
+
+.mistakes-item-blurred {
+  flex: 1;
+  filter: blur(4px);
+  user-select: none;
+  pointer-events: none;
+  opacity: 0.5;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.mistakes-lock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-light);
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 20px;
+  padding: 3px 9px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .upgrade-section {
   margin-top: 0;
   padding: 24px;

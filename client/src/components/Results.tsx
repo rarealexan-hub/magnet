@@ -315,13 +315,28 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
             Issues Detected
           </h3>
           <ul className="mistakes-list">
-            {feedback.mistakes.map((mistake, i) => (
+            {feedback.mistakes.slice(0, 3).map((mistake, i) => (
               <li key={i}>
                 <span className="fix-number">{i + 1}</span>
                 {mistake}
               </li>
             ))}
+            {[...Array(2)].map((_, i) => (
+              <li key={`locked-${i}`} className="mistakes-list-item--locked">
+                <span className="fix-number fix-number--locked">{feedback.mistakes.slice(0, 3).length + i + 1}</span>
+                <span className="mistakes-item-blurred">
+                  {i === 0
+                    ? "Your match targeting signals are sending the wrong message to your ideal type"
+                    : "First impression context is misaligned — here's how to reframe it"}
+                </span>
+                <span className="mistakes-lock-badge"><Lock size={11} /> Full Report</span>
+              </li>
+            ))}
           </ul>
+          <button className="breakdown-unlock-cta" onClick={onFullReport} style={{ marginTop: 12 }}>
+            <Lock size={12} />
+            See all fixes in the Full Report
+          </button>
         </div>
 
         <BasicSuggestions score={score} />
