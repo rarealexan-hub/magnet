@@ -1537,6 +1537,49 @@ h1 {
   text-align: right;
 }
 
+.breakdown-row--locked .breakdown-label {
+  opacity: 0.45;
+}
+
+.breakdown-bar-wrap--blurred {
+  filter: blur(4px);
+  opacity: 0.35;
+  pointer-events: none;
+  user-select: none;
+}
+
+.breakdown-value--locked {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--text-muted);
+  opacity: 0.5;
+  min-width: 28px;
+}
+
+.breakdown-unlock-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px 16px;
+  background: rgba(99, 102, 241, 0.07);
+  border: 1px dashed rgba(99, 102, 241, 0.3);
+  border-radius: 10px;
+  color: var(--accent-light);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.breakdown-unlock-cta:hover {
+  background: rgba(99, 102, 241, 0.13);
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
 .match-killer {
   display: flex;
   align-items: flex-start;
