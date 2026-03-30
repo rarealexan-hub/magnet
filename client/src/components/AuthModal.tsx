@@ -1,17 +1,20 @@
 import { useState } from "react";
-import { X, Loader2, Mail, Lock } from "lucide-react";
+import { X, Loader2, Mail, Lock, BookMarked } from "lucide-react";
 
 interface Props {
   onClose: () => void;
   onAuth: (action: "login" | "register", email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  context?: "default" | "save-results";
 }
 
-export function AuthModal({ onClose, onAuth }: Props) {
-  const [mode, setMode] = useState<"login" | "register">("login");
+export function AuthModal({ onClose, onAuth, context = "default" }: Props) {
+  const [mode, setMode] = useState<"login" | "register">(context === "save-results" ? "register" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const isSaveResults = context === "save-results";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +35,22 @@ export function AuthModal({ onClose, onAuth }: Props) {
     setError("");
   };
 
+  const heading = isSaveResults
+    ? mode === "register"
+      ? "Save your results"
+      : "Welcome back"
+    : mode === "login"
+      ? "Welcome back"
+      : "Create your account";
+
+  const subheading = isSaveResults
+    ? mode === "register"
+      ? "Create an account to save your Magnet score, access your Dashboard, and share feedback."
+      : "Sign in to access your saved results and share feedback."
+    : mode === "login"
+      ? "Sign in to your Magnet account"
+      : "Get started with Magnet";
+
   return (
     <div className="auth-overlay" onClick={onClose}>
       <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
@@ -40,8 +59,13 @@ export function AuthModal({ onClose, onAuth }: Props) {
         </button>
 
         <div className="auth-header">
-          <h2>{mode === "login" ? "Welcome back" : "Create your account"}</h2>
-          <p>{mode === "login" ? "Sign in to your Magnet account" : "Get started with Magnet"}</p>
+          {isSaveResults && mode === "register" && (
+            <div className="auth-save-icon">
+              <BookMarked size={22} />
+            </div>
+          )}
+          <h2>{heading}</h2>
+          <p>{subheading}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
@@ -81,7 +105,7 @@ export function AuthModal({ onClose, onAuth }: Props) {
 
           <button type="submit" className="auth-submit" disabled={loading}>
             {loading ? <Loader2 size={18} className="spin" /> : null}
-            {mode === "login" ? "Sign In" : "Create Account"}
+            {mode === "login" ? "Sign In" : isSaveResults ? "Save & Continue" : "Create Account"}
           </button>
         </form>
 

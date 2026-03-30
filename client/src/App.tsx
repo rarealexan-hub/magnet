@@ -19,6 +19,8 @@ export default function App() {
   const [showAuth, setShowAuth] = useState(false);
   const [preselectedPlatform, setPreselectedPlatform] = useState<string | undefined>();
   const [fullReportViewed, setFullReportViewed] = useState(false);
+  const [triggerFeedback, setTriggerFeedback] = useState(false);
+  const [authContext, setAuthContext] = useState<"default" | "save-results">("default");
   const { user, loading, token, login, register, logout } = useAuth();
 
   const handleStartAudit = () => setView("form");
@@ -35,12 +37,27 @@ export default function App() {
     setProfileInput(null);
     setPreselectedPlatform(undefined);
     setFullReportViewed(false);
+    setTriggerFeedback(false);
     window.history.pushState({}, "", "/");
   };
 
   const handleAuth = async (action: "login" | "register", email: string, password: string) => {
-    if (action === "login") return login(email, password);
-    return register(email, password);
+    const res = action === "login" ? await login(email, password) : await register(email, password);
+    if (res.success && view === "results") {
+      setTriggerFeedback(true);
+      setTimeout(() => setTriggerFeedback(false), 200);
+    }
+    return res;
+  };
+
+  const openAuthForResults = () => {
+    setAuthContext("save-results");
+    setShowAuth(true);
+  };
+
+  const openAuthDefault = () => {
+    setAuthContext("default");
+    setShowAuth(true);
   };
 
   const handleAnalyzeFromDashboard = (platform?: string) => {
@@ -80,7 +97,10 @@ export default function App() {
               onDashboard={() => setView("dashboard")}
             />
           ) : (
-            <button className="header-signin" onClick={() => setShowAuth(true)}>
+            <button
+              className="header-signin"
+              onClick={view === "results" ? openAuthForResults : openAuthDefault}
+            >
               <User size={14} />
               Sign In
             </button>
@@ -105,6 +125,9 @@ export default function App() {
           onFullReport={() => { setFullReportViewed(true); setView("full-report"); }}
           onBundle={() => { setFullReportViewed(true); setView("full-report"); }}
           fullReportViewed={fullReportViewed}
+          user={user}
+          onSignIn={openAuthForResults}
+          triggerFeedback={triggerFeedback}
         />
       )}
       {view === "full-report" && result && profileInput && (
@@ -124,7 +147,13 @@ export default function App() {
         />
       )}
 
-      {showAuth && <AuthModal onClose={() => setShowAuth(false)} onAuth={handleAuth} />}
+      {showAuth && (
+        <AuthModal
+          onClose={() => setShowAuth(false)}
+          onAuth={handleAuth}
+          context={authContext}
+        />
+      )}
     </div>
   );
 }

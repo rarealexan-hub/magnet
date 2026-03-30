@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { AlertTriangle, Crosshair, ArrowRight, FileText, Zap, Lightbulb, Lock, MessageSquare, Layers, TrendingUp } from "lucide-react";
+import { AlertTriangle, Crosshair, ArrowRight, FileText, Zap, Lightbulb, Lock, MessageSquare, Layers, TrendingUp, BookMarked } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 import { FeedbackSurvey } from "./FeedbackSurvey";
+import type { AuthUser } from "../hooks/useAuth";
 
 function MatchVolumeBlock({ score, platform }: { score: number; platform: string }) {
   const label = PLATFORM_LABEL[platform] ?? platform;
@@ -57,6 +58,9 @@ interface Props {
   onFullReport: () => void;
   onBundle?: () => void;
   fullReportViewed?: boolean;
+  user?: AuthUser | null;
+  onSignIn?: () => void;
+  triggerFeedback?: boolean;
 }
 
 const BASIC_SUGGESTIONS: Record<string, { tip: string; locked: string }> = {
@@ -124,7 +128,7 @@ function BasicSuggestions({ score }: { score: ProfileResult["score"] }) {
   );
 }
 
-export function Results({ result, profileInput, onStartOver, onFullReport, onBundle, fullReportViewed }: Props) {
+export function Results({ result, profileInput, onStartOver, onFullReport, onBundle, fullReportViewed, user, onSignIn, triggerFeedback }: Props) {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const surveyRef = useRef<HTMLDivElement>(null);
 
@@ -138,6 +142,20 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
+
+  useEffect(() => {
+    if (triggerFeedback) {
+      openFeedback();
+    }
+  }, [triggerFeedback]);
+
+  const handleFeedbackClick = () => {
+    if (!user && onSignIn) {
+      onSignIn();
+    } else {
+      openFeedback();
+    }
+  };
 
   const { score, feedback } = result;
 
@@ -231,8 +249,22 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
 
         <BasicSuggestions score={score} />
 
-        {/* ── Option 1: Match volume visual (free) ── */}
         <MatchVolumeBlock score={score.overall} platform={profileInput.platform} />
+
+        {!user && onSignIn && (
+          <div className="save-results-prompt">
+            <div className="save-results-icon">
+              <BookMarked size={18} />
+            </div>
+            <div className="save-results-text">
+              <p className="save-results-title">Save your results</p>
+              <p className="save-results-sub">Create a free account to track your score over time and access your Dashboard.</p>
+            </div>
+            <button className="save-results-btn" onClick={onSignIn}>
+              Sign In
+            </button>
+          </div>
+        )}
 
         <div className="upgrade-section">
           <h3 className="upgrade-title">Get the full fix, not just the diagnosis</h3>
@@ -301,8 +333,9 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
         </div>
 
         <div className="results-footer">
-          <button className="feedback-float-btn" onClick={openFeedback}>
-            <MessageSquare size={15} /> Give Feedback
+          <button className="feedback-float-btn" onClick={handleFeedbackClick}>
+            <MessageSquare size={15} />
+            {!user ? "Sign in to give feedback" : "Give Feedback"}
           </button>
           {fullReportViewed && (
             <button className="pricing-btn" style={{ width: "100%" }} onClick={onFullReport}>

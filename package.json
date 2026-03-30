@@ -11,6 +11,7 @@
     "cap:build": "vite build && npx cap sync ios"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
     "@capacitor/cli": "^8.2.0",
     "@capacitor/core": "^8.2.0",
     "@types/bcryptjs": "^2.4.6",
