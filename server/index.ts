@@ -131,6 +131,20 @@ async function initAuditTracking() {
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_purchases_email ON purchases (user_email)
     `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS feedback_submissions (
+        id SERIAL PRIMARY KEY,
+        email TEXT,
+        rating INTEGER NOT NULL,
+        would_recommend TEXT,
+        biggest_improvement TEXT,
+        open_feedback TEXT,
+        page TEXT,
+        platform TEXT,
+        magnet_score INTEGER,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
   } catch (err) {
     console.error("Failed to create audit tracking table:", err);
   }
@@ -838,39 +852,38 @@ app.post("/api/feedback", async (req: Request, res: Response) => {
       return;
     }
 
-    const spreadsheetId = process.env.FEEDBACK_SPREADSHEET_ID;
-    if (!spreadsheetId) {
-      console.error("FEEDBACK_SPREADSHEET_ID not set");
-      res.status(500).json({ error: "Feedback not configured" });
-      return;
-    }
-
-    const sheets = await getUncachableGoogleSheetClient();
-    await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: "Feedback!A:I",
-      valueInputOption: "USER_ENTERED",
-      requestBody: {
-        values: [
-          [
-            new Date().toISOString(),
-            rating,
-            wouldRecommend ?? "",
-            biggestImprovement ?? "",
-            openFeedback ?? "",
-            page ?? "",
-            platform ?? "",
-            magnetScore ?? "",
-            email ?? "",
-          ],
-        ],
-      },
-    });
+    await pool.query(
+      `INSERT INTO feedback_submissions
+        (email, rating, would_recommend, biggest_improvement, open_feedback, page, platform, magnet_score)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        email || null,
+        rating,
+        wouldRecommend || null,
+        biggestImprovement || null,
+        openFeedback || null,
+        page || null,
+        platform || null,
+        magnetScore || null,
+      ]
+    );
 
     res.json({ success: true });
   } catch (error) {
     console.error("Feedback submission error:", error);
     res.status(500).json({ error: "Failed to submit feedback" });
+  }
+});
+
+app.get("/api/admin/feedback", async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM feedback_submissions ORDER BY created_at DESC LIMIT 200`
+    );
+    res.json({ submissions: result.rows });
+  } catch (error) {
+    console.error("Admin feedback fetch error:", error);
+    res.status(500).json({ error: "Failed to fetch feedback" });
   }
 });
 

@@ -3450,6 +3450,23 @@ h1 {
   border-color: var(--accent);
 }
 
+.feedback-email-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 15px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.feedback-email-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 .feedback-error {
   font-size: 13px;
   color: var(--red);
