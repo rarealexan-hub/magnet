@@ -114,19 +114,21 @@ h1 {
   align-items: center;
   gap: 9px;
   padding: 14px 28px;
-  background: var(--text);
-  color: var(--bg);
+  background: #185adb;
+  color: #fff;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.01em;
   border: none;
   border-radius: var(--radius);
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: background 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 18px rgba(24, 90, 219, 0.35);
 }
 
 .cta-button:hover {
-  opacity: 0.88;
+  background: #1450c4;
+  box-shadow: 0 6px 24px rgba(24, 90, 219, 0.45);
 }
 
 .cta-sub {
@@ -202,6 +204,49 @@ h1 {
 
 .before-after-section {
   margin-bottom: 64px;
+}
+
+.ba-toggle-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ba-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.ba-toggle-btn.active.before {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--red);
+}
+
+.ba-toggle-btn.active.after {
+  background: rgba(74, 222, 128, 0.08);
+  border-color: rgba(74, 222, 128, 0.3);
+  color: var(--green);
+}
+
+.ba-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.ba-panel .ba-card {
+  width: 100%;
 }
 
 .section-title {
@@ -357,6 +402,105 @@ h1 {
   border-radius: 50%;
   background: var(--green);
   opacity: 0.5;
+}
+
+.ba-x, .ba-check {
+  padding-left: 20px;
+}
+
+.ba-x::before {
+  content: "✕";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--red);
+  opacity: 0.8;
+  background: none;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+}
+
+.ba-check::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--green);
+  opacity: 0.9;
+  background: none;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+}
+
+/* ── Wall of Love ── */
+.wall-of-love {
+  margin-bottom: 64px;
+}
+
+.testimonial-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 640px) {
+  .testimonial-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.testimonial-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+}
+
+.testimonial-quote-icon {
+  color: var(--accent-light);
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+
+.testimonial-text {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text);
+  flex: 1;
+  font-style: italic;
+}
+
+.testimonial-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.testimonial-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.testimonial-detail {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
 }
 
 .features-grid {
@@ -1755,8 +1899,8 @@ h1 {
   justify-content: center;
   min-width: 24px;
   height: 24px;
-  background: var(--accent);
-  color: white;
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--red);
   font-size: 12px;
   font-weight: 800;
   border-radius: 6px;

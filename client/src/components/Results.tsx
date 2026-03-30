@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { AlertTriangle, Crosshair, ArrowRight, FileText, Zap, Lightbulb, Lock, MessageSquare, Layers, TrendingUp, BookMarked } from "lucide-react";
+import { AlertTriangle, Crosshair, ArrowRight, FileText, Zap, Lightbulb, Lock, MessageSquare, Layers, TrendingUp, BookMarked, X } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
@@ -317,7 +317,7 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
           <ul className="mistakes-list">
             {feedback.mistakes.slice(0, 3).map((mistake, i) => (
               <li key={i}>
-                <span className="fix-number">{i + 1}</span>
+                <span className="fix-number"><X size={13} /></span>
                 {mistake}
               </li>
             ))}
