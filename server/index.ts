@@ -13,6 +13,9 @@ import {
   verifyToken,
 } from "./auth.js";
 import { getUncachableGoogleSheetClient } from "./googleSheets.js";
+import { getUncachableStripeClient, getStripePublishableKey, getStripeSync } from "./stripeClient.js";
+import { WebhookHandlers } from "./webhookHandlers.js";
+import { runMigrations } from "stripe-replit-sync";
 import type { Request, Response, NextFunction } from "express";
 import type {
   ProfileInput,
@@ -25,6 +28,26 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 const app = express();
 app.use(cors());
+
+app.post(
+  '/api/stripe/webhook',
+  express.raw({ type: 'application/json' }),
+  async (req: Request, res: Response) => {
+    const signature = req.headers['stripe-signature'];
+    if (!signature) {
+      res.status(400).json({ error: 'Missing stripe-signature' });
+      return;
+    }
+    const sig = Array.isArray(signature) ? signature[0] : signature;
+    try {
+      await WebhookHandlers.processWebhook(req.body as Buffer, sig);
+      res.status(200).json({ received: true });
+    } catch (error: any) {
+      console.error('Webhook error:', error.message);
+      res.status(400).json({ error: 'Webhook processing error' });
+    }
+  }
+);
 
 async function initAuditTracking() {
   try {
@@ -58,6 +81,7 @@ async function initAuditTracking() {
       )
     `);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT`);
     await pool.query(`
       DO $$ BEGIN
         IF EXISTS (
@@ -96,6 +120,32 @@ async function initAuditTracking() {
 }
 
 await initAuditTracking();
+
+async function initStripe() {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    console.warn('DATABASE_URL not set — skipping Stripe init');
+    return;
+  }
+  try {
+    console.log('Initializing Stripe schema...');
+    await runMigrations({ databaseUrl });
+    console.log('Stripe schema ready');
+
+    const stripeSync = await getStripeSync();
+    const webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
+    await stripeSync.findOrCreateManagedWebhook(`${webhookBaseUrl}/api/stripe/webhook`);
+    console.log('Stripe webhook configured');
+
+    stripeSync.syncBackfill()
+      .then(() => console.log('Stripe data synced'))
+      .catch((err: any) => console.error('Stripe backfill error:', err));
+  } catch (error) {
+    console.error('Failed to initialize Stripe:', error);
+  }
+}
+
+await initStripe();
 
 app.use(express.json({ limit: "50mb" }));
 
@@ -145,6 +195,74 @@ function authenticateOptional(
   }
   next();
 }
+
+app.get('/api/stripe/publishable-key', async (_req, res) => {
+  try {
+    const key = await getStripePublishableKey();
+    res.json({ publishableKey: key });
+  } catch (error) {
+    console.error('Error fetching publishable key:', error);
+    res.status(500).json({ error: 'Failed to load payment config' });
+  }
+});
+
+app.get('/api/stripe/prices', async (_req, res) => {
+  try {
+    const stripe = await getUncachableStripeClient();
+    const prices = await stripe.prices.list({ active: true, expand: ['data.product'] });
+    res.json({ data: prices.data });
+  } catch (error) {
+    console.error('Error fetching prices:', error);
+    res.status(500).json({ error: 'Failed to load pricing' });
+  }
+});
+
+app.post('/api/checkout', authenticateOptional, async (req: AuthRequest, res: Response) => {
+  try {
+    const { priceId } = req.body;
+    if (!priceId) {
+      res.status(400).json({ error: 'priceId required' });
+      return;
+    }
+
+    const stripe = await getUncachableStripeClient();
+    const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
+
+    const sessionParams: any = {
+      payment_method_types: ['card'],
+      line_items: [{ price: priceId, quantity: 1 }],
+      mode: 'payment',
+      success_url: `${baseUrl}/?payment=success`,
+      cancel_url: `${baseUrl}/?payment=cancelled`,
+    };
+
+    if (req.user?.email) {
+      const userRow = await pool.query(
+        'SELECT stripe_customer_id FROM users WHERE id = $1',
+        [req.user.userId]
+      );
+      let customerId = userRow.rows[0]?.stripe_customer_id;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: req.user.email,
+          metadata: { userId: String(req.user.userId) },
+        });
+        customerId = customer.id;
+        await pool.query(
+          'UPDATE users SET stripe_customer_id = $1 WHERE id = $2',
+          [customerId, req.user.userId]
+        );
+      }
+      sessionParams.customer = customerId;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
+    res.json({ url: session.url });
+  } catch (error: any) {
+    console.error('Checkout error:', error);
+    res.status(500).json({ error: 'Failed to create checkout session' });
+  }
+});
 
 app.post("/api/auth/register", async (req, res) => {
   try {

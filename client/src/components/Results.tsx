@@ -131,6 +131,54 @@ function BasicSuggestions({ score }: { score: ProfileResult["score"] }) {
 export function Results({ result, profileInput, onStartOver, onFullReport, onBundle, fullReportViewed, user, onSignIn, triggerFeedback }: Props) {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const surveyRef = useRef<HTMLDivElement>(null);
+  const [prices, setPrices] = useState<Record<string, string>>({});
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/stripe/prices')
+      .then(r => r.json())
+      .then(data => {
+        const map: Record<string, string> = {};
+        for (const price of data.data ?? []) {
+          const type = price.product?.metadata?.type;
+          if (type) map[type] = price.id;
+        }
+        setPrices(map);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleCheckout = async (type: 'full-report' | 'profile-pack') => {
+    const priceId = prices[type];
+    if (!priceId) {
+      setCheckoutError('Payment not available right now. Please try again.');
+      return;
+    }
+    setCheckoutLoading(type);
+    setCheckoutError(null);
+    try {
+      const token = localStorage.getItem('magnet_token');
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ priceId }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setCheckoutError(data.error || 'Checkout failed. Please try again.');
+      }
+    } catch {
+      setCheckoutError('Checkout failed. Please try again.');
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
 
   const openFeedback = () => {
     setFeedbackOpen(true);
@@ -295,8 +343,12 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
                   <li><Zap size={14} /> Optimal photo order — ranked 1–6 with reasoning</li>
                   <li><Zap size={14} /> Category-level AI analysis written about your profile</li>
                 </ul>
-                <button className="pricing-btn" onClick={onFullReport}>
-                  Get Full Report <ArrowRight size={16} />
+                <button
+                  className="pricing-btn"
+                  onClick={() => handleCheckout('full-report')}
+                  disabled={checkoutLoading === 'full-report'}
+                >
+                  {checkoutLoading === 'full-report' ? 'Loading…' : <><span>Get Full Report</span> <ArrowRight size={16} /></>}
                 </button>
               </div>
             )}
@@ -324,13 +376,23 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
                 <li><Zap size={14} /> Use across any platforms — Hinge, Tinder, Bumble & more</li>
                 <li><Zap size={14} /> Never expires — use whenever you update your profiles</li>
               </ul>
-              <button className="pricing-btn featured-btn" onClick={onBundle ?? onFullReport}>
-                Get Profile Pack <ArrowRight size={16} />
+              <button
+                className="pricing-btn featured-btn"
+                onClick={() => handleCheckout('profile-pack')}
+                disabled={checkoutLoading === 'profile-pack'}
+              >
+                {checkoutLoading === 'profile-pack' ? 'Loading…' : <><span>Get Profile Pack</span> <ArrowRight size={16} /></>}
               </button>
             </div>
 
           </div>
         </div>
+
+        {checkoutError && (
+          <p style={{ color: '#ef4444', textAlign: 'center', marginTop: '0.75rem', fontSize: '0.875rem' }}>
+            {checkoutError}
+          </p>
+        )}
 
         <div className="results-footer">
           <button className="feedback-float-btn" onClick={handleFeedbackClick}>
