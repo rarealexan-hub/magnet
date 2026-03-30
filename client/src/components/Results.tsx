@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Copy, Check, AlertTriangle, Crosshair, ArrowRight, Share2, FileText, Zap, Lightbulb, Lock, MessageSquare, Layers, TrendingUp } from "lucide-react";
+import { AlertTriangle, Crosshair, ArrowRight, FileText, Zap, Lightbulb, Lock, MessageSquare, Layers, TrendingUp } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
@@ -125,7 +125,6 @@ function BasicSuggestions({ score }: { score: ProfileResult["score"] }) {
 }
 
 export function Results({ result, profileInput, onStartOver, onFullReport, onBundle, fullReportViewed }: Props) {
-  const [copied, setCopied] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const surveyRef = useRef<HTMLDivElement>(null);
 
@@ -141,14 +140,6 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
   }, []);
 
   const { score, feedback } = result;
-
-  const copyRoast = () => {
-    navigator.clipboard.writeText(
-      `MAGNET SCORE: ${score.overall}/100\n\n"${feedback.roast}"\n\nGet your Magnet score at magnet.app`
-    );
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const profileTypeColor = {
     "high-signal": "#22c55e",
@@ -221,14 +212,6 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
               </p>
             </div>
           </div>
-        </div>
-
-        <div className="roast-card">
-          <p className="roast-text">"{feedback.roast}"</p>
-          <button className="copy-btn" onClick={copyRoast}>
-            {copied ? <Check size={16} /> : <Copy size={16} />}
-            {copied ? "Copied!" : "Share your roast"}
-          </button>
         </div>
 
         <div className="mistakes-section">
@@ -317,10 +300,6 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
         </div>
 
         <div className="results-footer">
-          <button className="share-roast-btn" onClick={copyRoast}>
-            <Share2 size={16} />
-            {copied ? "Copied!" : "Share your roast with friends"}
-          </button>
           <button className="feedback-float-btn" onClick={openFeedback}>
             <MessageSquare size={15} /> Give Feedback
           </button>
