@@ -399,16 +399,16 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   };
 
   const handlePhotosNext = () => {
+    if (!userEmail && (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))) {
+      setError("Please enter a valid email address to continue.");
+      return;
+    }
     setError("");
     setStep("details");
     window.scrollTo({ top: 0, behavior: "instant" });
   };
 
   const handleDetailsNext = () => {
-    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setError("Please enter a valid email address.");
-      return;
-    }
     setError("");
     runAnalysis();
   };
@@ -540,6 +540,20 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               ))}
             </div>
           </div>
+
+          {!userEmail && (
+            <div className="form-section" style={{ marginTop: 24 }}>
+              <label className="form-label">Your email</label>
+              <p className="form-hint">We'll send your results here so you don't lose them.</p>
+              <input
+                type="email"
+                className="form-input"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+          )}
 
           {error && <div className="form-error">{error}</div>}
 
@@ -725,20 +739,6 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 onChange={(e) => setCustomTarget(e.target.value)}
               />
             </div>
-          </div>
-
-          <div className="form-section">
-            <label className="form-label">Your email</label>
-            <p className="form-hint">{userEmail ? "Signed in — using your account email." : "We'll send your results here so you don't lose them."}</p>
-            <input
-              type="email"
-              className="form-input"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              readOnly={!!userEmail}
-              style={userEmail ? { opacity: 0.7, cursor: "default" } : undefined}
-            />
           </div>
 
           {error && <div className="form-error">{error}</div>}
