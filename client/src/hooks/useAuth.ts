@@ -78,6 +78,25 @@ export function useAuth() {
     }
   };
 
+  const loginWithGoogle = async (credential: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || "Google sign-in failed" };
+      }
+      localStorage.setItem("magnet_token", data.token);
+      setState({ user: data.user, loading: false });
+      return { success: true };
+    } catch {
+      return { success: false, error: "Network error. Please try again." };
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem("magnet_token");
     setState({ user: null, loading: false });
@@ -90,6 +109,7 @@ export function useAuth() {
     loading: state.loading,
     token,
     login,
+    loginWithGoogle,
     register,
     logout,
   };

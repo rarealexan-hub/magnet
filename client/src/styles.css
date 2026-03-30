@@ -3064,6 +3064,59 @@ h1 {
   text-decoration: underline;
 }
 
+.auth-google-btn-wrap {
+  position: relative;
+  margin-bottom: 4px;
+}
+
+.auth-google-btn-container {
+  width: 100%;
+  min-height: 44px;
+}
+
+.auth-google-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.7);
+  border-radius: var(--radius);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 4px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.auth-email-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 2px 4px;
+  transition: color 0.15s;
+}
+
+.auth-email-toggle:hover {
+  color: var(--text);
+}
+
 /* Upgrade modal */
 .upgrade-modal-backdrop {
   position: fixed;

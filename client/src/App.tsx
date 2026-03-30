@@ -21,7 +21,7 @@ export default function App() {
   const [fullReportViewed, setFullReportViewed] = useState(false);
   const [triggerFeedback, setTriggerFeedback] = useState(false);
   const [authContext, setAuthContext] = useState<"default" | "save-results">("default");
-  const { user, loading, token, login, register, logout } = useAuth();
+  const { user, loading, token, login, loginWithGoogle, register, logout } = useAuth();
 
   const handleStartAudit = () => setView("form");
 
@@ -43,6 +43,15 @@ export default function App() {
 
   const handleAuth = async (action: "login" | "register", email: string, password: string) => {
     const res = action === "login" ? await login(email, password) : await register(email, password);
+    if (res.success && view === "results") {
+      setTriggerFeedback(true);
+      setTimeout(() => setTriggerFeedback(false), 200);
+    }
+    return res;
+  };
+
+  const handleGoogleAuth = async (credential: string) => {
+    const res = await loginWithGoogle(credential);
     if (res.success && view === "results") {
       setTriggerFeedback(true);
       setTimeout(() => setTriggerFeedback(false), 200);
@@ -151,6 +160,8 @@ export default function App() {
         <AuthModal
           onClose={() => setShowAuth(false)}
           onAuth={handleAuth}
+          onGoogleAuth={handleGoogleAuth}
+          googleClientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}
           context={authContext}
         />
       )}

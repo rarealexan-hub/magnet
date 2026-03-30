@@ -4,6 +4,7 @@ import path from "path";
 import multer from "multer";
 import { fileURLToPath } from "url";
 import { Pool } from "pg";
+import { OAuth2Client } from "google-auth-library";
 import { analyzeProfile } from "./ai.js";
 import {
   hashPassword,
@@ -52,9 +53,21 @@ async function initAuditTracking() {
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
+        password_hash TEXT,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT`);
+    await pool.query(`
+      DO $$ BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='users' AND column_name='password_hash'
+          AND is_nullable='NO'
+        ) THEN
+          ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
+        END IF;
+      END $$;
     `);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS analyses (
@@ -210,6 +223,50 @@ app.get("/api/auth/me", async (req: AuthRequest, res) => {
     return;
   }
   res.json({ user: { id: payload.userId, email: payload.email } });
+});
+
+app.post("/api/auth/google", async (req, res) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      res.status(400).json({ error: "Google credential required" });
+      return;
+    }
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      res.status(500).json({ error: "Google sign-in is not configured" });
+      return;
+    }
+    const client = new OAuth2Client(clientId);
+    const ticket = await client.verifyIdToken({ idToken: credential, audience: clientId });
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) {
+      res.status(400).json({ error: "Invalid Google credential" });
+      return;
+    }
+    const { email, sub: googleId } = payload;
+    const normalizedEmail = email.toLowerCase().trim();
+    const existing = await pool.query(
+      "SELECT id, email FROM users WHERE email = $1 OR google_id = $2",
+      [normalizedEmail, googleId]
+    );
+    let user: { id: number; email: string };
+    if (existing.rows.length > 0) {
+      user = existing.rows[0];
+      await pool.query("UPDATE users SET google_id = $1 WHERE id = $2", [googleId, user.id]);
+    } else {
+      const result = await pool.query(
+        "INSERT INTO users (email, google_id) VALUES ($1, $2) RETURNING id, email",
+        [normalizedEmail, googleId]
+      );
+      user = result.rows[0];
+    }
+    const token = generateToken({ userId: user.id, email: user.email });
+    res.json({ token, user: { id: user.id, email: user.email } });
+  } catch (error) {
+    console.error("Google auth error:", error);
+    res.status(500).json({ error: "Google sign-in failed. Please try again." });
+  }
 });
 
 function authenticateRequired(
