@@ -158,6 +158,12 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
     setCheckoutLoading(type);
     setCheckoutError(null);
     try {
+      sessionStorage.setItem('magnet_pending_purchase', JSON.stringify({
+        result,
+        profileInput,
+        productType: type,
+      }));
+
       const token = localStorage.getItem('magnet_token');
       const res = await fetch('/api/checkout', {
         method: 'POST',
@@ -165,15 +171,21 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ priceId }),
+        body: JSON.stringify({
+          priceId,
+          analysisId: result.analysisId,
+          productType: type,
+        }),
       });
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
       } else {
+        sessionStorage.removeItem('magnet_pending_purchase');
         setCheckoutError(data.error || 'Checkout failed. Please try again.');
       }
     } catch {
+      sessionStorage.removeItem('magnet_pending_purchase');
       setCheckoutError('Checkout failed. Please try again.');
     } finally {
       setCheckoutLoading(null);

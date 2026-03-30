@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import {
   ArrowLeft, ArrowRight, TrendingUp, TrendingDown,
   Activity, RefreshCw, BarChart3, Plus, Loader2, LogIn,
-  Camera, Crosshair, Zap, Star, ChevronRight, Minus
+  Camera, Crosshair, Zap, Star, ChevronRight, Minus, FileText, Lock
 } from "lucide-react";
 import type { DashboardData, AnalysisRecord } from "@shared/types";
 import { PLATFORM_COLOR, PLATFORM_LABEL } from "@shared/types";
@@ -12,6 +12,7 @@ import { FeedbackSurvey } from "./FeedbackSurvey";
 interface Props {
   onAnalyze: (platform?: string) => void;
   onViewResult: (analysis: AnalysisRecord) => void;
+  onViewFullReport: (analysis: AnalysisRecord) => void;
   onBack: () => void;
   userEmail?: string;
   token?: string;
@@ -52,7 +53,7 @@ function scoreLabel(score: number): string {
   return "Poor";
 }
 
-export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }: Props) {
+export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, userEmail, token }: Props) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -270,9 +271,20 @@ export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }:
                     })}
                   </div>
                 </div>
-                <button className="dash-view-btn" onClick={() => onViewResult(latest)}>
-                  View Full Results <ChevronRight size={14} />
-                </button>
+                <div className="dash-view-btn-group">
+                  <button className="dash-view-btn" onClick={() => onViewResult(latest)}>
+                    View Results <ChevronRight size={14} />
+                  </button>
+                  {latest.purchased ? (
+                    <button className="dash-view-full-btn" onClick={(e) => { e.stopPropagation(); onViewFullReport(latest); }}>
+                      <FileText size={13} /> Full Report
+                    </button>
+                  ) : (
+                    <button className="dash-unlock-btn" onClick={(e) => { e.stopPropagation(); onViewResult(latest); }}>
+                      <Lock size={12} /> Unlock Full Report
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Score trend chart */}
@@ -376,7 +388,7 @@ export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }:
                   const prevScore = analyses[i + 1]?.score.overall;
                   const delta = prevScore !== undefined ? a.score.overall - prevScore : null;
                   return (
-                    <div key={a.id} className="dash-history-item" onClick={() => onViewResult(a)}>
+                    <div key={a.id} className={`dash-history-item ${a.purchased ? "dash-history-item--purchased" : ""}`} onClick={() => onViewResult(a)}>
                       <ScoreRing score={a.score.overall} size={44} />
                       <div className="dash-history-main">
                         <div className="dash-history-top">
@@ -386,6 +398,11 @@ export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }:
                           >
                             {PLATFORM_LABEL[a.platform] || a.platform}
                           </span>
+                          {a.purchased && (
+                            <span className="dash-history-report-badge">
+                              <FileText size={10} /> Full Report
+                            </span>
+                          )}
                           <span className="dash-history-date">{timeAgo(a.created_at)}</span>
                         </div>
                         <p className="dash-history-roast">
@@ -406,7 +423,16 @@ export function Dashboard({ onAnalyze, onViewResult, onBack, userEmail, token }:
                             {delta > 0 ? `+${delta}` : delta}
                           </span>
                         )}
-                        <ChevronRight size={15} className="dash-history-arrow" />
+                        {a.purchased ? (
+                          <button
+                            className="dash-history-report-btn"
+                            onClick={(e) => { e.stopPropagation(); onViewFullReport(a); }}
+                          >
+                            <FileText size={12} />
+                          </button>
+                        ) : (
+                          <ChevronRight size={15} className="dash-history-arrow" />
+                        )}
                       </div>
                     </div>
                   );

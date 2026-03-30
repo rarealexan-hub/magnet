@@ -114,6 +114,23 @@ async function initAuditTracking() {
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_analyses_email ON analyses (user_email)
     `);
+    await pool.query(`
+      ALTER TABLE analyses ADD COLUMN IF NOT EXISTS full_report_data JSONB
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS purchases (
+        id SERIAL PRIMARY KEY,
+        user_email TEXT NOT NULL,
+        stripe_session_id TEXT UNIQUE NOT NULL,
+        product_type TEXT NOT NULL,
+        analysis_id INTEGER,
+        credits_remaining INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_purchases_email ON purchases (user_email)
+    `);
   } catch (err) {
     console.error("Failed to create audit tracking table:", err);
   }
@@ -219,7 +236,7 @@ app.get('/api/stripe/prices', async (_req, res) => {
 
 app.post('/api/checkout', authenticateOptional, async (req: AuthRequest, res: Response) => {
   try {
-    const { priceId } = req.body;
+    const { priceId, analysisId, productType } = req.body;
     if (!priceId) {
       res.status(400).json({ error: 'priceId required' });
       return;
@@ -232,8 +249,13 @@ app.post('/api/checkout', authenticateOptional, async (req: AuthRequest, res: Re
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
       mode: 'payment',
-      success_url: `${baseUrl}/?payment=success`,
+      success_url: `${baseUrl}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/?payment=cancelled`,
+      metadata: {
+        analysisId: analysisId ? String(analysisId) : '',
+        productType: productType || '',
+        userEmail: req.user?.email || '',
+      },
     };
 
     if (req.user?.email) {
@@ -261,6 +283,66 @@ app.post('/api/checkout', authenticateOptional, async (req: AuthRequest, res: Re
   } catch (error: any) {
     console.error('Checkout error:', error);
     res.status(500).json({ error: 'Failed to create checkout session' });
+  }
+});
+
+app.post('/api/checkout/verify', async (req: Request, res: Response) => {
+  try {
+    const { sessionId, userEmail } = req.body;
+    if (!sessionId) {
+      res.status(400).json({ error: 'sessionId required' });
+      return;
+    }
+
+    const stripe = await getUncachableStripeClient();
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    if (session.payment_status !== 'paid') {
+      res.status(402).json({ error: 'Payment not completed' });
+      return;
+    }
+
+    const analysisId = session.metadata?.analysisId ? parseInt(session.metadata.analysisId) : null;
+    const productType = session.metadata?.productType || 'full-report';
+    const email = userEmail || session.metadata?.userEmail || session.customer_details?.email || '';
+    const creditsRemaining = productType === 'profile-pack' ? 2 : 0;
+
+    const existing = await pool.query(
+      'SELECT id FROM purchases WHERE stripe_session_id = $1',
+      [sessionId]
+    );
+
+    if (existing.rows.length === 0) {
+      await pool.query(
+        `INSERT INTO purchases (user_email, stripe_session_id, product_type, analysis_id, credits_remaining)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [email.toLowerCase().trim(), sessionId, productType, analysisId, creditsRemaining]
+      );
+    }
+
+    res.json({ success: true, productType, analysisId });
+  } catch (error: any) {
+    console.error('Verify checkout error:', error);
+    res.status(500).json({ error: 'Failed to verify payment' });
+  }
+});
+
+app.get('/api/purchases', authenticateRequired, async (req: AuthRequest, res: Response) => {
+  try {
+    const email = req.user!.email;
+    const result = await pool.query(
+      `SELECT p.id, p.product_type, p.analysis_id, p.credits_remaining, p.created_at,
+              a.platform, a.overall_score, a.full_report_data
+       FROM purchases p
+       LEFT JOIN analyses a ON a.id = p.analysis_id
+       WHERE p.user_email = $1
+       ORDER BY p.created_at DESC`,
+      [email]
+    );
+    res.json({ purchases: result.rows });
+  } catch (error) {
+    console.error('Purchases error:', error);
+    res.status(500).json({ error: 'Failed to load purchases' });
   }
 });
 
@@ -413,33 +495,49 @@ app.get(
     try {
       const email = req.user!.email;
       const result = await pool.query(
-        `SELECT id, user_email, platform, overall_score, photo_quality, attraction_signals,
-              personality_signals, match_targeting, first_impression, roast, mistakes,
-              profile_type, profile_type_explanation, created_at
-       FROM analyses WHERE user_email = $1 ORDER BY created_at DESC`,
+        `SELECT a.id, a.user_email, a.platform, a.overall_score, a.photo_quality, a.attraction_signals,
+              a.personality_signals, a.match_targeting, a.first_impression, a.roast, a.mistakes,
+              a.profile_type, a.profile_type_explanation, a.full_report_data, a.created_at,
+              p.id as purchase_id, p.product_type as purchase_type, p.credits_remaining
+         FROM analyses a
+         LEFT JOIN purchases p ON p.analysis_id = a.id AND p.user_email = a.user_email
+         WHERE a.user_email = $1
+         ORDER BY a.created_at DESC`,
         [email],
       );
 
-      const analyses: AnalysisRecord[] = result.rows.map((r: any) => ({
-        id: r.id,
-        email: r.user_email,
-        platform: r.platform,
-        score: {
-          overall: r.overall_score,
-          photoQuality: r.photo_quality,
-          attractionSignals: r.attraction_signals,
-          personalitySignals: r.personality_signals,
-          matchTargeting: r.match_targeting,
-          firstImpression: r.first_impression,
-        },
-        feedback: {
-          roast: r.roast || "",
-          mistakes: r.mistakes || [],
-          profileType: r.profile_type || "generic",
-          profileTypeExplanation: r.profile_type_explanation || "",
-        },
-        created_at: r.created_at,
-      }));
+      const analyses: AnalysisRecord[] = result.rows.map((r: any) => {
+        const fullReportData = r.full_report_data || {};
+        return {
+          id: r.id,
+          email: r.user_email,
+          platform: r.platform,
+          score: {
+            overall: r.overall_score,
+            photoQuality: r.photo_quality,
+            attractionSignals: r.attraction_signals,
+            personalitySignals: r.personality_signals,
+            matchTargeting: r.match_targeting,
+            firstImpression: r.first_impression,
+          },
+          feedback: {
+            roast: r.roast || "",
+            mistakes: r.mistakes || [],
+            profileType: r.profile_type || "generic",
+            profileTypeExplanation: r.profile_type_explanation || "",
+            categoryAnalysis: fullReportData.categoryAnalysis,
+            promptRecommendations: fullReportData.promptRecommendations,
+            photoSwapRecommendations: fullReportData.photoSwapRecommendations,
+            photoOrderRecommendation: fullReportData.photoOrderRecommendation,
+            sampleProfile: fullReportData.sampleProfile,
+            matchPotential: fullReportData.matchPotential,
+            potentialMatches: fullReportData.potentialMatches,
+          },
+          created_at: r.created_at,
+          purchased: !!r.purchase_id,
+          purchaseType: r.purchase_type || null,
+        };
+      });
 
       const platformMap = new Map<
         string,
@@ -673,9 +771,19 @@ app.post(
       }
 
       const ownerEmail = req.user?.email || email;
-      await pool.query(
-        `INSERT INTO analyses (user_email, platform, overall_score, photo_quality, attraction_signals, personality_signals, match_targeting, first_impression, roast, mistakes, profile_type, profile_type_explanation)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      const fullReportData = {
+        categoryAnalysis: result.feedback.categoryAnalysis,
+        promptRecommendations: result.feedback.promptRecommendations,
+        photoSwapRecommendations: result.feedback.photoSwapRecommendations,
+        photoOrderRecommendation: result.feedback.photoOrderRecommendation,
+        sampleProfile: result.feedback.sampleProfile,
+        matchPotential: result.feedback.matchPotential,
+        potentialMatches: result.feedback.potentialMatches,
+      };
+
+      const insertResult = await pool.query(
+        `INSERT INTO analyses (user_email, platform, overall_score, photo_quality, attraction_signals, personality_signals, match_targeting, first_impression, roast, mistakes, profile_type, profile_type_explanation, full_report_data)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
         [
           ownerEmail,
           platform,
@@ -689,9 +797,11 @@ app.post(
           JSON.stringify(result.feedback.mistakes),
           result.feedback.profileType,
           result.feedback.profileTypeExplanation,
+          JSON.stringify(fullReportData),
         ],
       );
-      res.json(result);
+      const analysisId = insertResult.rows[0]?.id;
+      res.json({ ...result, analysisId });
     } catch (error: any) {
       console.error("Analysis error:", error);
       const msg =

@@ -156,6 +156,7 @@ export interface ProfileFeedback {
 export interface ProfileResult {
   score: ProfileScore;
   feedback: ProfileFeedback;
+  analysisId?: number;
 }
 
 export interface AnalysisRecord {
@@ -165,6 +166,8 @@ export interface AnalysisRecord {
   score: ProfileScore;
   feedback: ProfileFeedback;
   created_at: string;
+  purchased?: boolean;
+  purchaseType?: string | null;
 }
 
 export interface DashboardData {

@@ -8,6 +8,7 @@ interface Props {
   result: ProfileResult;
   profileInput: ProfileInput;
   onBack: () => void;
+  purchased?: boolean;
 }
 
 function parsePhotoData(raw: string): { data: string; mimeType: string } | null {
@@ -33,7 +34,7 @@ function PhotoThumb({ raw, label }: { raw: string; label: string }) {
   );
 }
 
-export function FullReport({ result, profileInput, onBack }: Props) {
+export function FullReport({ result, profileInput, onBack, purchased }: Props) {
   const { score, feedback } = result;
   const platform = profileInput.platform || "other";
   const platformLabel = PLATFORM_LABEL[platform] ?? platform;
@@ -73,6 +74,13 @@ export function FullReport({ result, profileInput, onBack }: Props) {
             <ArrowLeft size={16} /> Back to Results
           </button>
         </div>
+
+        {purchased && (
+          <div className="report-unlocked-banner">
+            <Sparkles size={15} />
+            <span>Full Report Unlocked</span>
+          </div>
+        )}
 
         <div className="report-hero">
           <div className="report-hero-badge">Full Report</div>
