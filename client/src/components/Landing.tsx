@@ -35,7 +35,7 @@ export function Landing({ onStart }: Props) {
     <div className="landing">
       <div className="landing-hero">
         <div className="badge">
-          <MagnetIcon size={18} />
+          <MagnetIcon size={22} />
           <span>Magnet</span>
         </div>
         <h1>
