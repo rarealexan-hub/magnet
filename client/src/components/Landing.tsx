@@ -52,7 +52,6 @@ export function Landing({ onStart }: Props) {
           Analyze My Profile
           <ArrowRight size={16} />
         </button>
-        <p className="cta-sub">Free. No credit card. Takes 3 minutes.</p>
       </div>
 
       <div className="stats-strip">
