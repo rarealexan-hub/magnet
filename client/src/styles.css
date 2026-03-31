@@ -5,7 +5,7 @@
 }
 
 :root {
-  --bg: #f8fafc;
+  --bg: #e8edf5;
   --surface: #ffffff;
   --surface-2: #f1f5f9;
   --border: #e2e8f0;
@@ -66,12 +66,12 @@ select, input, textarea {
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 5px 12px 5px 10px;
+  gap: 8px;
+  padding: 7px 16px 7px 12px;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: 100px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--text-muted);
