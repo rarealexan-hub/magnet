@@ -2,7 +2,7 @@ import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight, ArrowLeftRi
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { PLATFORM_COLOR, PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
-import { FeedbackSurvey } from "./FeedbackSurvey";
+
 
 interface Props {
   result: ProfileResult;
@@ -446,12 +446,6 @@ export function FullReport({ result, profileInput, onBack, purchased }: Props) {
             </div>
           </div>
         )}
-
-        <FeedbackSurvey
-          page="full-report"
-          platform={profileInput.platform}
-          magnetScore={result.score.overall}
-        />
 
         <div className="report-footer">
           <button className="results-start-over-btn" onClick={onBack}>

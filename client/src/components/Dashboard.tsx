@@ -7,7 +7,7 @@ import {
 import type { DashboardData, AnalysisRecord } from "@shared/types";
 import { PLATFORM_COLOR, PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
-import { FeedbackSurvey } from "./FeedbackSurvey";
+
 
 interface Props {
   onAnalyze: (platform?: string) => void;
@@ -585,7 +585,6 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
               </div>
             )}
 
-            <FeedbackSurvey page="dashboard" email={userEmail} />
           </>
         )}
       </div>
