@@ -5,24 +5,24 @@
 }
 
 :root {
-  --bg: #d8e0ed;
+  --bg: #ede0f5;
   --surface: #ffffff;
-  --surface-2: #f1f5f9;
-  --border: #e2e8f0;
-  --border-subtle: #eef2f7;
-  --text: #0a1931;
-  --text-muted: #64748b;
-  --text-dim: #94a3b8;
-  --accent: #185adb;
-  --accent-light: #3b76e8;
-  --accent-subtle: rgba(24, 90, 219, 0.08);
+  --surface-2: #faf4fd;
+  --border: #e0ccee;
+  --border-subtle: #f2eaf8;
+  --text: #1a0a1e;
+  --text-muted: #7a5289;
+  --text-dim: #b097bc;
+  --accent: #9333ea;
+  --accent-light: #a855f7;
+  --accent-subtle: rgba(147, 51, 234, 0.08);
   --green: #16a34a;
   --green-subtle: rgba(22, 163, 74, 0.08);
   --red: #dc2626;
   --red-subtle: rgba(220, 38, 38, 0.08);
   --yellow: #d97706;
   --card: #ffffff;
-  --muted: #64748b;
+  --muted: #7a5289;
   --radius-sm: 6px;
   --radius: 10px;
   --radius-lg: 14px;
@@ -88,7 +88,10 @@ h1 {
 }
 
 .gradient-text {
-  color: var(--text);
+  background: linear-gradient(135deg, #db2777, #9333ea);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .subtitle {
@@ -114,7 +117,7 @@ h1 {
   align-items: center;
   gap: 9px;
   padding: 14px 28px;
-  background: #185adb;
+  background: linear-gradient(135deg, #db2777, #9333ea);
   color: #fff;
   font-size: 15px;
   font-weight: 700;
@@ -122,13 +125,13 @@ h1 {
   border: none;
   border-radius: var(--radius);
   cursor: pointer;
-  transition: background 0.15s, box-shadow 0.15s;
-  box-shadow: 0 4px 18px rgba(24, 90, 219, 0.35);
+  transition: opacity 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 18px rgba(147, 51, 234, 0.4);
 }
 
 .cta-button:hover {
-  background: #1450c4;
-  box-shadow: 0 6px 24px rgba(24, 90, 219, 0.45);
+  opacity: 0.92;
+  box-shadow: 0 6px 24px rgba(147, 51, 234, 0.55);
 }
 
 .cta-sub {
@@ -3012,7 +3015,7 @@ h1 {
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: #185adb;
+  background: linear-gradient(135deg, #db2777, #9333ea);
   border: none;
   border-radius: var(--radius-sm);
   color: #fff;
@@ -3021,13 +3024,13 @@ h1 {
   letter-spacing: 0.01em;
   cursor: pointer;
   min-height: 36px;
-  transition: background 0.15s, box-shadow 0.15s;
-  box-shadow: 0 2px 10px rgba(24, 90, 219, 0.3);
+  transition: opacity 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 10px rgba(147, 51, 234, 0.35);
 }
 
 .header-signin:hover {
-  background: #1450c4;
-  box-shadow: 0 4px 16px rgba(24, 90, 219, 0.4);
+  opacity: 0.9;
+  box-shadow: 0 4px 16px rgba(147, 51, 234, 0.5);
 }
 
 .user-menu {
