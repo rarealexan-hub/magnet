@@ -634,6 +634,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               {contextOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             <p className="form-hint" style={{ marginTop: 6 }}>Could be your age, job, a prompt answer — whatever shows up first.</p>
+            <p className="form-hint" style={{ marginTop: 4, fontStyle: "italic" }}>The more you fill in, the more specific and accurate your results will be.</p>
             {contextOpen && (
               <div className="context-toggle-body">
                 <input
