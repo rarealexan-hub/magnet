@@ -84,17 +84,20 @@ const BASIC_SUGGESTIONS: Record<string, { tip: string; locked: string }> = {
   },
 };
 
-function BasicSuggestions({ score }: { score: ProfileResult["score"] }) {
-  const categories = [
+function BasicSuggestions({ score, onFullReport }: { score: ProfileResult["score"]; onFullReport: () => void }) {
+  const freeCategories = [
     { key: "photoQuality" as const, label: "Photo Quality" },
     { key: "attractionSignals" as const, label: "Attraction Signals" },
     { key: "personalitySignals" as const, label: "Personality Signals" },
+  ];
+  const lockedCategories = [
     { key: "matchTargeting" as const, label: "Match Targeting" },
     { key: "firstImpression" as const, label: "First Impression" },
   ];
 
-  const weak = categories.filter((c) => score[c.key] < 70);
-  if (weak.length === 0) return null;
+  const weakFree = freeCategories.filter((c) => score[c.key] < 70);
+  const weakLocked = lockedCategories.filter((c) => score[c.key] < 70);
+  if (weakFree.length === 0 && weakLocked.length === 0) return null;
 
   return (
     <div className="basic-suggestions-section">
@@ -105,7 +108,7 @@ function BasicSuggestions({ score }: { score: ProfileResult["score"] }) {
         These are direction-level tips. The Full Report gives you the exact specifics.
       </p>
       <div className="basic-suggestions-list">
-        {weak.map((cat) => {
+        {weakFree.map((cat) => {
           const s = BASIC_SUGGESTIONS[cat.key];
           return (
             <div key={cat.key} className="basic-suggestion-item">
@@ -121,6 +124,23 @@ function BasicSuggestions({ score }: { score: ProfileResult["score"] }) {
             </div>
           );
         })}
+        {weakLocked.map((cat) => (
+          <div key={cat.key} className="basic-suggestion-item basic-suggestion-item--locked" onClick={onFullReport}>
+            <div className="basic-suggestion-header">
+              <span className="basic-suggestion-label">{cat.label}</span>
+              <span className="basic-suggestion-score basic-suggestion-score--locked">
+                <Lock size={11} /> Full Report
+              </span>
+            </div>
+            <div className="basic-suggestion-tip basic-suggestion-tip--blurred">
+              Your profile is sending mixed signals to the people you most want to attract.
+            </div>
+            <div className="basic-suggestion-locked">
+              <Lock size={11} />
+              <span>{BASIC_SUGGESTIONS[cat.key].locked}</span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -314,7 +334,7 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
           </button>
         </div>
 
-        <BasicSuggestions score={score} />
+        <BasicSuggestions score={score} onFullReport={onFullReport} />
 
         <MatchVolumeBlock score={score.overall} platform={profileInput.platform} />
 

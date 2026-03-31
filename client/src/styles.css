@@ -5734,6 +5734,39 @@ button {
   font-weight: 500;
 }
 
+.basic-suggestion-item--locked {
+  cursor: pointer;
+  border-color: var(--border);
+  opacity: 0.85;
+  position: relative;
+  overflow: hidden;
+  transition: opacity 0.15s, border-color 0.15s;
+}
+
+.basic-suggestion-item--locked:hover {
+  opacity: 1;
+  border-color: #a855f7;
+}
+
+.basic-suggestion-score--locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #a855f7;
+  background: rgba(147, 51, 234, 0.1);
+  padding: 2px 7px;
+  border-radius: 100px;
+}
+
+.basic-suggestion-tip--blurred {
+  filter: blur(4px);
+  user-select: none;
+  pointer-events: none;
+  color: var(--text);
+}
+
 @media (max-width: 640px) {
   .basic-suggestions-section {
     padding: 18px;
