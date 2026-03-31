@@ -20,7 +20,6 @@ export default function App() {
   const [preselectedPlatform, setPreselectedPlatform] = useState<string | undefined>();
   const [fullReportViewed, setFullReportViewed] = useState(false);
   const [reportPurchased, setReportPurchased] = useState(false);
-  const [triggerFeedback, setTriggerFeedback] = useState(false);
   const [authContext, setAuthContext] = useState<"default" | "save-results">("default");
   const [paymentVerifyError, setPaymentVerifyError] = useState<string | null>(null);
   const { user, loading, token, login, loginWithGoogle, register, logout } = useAuth();
@@ -98,25 +97,16 @@ export default function App() {
     setProfileInput(null);
     setPreselectedPlatform(undefined);
     setFullReportViewed(false);
-    setTriggerFeedback(false);
     window.history.pushState({}, "", "/");
   };
 
   const handleAuth = async (action: "login" | "register", email: string, password: string) => {
     const res = action === "login" ? await login(email, password) : await register(email, password);
-    if (res.success && view === "results") {
-      setTriggerFeedback(true);
-      setTimeout(() => setTriggerFeedback(false), 200);
-    }
     return res;
   };
 
   const handleGoogleAuth = async (credential: string) => {
     const res = await loginWithGoogle(credential);
-    if (res.success && view === "results") {
-      setTriggerFeedback(true);
-      setTimeout(() => setTriggerFeedback(false), 200);
-    }
     return res;
   };
 
@@ -239,7 +229,6 @@ export default function App() {
               fullReportViewed={fullReportViewed}
               user={user}
               onSignIn={openAuthForResults}
-              triggerFeedback={triggerFeedback}
             />
           )}
           {view === "full-report" && result && profileInput && (

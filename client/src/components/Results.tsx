@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from "react";
-import { AlertTriangle, Crosshair, ArrowRight, FileText, Zap, Lightbulb, Lock, MessageSquare, Layers, TrendingUp, BookMarked, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { AlertTriangle, Crosshair, ArrowRight, FileText, Zap, Lightbulb, Lock, Layers, TrendingUp, BookMarked, X } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
-import { FeedbackSurvey } from "./FeedbackSurvey";
 import type { AuthUser } from "../hooks/useAuth";
 
 function MatchVolumeBlock({ score, platform }: { score: number; platform: string }) {
@@ -60,7 +59,6 @@ interface Props {
   fullReportViewed?: boolean;
   user?: AuthUser | null;
   onSignIn?: () => void;
-  triggerFeedback?: boolean;
 }
 
 const BASIC_SUGGESTIONS: Record<string, { tip: string; locked: string }> = {
@@ -128,9 +126,7 @@ function BasicSuggestions({ score }: { score: ProfileResult["score"] }) {
   );
 }
 
-export function Results({ result, profileInput, onStartOver, onFullReport, onBundle, fullReportViewed, user, onSignIn, triggerFeedback }: Props) {
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const surveyRef = useRef<HTMLDivElement>(null);
+export function Results({ result, profileInput, onStartOver, onFullReport, onBundle, fullReportViewed, user, onSignIn }: Props) {
   const [prices, setPrices] = useState<Record<string, string>>({});
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -192,30 +188,9 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
     }
   };
 
-  const openFeedback = () => {
-    setFeedbackOpen(true);
-    setTimeout(() => {
-      surveyRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 80);
-  };
-
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
-
-  useEffect(() => {
-    if (triggerFeedback) {
-      openFeedback();
-    }
-  }, [triggerFeedback]);
-
-  const handleFeedbackClick = () => {
-    if (!user && onSignIn) {
-      onSignIn();
-    } else {
-      openFeedback();
-    }
-  };
 
   const { score, feedback } = result;
 
@@ -438,26 +413,13 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
           </p>
         )}
 
-        <div className="results-footer">
-          <button className="feedback-float-btn" onClick={handleFeedbackClick}>
-            <MessageSquare size={15} />
-            {!user ? "Sign in to give feedback" : "Give Feedback"}
-          </button>
-          {fullReportViewed && (
+        {fullReportViewed && (
+          <div className="results-footer">
             <button className="pricing-btn" style={{ width: "100%" }} onClick={onFullReport}>
               <FileText size={15} /> View Full Report
             </button>
-          )}
-        </div>
-
-        <FeedbackSurvey
-          page="results"
-          platform={profileInput.platform}
-          magnetScore={score.overall}
-          email={user?.email}
-          defaultOpen={feedbackOpen}
-          surveyRef={surveyRef}
-        />
+          </div>
+        )}
 
       </div>
     </div>
