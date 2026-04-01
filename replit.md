@@ -50,6 +50,12 @@ shared/
 - `free_audits` — tracks which emails have used their free Magnet analysis per platform (id, email, platform, created_at; UNIQUE on email+platform)
 - `analyses` — persists every analysis result (id SERIAL PK, user_email TEXT, platform TEXT, overall_score INT, photo_quality INT, attraction_signals INT, personality_signals INT, match_targeting INT, first_impression INT, roast TEXT, mistakes JSONB, profile_type TEXT, profile_type_explanation TEXT, created_at TIMESTAMP); indexed on user_email
 
+## Design System
+
+- **Theme**: Dark & Tactical — `#0D1117` page background, white surface cards, electric blue `#0EA5E9` / teal `#00C9A7` accent gradient
+- CSS custom property scoping: `:root` sets light text for dark bg; white card containers override to dark text via `--text: #0f172a`
+- All CTA buttons, Sign In button, gradient text: `linear-gradient(135deg, #0EA5E9, #00C9A7)`
+
 ## Mobile Responsiveness
 
 - Viewport meta tag with `width=device-width, initial-scale=1.0`

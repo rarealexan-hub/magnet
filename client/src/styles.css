@@ -5,27 +5,50 @@
 }
 
 :root {
-  --bg: #ede0f5;
+  --bg: #0D1117;
   --surface: #ffffff;
-  --surface-2: #faf4fd;
-  --border: #e0ccee;
-  --border-subtle: #f2eaf8;
-  --text: #1a0a1e;
-  --text-muted: #7a5289;
-  --text-dim: #b097bc;
-  --accent: #9333ea;
-  --accent-light: #a855f7;
-  --accent-subtle: rgba(147, 51, 234, 0.08);
+  --surface-2: #f1f5f9;
+  --border: #1e293b;
+  --border-subtle: #243447;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  --accent: #0EA5E9;
+  --accent-light: #38bdf8;
+  --accent-subtle: rgba(14, 165, 233, 0.1);
   --green: #16a34a;
   --green-subtle: rgba(22, 163, 74, 0.08);
   --red: #dc2626;
   --red-subtle: rgba(220, 38, 38, 0.08);
   --yellow: #d97706;
   --card: #ffffff;
-  --muted: #7a5289;
+  --muted: #94a3b8;
   --radius-sm: 6px;
   --radius: 10px;
   --radius-lg: 14px;
+}
+
+/* Dark text inside white surface cards */
+.stats-strip,
+.badge,
+.ba-card,
+.ba-toggle-btn,
+.testimonial-card,
+.feature-card,
+.proof-item,
+.form-container,
+.score-card,
+.roast-card,
+.mistakes-section,
+.upgrade-section,
+.pricing-card,
+.basic-suggestions-section,
+.report-section-card,
+.dashboard-card,
+.dashboard-features {
+  --text: #0f172a;
+  --text-muted: #475569;
+  --text-dim: #94a3b8;
 }
 
 body {
@@ -88,7 +111,7 @@ h1 {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #db2777, #9333ea);
+  background: linear-gradient(135deg, #0EA5E9, #00C9A7);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -117,7 +140,7 @@ h1 {
   align-items: center;
   gap: 9px;
   padding: 14px 28px;
-  background: linear-gradient(135deg, #db2777, #9333ea);
+  background: linear-gradient(135deg, #0EA5E9, #00C9A7);
   color: #fff;
   font-size: 15px;
   font-weight: 700;
@@ -126,12 +149,12 @@ h1 {
   border-radius: var(--radius);
   cursor: pointer;
   transition: opacity 0.15s, box-shadow 0.15s;
-  box-shadow: 0 4px 18px rgba(147, 51, 234, 0.4);
+  box-shadow: 0 4px 18px rgba(14, 165, 233, 0.4);
 }
 
 .cta-button:hover {
   opacity: 0.92;
-  box-shadow: 0 6px 24px rgba(147, 51, 234, 0.55);
+  box-shadow: 0 6px 24px rgba(14, 165, 233, 0.55);
 }
 
 .cta-sub {
@@ -1991,8 +2014,8 @@ h1 {
 }
 
 .pricing-card.featured {
-  border-color: rgba(79, 110, 247, 0.35);
-  background: rgba(79, 110, 247, 0.04);
+  border-color: rgba(14, 165, 233, 0.35);
+  background: rgba(14, 165, 233, 0.04);
 }
 
 .pricing-badge {
@@ -2030,7 +2053,7 @@ h1 {
 
 .pricing-icon.featured-icon {
   background: var(--accent-subtle);
-  border-color: rgba(79, 110, 247, 0.2);
+  border-color: rgba(14, 165, 233, 0.2);
   color: var(--accent-light);
 }
 
@@ -3015,7 +3038,7 @@ h1 {
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, #db2777, #9333ea);
+  background: linear-gradient(135deg, #0EA5E9, #00C9A7);
   border: none;
   border-radius: var(--radius-sm);
   color: #fff;
@@ -3025,12 +3048,12 @@ h1 {
   cursor: pointer;
   min-height: 36px;
   transition: opacity 0.15s, box-shadow 0.15s;
-  box-shadow: 0 2px 10px rgba(147, 51, 234, 0.35);
+  box-shadow: 0 2px 10px rgba(14, 165, 233, 0.35);
 }
 
 .header-signin:hover {
   opacity: 0.9;
-  box-shadow: 0 4px 16px rgba(147, 51, 234, 0.5);
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.5);
 }
 
 .user-menu {
@@ -4079,8 +4102,8 @@ h1 {
   font-size: 13px;
   font-weight: 600;
   color: var(--accent-light);
-  background: rgba(99,102,241,0.1);
-  border: 1px solid rgba(99,102,241,0.2);
+  background: rgba(14,165,233,0.1);
+  border: 1px solid rgba(14,165,233,0.2);
   border-radius: 10px;
   padding: 9px 16px;
   cursor: pointer;
@@ -4089,8 +4112,8 @@ h1 {
 }
 
 .dash-view-btn:hover {
-  background: rgba(99,102,241,0.18);
-  border-color: rgba(99,102,241,0.35);
+  background: rgba(14,165,233,0.18);
+  border-color: rgba(14,165,233,0.35);
 }
 
 /* Chart card */
@@ -4165,7 +4188,7 @@ h1 {
 
 .dash-bar-fill {
   width: 100%;
-  background: rgba(99,102,241,0.45);
+  background: rgba(14,165,233,0.45);
   border-radius: 4px 4px 0 0;
   transition: height 0.5s ease;
 }
@@ -4226,8 +4249,8 @@ h1 {
   font-size: 12px;
   font-weight: 700;
   color: var(--accent-light);
-  background: rgba(99,102,241,0.1);
-  border: 1px solid rgba(99,102,241,0.2);
+  background: rgba(14,165,233,0.1);
+  border: 1px solid rgba(14,165,233,0.2);
   border-radius: 8px;
   padding: 6px 12px;
   cursor: pointer;
@@ -4235,7 +4258,7 @@ h1 {
 }
 
 .dash-new-btn:hover {
-  background: rgba(99,102,241,0.18);
+  background: rgba(14,165,233,0.18);
 }
 
 /* Platform grid */
@@ -4353,8 +4376,8 @@ h1 {
   font-size: 12px;
   font-weight: 600;
   color: var(--accent-light);
-  background: rgba(99,102,241,0.1);
-  border: 1px solid rgba(99,102,241,0.2);
+  background: rgba(14,165,233,0.1);
+  border: 1px solid rgba(14,165,233,0.2);
   border-radius: 8px;
   padding: 7px 14px;
   cursor: pointer;
@@ -4362,7 +4385,7 @@ h1 {
 }
 
 .dash-analyze-platform-btn:hover {
-  background: rgba(99,102,241,0.18);
+  background: rgba(14,165,233,0.18);
 }
 
 /* History list */
@@ -4386,7 +4409,7 @@ h1 {
 
 .dash-history-item:hover {
   background: rgba(255,255,255,0.06);
-  border-color: rgba(99,102,241,0.25);
+  border-color: rgba(14,165,233,0.25);
 }
 
 .dash-history-main {
@@ -4594,7 +4617,7 @@ h1 {
 }
 
 .dash-new-btn-locked:hover {
-  background: rgba(99,102,241,0.1);
+  background: rgba(14,165,233,0.1);
 }
 
 /* ── Insight cards ── */
@@ -4616,8 +4639,8 @@ h1 {
 }
 
 .dash-insight-card.focus-card {
-  border-color: rgba(99,102,241,0.3);
-  background: rgba(99,102,241,0.04);
+  border-color: rgba(14,165,233,0.3);
+  background: rgba(14,165,233,0.04);
 }
 
 .dash-insight-icon {
@@ -5437,7 +5460,7 @@ button {
 
 .prompt-rec-suggestion {
   padding: 12px 14px;
-  background: rgba(99,102,241,0.04);
+  background: rgba(14,165,233,0.04);
   border-top: 1px solid var(--border);
 }
 
@@ -5458,7 +5481,7 @@ button {
 }
 
 .prompt-rec-label.suggest-label {
-  color: #818cf8;
+  color: #38bdf8;
 }
 
 .prompt-rec-text {
@@ -5542,8 +5565,8 @@ button {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: rgba(99,102,241,0.15);
-  color: #818cf8;
+  background: rgba(14,165,233,0.15);
+  color: #38bdf8;
   font-size: 12px;
   font-weight: 800;
   display: flex;
@@ -5627,10 +5650,10 @@ button {
   gap: 6px;
   width: 100%;
   padding: 8px 12px;
-  background: rgba(99,102,241,0.1);
-  border: 1px solid rgba(99,102,241,0.25);
+  background: rgba(14,165,233,0.1);
+  border: 1px solid rgba(14,165,233,0.25);
   border-radius: 8px;
-  color: #818cf8;
+  color: #38bdf8;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -5639,8 +5662,8 @@ button {
 }
 
 .dash-platform-action-btn:hover {
-  background: rgba(99,102,241,0.2);
-  border-color: rgba(99,102,241,0.4);
+  background: rgba(14,165,233,0.2);
+  border-color: rgba(14,165,233,0.4);
 }
 
 /* ── Basic suggestions (free tier) ── */
@@ -5724,12 +5747,12 @@ button {
 
 .basic-suggestion-locked svg {
   flex-shrink: 0;
-  color: #818cf8;
+  color: #38bdf8;
   opacity: 1;
 }
 
 .basic-suggestion-locked span {
-  color: #818cf8;
+  color: #38bdf8;
   opacity: 0.8;
   font-weight: 500;
 }
@@ -5745,7 +5768,7 @@ button {
 
 .basic-suggestion-item--locked:hover {
   opacity: 1;
-  border-color: #a855f7;
+  border-color: #0EA5E9;
 }
 
 .basic-suggestion-score--locked {
@@ -5754,8 +5777,8 @@ button {
   gap: 4px;
   font-size: 11px;
   font-weight: 700;
-  color: #a855f7;
-  background: rgba(147, 51, 234, 0.1);
+  color: #0EA5E9;
+  background: rgba(14, 165, 233, 0.1);
   padding: 2px 7px;
   border-radius: 100px;
 }
@@ -5795,7 +5818,7 @@ button {
 
 .reanalyze-cta:hover {
   background: rgba(255,255,255,0.06);
-  border-color: rgba(99,102,241,0.3);
+  border-color: rgba(14,165,233,0.3);
 }
 
 .reanalyze-cta-left {
@@ -5808,8 +5831,8 @@ button {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: rgba(99,102,241,0.12);
-  color: #818cf8;
+  background: rgba(14,165,233,0.12);
+  color: #38bdf8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5832,9 +5855,9 @@ button {
 .reanalyze-price-badge {
   font-size: 14px;
   font-weight: 800;
-  color: #818cf8;
-  background: rgba(99,102,241,0.12);
-  border: 1px solid rgba(99,102,241,0.25);
+  color: #38bdf8;
+  background: rgba(14,165,233,0.12);
+  border: 1px solid rgba(14,165,233,0.25);
   padding: 4px 10px;
   border-radius: 20px;
   white-space: nowrap;
@@ -5845,8 +5868,8 @@ button {
 .dash-price-pill {
   font-size: 10px;
   font-weight: 700;
-  background: rgba(99,102,241,0.2);
-  color: #a5b4fc;
+  background: rgba(14,165,233,0.2);
+  color: #7dd3fc;
   padding: 2px 6px;
   border-radius: 10px;
   margin-left: 4px;
@@ -5883,9 +5906,9 @@ button {
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 20px;
-  background: rgba(99,102,241,0.12);
-  color: #a5b4fc;
-  border: 1px solid rgba(99,102,241,0.25);
+  background: rgba(14,165,233,0.12);
+  color: #7dd3fc;
+  border: 1px solid rgba(14,165,233,0.25);
   white-space: nowrap;
 }
 
@@ -5910,15 +5933,15 @@ button {
 }
 
 .orientation-btn:hover {
-  border-color: rgba(99,102,241,0.4);
+  border-color: rgba(14,165,233,0.4);
   color: var(--text);
-  background: rgba(99,102,241,0.06);
+  background: rgba(14,165,233,0.06);
 }
 
 .orientation-btn.active {
-  border-color: #6366f1;
-  background: rgba(99,102,241,0.15);
-  color: #a5b4fc;
+  border-color: #0EA5E9;
+  background: rgba(14,165,233,0.15);
+  color: #7dd3fc;
   font-weight: 600;
 }
 
@@ -5946,22 +5969,22 @@ button {
 }
 
 .pref-btn:hover {
-  border-color: rgba(99,102,241,0.4);
+  border-color: rgba(14,165,233,0.4);
   color: var(--text);
-  background: rgba(99,102,241,0.06);
+  background: rgba(14,165,233,0.06);
 }
 
 .pref-btn.active {
-  border-color: #6366f1;
-  background: rgba(99,102,241,0.15);
-  color: #a5b4fc;
+  border-color: #0EA5E9;
+  background: rgba(14,165,233,0.15);
+  color: #7dd3fc;
   font-weight: 600;
 }
 
 .pref-check {
   font-size: 11px;
   font-weight: 800;
-  color: #818cf8;
+  color: #38bdf8;
 }
 
 @media (max-width: 640px) {
@@ -5992,13 +6015,13 @@ button {
 }
 
 .taste-card:hover:not(.dimmed) {
-  border-color: rgba(99,102,241,0.5);
+  border-color: rgba(14,165,233,0.5);
   transform: translateY(-2px);
 }
 
 .taste-card.selected {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
+  border-color: #0EA5E9;
+  box-shadow: 0 0 0 3px rgba(14,165,233,0.2);
 }
 
 .taste-card.dimmed {
@@ -6026,7 +6049,7 @@ button {
   right: 8px;
   width: 28px;
   height: 28px;
-  background: #6366f1;
+  background: #0EA5E9;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -6157,9 +6180,9 @@ button {
 }
 
 .feedback-float-btn:hover {
-  background: rgba(99,102,241,0.08);
-  border-color: rgba(99,102,241,0.3);
-  color: #a5b4fc;
+  background: rgba(14,165,233,0.08);
+  border-color: rgba(14,165,233,0.3);
+  color: #7dd3fc;
 }
 
 /* ── Profile Preview (Sample Profile) ── */
@@ -6262,7 +6285,7 @@ button {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  color: #a5b4fc;
+  color: #7dd3fc;
   font-size: 13px;
   line-height: 1.6;
 }
@@ -6640,7 +6663,7 @@ button {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: rgba(99,102,241,0.2);
+  background: rgba(14,165,233,0.2);
   color: var(--accent);
   font-size: 11px;
   font-weight: 700;
@@ -6673,7 +6696,7 @@ button {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #db2777, #9333ea);
+  background: linear-gradient(135deg, #0EA5E9, #00C9A7);
   color: white;
   font-size: 18px;
   font-weight: 700;
@@ -6707,9 +6730,9 @@ button {
   align-items: flex-start;
   gap: 6px;
   padding: 8px 10px;
-  background: rgba(219, 39, 119, 0.08);
+  background: rgba(14, 165, 233, 0.08);
   border-radius: 8px;
-  color: #f9a8d4;
+  color: #7dd3fc;
   font-size: 12px;
   line-height: 1.4;
 }
@@ -6717,7 +6740,7 @@ button {
 .potential-match-why svg {
   flex-shrink: 0;
   margin-top: 2px;
-  color: #db2777;
+  color: #0EA5E9;
 }
 
 @media (max-width: 480px) {

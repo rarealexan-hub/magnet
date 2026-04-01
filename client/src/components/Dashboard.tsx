@@ -342,7 +342,7 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
                 {platforms.map((p) => (
                   <div key={p.platform} className="dash-platform-card">
                     <div className="dash-platform-top">
-                      <div className="dash-platform-dot" style={{ background: PLATFORM_COLOR[p.platform] ?? "#6366f1" }} />
+                      <div className="dash-platform-dot" style={{ background: PLATFORM_COLOR[p.platform] ?? "#0EA5E9" }} />
                       <span className="dash-platform-name">{PLATFORM_LABEL[p.platform]}</span>
                       {p.analysisCount > 0 && (
                         <span className="dash-platform-count">{p.analysisCount} scan{p.analysisCount > 1 ? "s" : ""}</span>
@@ -394,7 +394,7 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
                         <div className="dash-history-top">
                           <span
                             className="dash-history-platform"
-                            style={{ color: PLATFORM_COLOR[a.platform] ?? "#6366f1" }}
+                            style={{ color: PLATFORM_COLOR[a.platform] ?? "#0EA5E9" }}
                           >
                             {PLATFORM_LABEL[a.platform] || a.platform}
                           </span>
@@ -443,7 +443,7 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
             {/* ── Insight cards ── */}
             <div className="dash-insight-grid">
               <div className="dash-insight-card focus-card">
-                <div className="dash-insight-icon" style={{ background: "rgba(99,102,241,0.12)", color: "#818cf8" }}>
+                <div className="dash-insight-icon" style={{ background: "rgba(14,165,233,0.12)", color: "#38bdf8" }}>
                   <focusCategory.icon size={18} />
                 </div>
                 <div className="dash-insight-body">
@@ -565,11 +565,11 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
                     <div key={a.id} className="dash-type-step">
                       <div
                         className="dash-type-dot"
-                        style={{ background: TYPE_COLORS[a.feedback.profileType] ?? "#6366f1" }}
+                        style={{ background: TYPE_COLORS[a.feedback.profileType] ?? "#0EA5E9" }}
                       />
                       {i < analyses.length - 1 && <div className="dash-type-line" />}
                       <div className="dash-type-info">
-                        <span className="dash-type-name" style={{ color: TYPE_COLORS[a.feedback.profileType] ?? "#6366f1" }}>
+                        <span className="dash-type-name" style={{ color: TYPE_COLORS[a.feedback.profileType] ?? "#0EA5E9" }}>
                           {TYPE_LABELS[a.feedback.profileType]}
                         </span>
                         <span className="dash-type-meta">{timeAgo(a.created_at)} · {a.score.overall}/100</span>
