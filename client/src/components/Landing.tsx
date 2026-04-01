@@ -1,32 +1,10 @@
 import { useState } from "react";
-import { ArrowRight, Magnet as MagnetIcon, Target, Sparkles, TrendingUp, Zap, X, Check, Quote } from "lucide-react";
+import { ArrowRight, Magnet as MagnetIcon, Target, Sparkles, TrendingUp, Zap, X, Check } from "lucide-react";
 
 interface Props {
   onStart: () => void;
 }
 
-const TESTIMONIALS = [
-  {
-    quote: "Went from 2 matches a week to like 11. The photo feedback alone was worth it.",
-    name: "Marcus T.",
-    detail: "Hinge · 3 weeks after",
-  },
-  {
-    quote: "I didn't realize my bio was actively repelling the type of person I wanted. Fixed it in an afternoon.",
-    name: "Priya K.",
-    detail: "Bumble · 1 month after",
-  },
-  {
-    quote: "The prompt rewrite suggestions were eerily good. Got a date from the first new opener I tried.",
-    name: "Jake R.",
-    detail: "Hinge · 2 weeks after",
-  },
-  {
-    quote: "Scored a 31 on first run. Felt personally attacked. Got to 74 after two rounds of fixes. Actually works.",
-    name: "Chloe M.",
-    detail: "Tinder · 6 weeks after",
-  },
-];
 
 export function Landing({ onStart }: Props) {
   const [baView, setBaView] = useState<"before" | "after">("before");
@@ -159,22 +137,6 @@ export function Landing({ onStart }: Props) {
           </div>
           <h3>Guided Optimization</h3>
           <p>Not just what's wrong — the Full Report tells you what to change, how to change it, and why it will perform better.</p>
-        </div>
-      </div>
-
-      <div className="wall-of-love">
-        <p className="section-title">Wall of Love</p>
-        <div className="testimonial-grid">
-          {TESTIMONIALS.map((t, i) => (
-            <div key={i} className="testimonial-card">
-              <Quote size={16} className="testimonial-quote-icon" />
-              <p className="testimonial-text">{t.quote}</p>
-              <div className="testimonial-footer">
-                <span className="testimonial-name">{t.name}</span>
-                <span className="testimonial-detail">{t.detail}</span>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 
