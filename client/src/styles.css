@@ -11,8 +11,8 @@
   --border: #1e293b;
   --border-subtle: #243447;
   --text: #e2e8f0;
-  --text-muted: #94a3b8;
-  --text-dim: #64748b;
+  --text-muted: #b0c4d8;
+  --text-dim: #8ba5be;
   --accent: #0EA5E9;
   --accent-light: #38bdf8;
   --accent-subtle: rgba(14, 165, 233, 0.1);
@@ -22,7 +22,7 @@
   --red-subtle: rgba(220, 38, 38, 0.08);
   --yellow: #d97706;
   --card: #ffffff;
-  --muted: #94a3b8;
+  --muted: #b0c4d8;
   --radius-sm: 6px;
   --radius: 10px;
   --radius-lg: 14px;
@@ -47,8 +47,8 @@
 .dashboard-card,
 .dashboard-features {
   --text: #0f172a;
-  --text-muted: #475569;
-  --text-dim: #94a3b8;
+  --text-muted: #3d5166;
+  --text-dim: #5a6f82;
 }
 
 body {
