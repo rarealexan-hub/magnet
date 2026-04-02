@@ -428,6 +428,10 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
       setError("Please upload a screenshot or type out the first thing written on your profile.");
       return;
     }
+    if (!customTarget.trim()) {
+      setError("Please describe in your own words who you're trying to attract.");
+      return;
+    }
     setError("");
     runAnalysis();
   };
@@ -727,7 +731,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               })}
             </div>
             <div style={{ marginTop: 14 }}>
-              <label className="form-label" style={{ marginBottom: 6 }}>Describe in your own words <span className="form-label-optional">optional</span></label>
+              <label className="form-label" style={{ marginBottom: 6 }}>Describe in your own words</label>
               <textarea
                 className="form-textarea"
                 rows={2}
