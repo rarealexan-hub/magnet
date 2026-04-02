@@ -1575,8 +1575,8 @@ h2, h3, h4, h5, h6 {
 .submit-btn {
   width: 100%;
   padding: 15px;
-  background: var(--text);
-  color: var(--bg);
+  background: linear-gradient(135deg, #0EA5E9, #00C9A7);
+  color: #ffffff;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.01em;
