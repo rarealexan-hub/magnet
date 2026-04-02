@@ -102,6 +102,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   );
   const [email, setEmail] = useState(userEmail || "");
   const [bio, setBio] = useState("");
+  const [bioAbout, setBioAbout] = useState("");
   const [selectedPrompts, setSelectedPrompts] = useState<SelectedPrompt[]>([]);
   const [screenshots, setScreenshots] = useState<ScreenshotFile[]>([]);
   const [currentPhotos, setCurrentPhotos] = useState<UploadedPhoto[]>([]);
@@ -115,6 +116,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   const [attractedTo, setAttractedTo] = useState<string[]>([]);
   const [step, setStep] = useState<Step>("photos");
   const [contextOpen, setContextOpen] = useState(false);
+  const [bioOpen, setBioOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -336,7 +338,11 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
     const fd = new FormData();
     fd.append("platform", platform);
     fd.append("email", email.trim());
-    fd.append("bio", bio);
+    const combinedBio = [
+      bio.trim() && `First prompt: ${bio.trim()}`,
+      bioAbout.trim() && `Bio/About section: ${bioAbout.trim()}`,
+    ].filter(Boolean).join("\n\n");
+    fd.append("bio", combinedBio);
     targetQualities.forEach((q) => fd.append("targetQualities", q));
     if (customTarget.trim()) fd.append("customTarget", customTarget);
     if (gender) fd.append("gender", gender);
@@ -634,7 +640,6 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               {contextOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             <p className="form-hint" style={{ marginTop: 6 }}>Could be your age, job, a prompt answer — whatever shows up first.</p>
-            <p className="form-hint" style={{ marginTop: 4, fontStyle: "italic" }}>The more you fill in, the more specific and accurate your results will be.</p>
             {contextOpen && (
               <div className="context-toggle-body">
                 <input
@@ -665,9 +670,29 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 <textarea
                   className="form-textarea"
                   rows={3}
-                  placeholder={platformPrompts ? "Any bio or about section (optional)..." : "Paste or type your bio here..."}
+                  placeholder="e.g. '28 · Designer · Boston' or paste your first prompt answer..."
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="form-section">
+            <button type="button" className="context-toggle-btn" onClick={() => setBioOpen(!bioOpen)}>
+              <span>Any bio or about section?</span>
+              <span className="form-label-badge">optional</span>
+              {bioOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+            <p className="form-hint" style={{ marginTop: 6 }}>Paste in your full bio or about me text — helps the AI give more targeted feedback.</p>
+            {bioOpen && (
+              <div className="context-toggle-body">
+                <textarea
+                  className="form-textarea"
+                  rows={4}
+                  placeholder="Paste or type your bio / about section here..."
+                  value={bioAbout}
+                  onChange={(e) => setBioAbout(e.target.value)}
                 />
               </div>
             )}
