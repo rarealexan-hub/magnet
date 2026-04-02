@@ -102,11 +102,19 @@ export default function App() {
 
   const handleAuth = async (action: "login" | "register", email: string, password: string) => {
     const res = action === "login" ? await login(email, password) : await register(email, password);
+    if (res.success && authContext === "default") {
+      setShowAuth(false);
+      setView("dashboard");
+    }
     return res;
   };
 
   const handleGoogleAuth = async (credential: string) => {
     const res = await loginWithGoogle(credential);
+    if (res.success && authContext === "default") {
+      setShowAuth(false);
+      setView("dashboard");
+    }
     return res;
   };
 

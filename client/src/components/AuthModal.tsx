@@ -162,11 +162,11 @@ export function AuthModal({ onClose, onAuth, onGoogleAuth, context = "default", 
                 <input
                   type="password"
                   className="auth-input"
-                  placeholder={mode === "register" ? "Password (6+ characters)" : "Password"}
+                  placeholder={mode === "register" ? "Password (8+ characters)" : "Password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={mode === "register" ? 8 : 1}
                   autoComplete={mode === "login" ? "current-password" : "new-password"}
                 />
               </div>
