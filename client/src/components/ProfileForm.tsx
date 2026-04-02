@@ -686,6 +686,11 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
             />
           </div>
 
+          <div className="form-reminder">
+            <span className="form-reminder-label">Reminder</span>
+            The more you give us, the less we have to guess — and the more precisely we can fix you.
+          </div>
+
           <div className="form-section">
             <button type="button" className="context-toggle-btn" onClick={() => setBioOpen(!bioOpen)}>
               <span>Any bio or about section?</span>
