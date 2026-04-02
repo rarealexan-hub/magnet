@@ -21,7 +21,7 @@ export function Landing({ onStart }: Props) {
           <span className="gradient-text"> sending the wrong signals.</span>
         </h1>
         <p className="subtitle">
-          Magnet scores your profile across five dimensions and shows you exactly what to fix — photos, prompts, first impression, and who you're signaling to.
+          Your profile is working hard. Just... not for you. Magnet scores all five dimensions — photos, prompts, first impression, and exactly who you're inadvertently summoning.
         </p>
         <p className="subtitle-small">
           The analysis your best friend wishes they could give you.
