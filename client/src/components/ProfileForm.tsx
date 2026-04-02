@@ -416,6 +416,14 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   };
 
   const handleDetailsNext = () => {
+    if (!gender) {
+      setError("Please select your gender.");
+      return;
+    }
+    if (attractedTo.length === 0) {
+      setError("Please select at least one gender you're trying to attract.");
+      return;
+    }
     setError("");
     runAnalysis();
   };
@@ -605,7 +613,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           </div>
 
           <div className="form-section">
-            <label className="form-label">Your gender <span className="form-label-optional">optional</span></label>
+            <label className="form-label">Your gender</label>
             <div className="orientation-grid">
               {GENDER_OPTIONS.map((g) => (
                 <button key={g.id} type="button" className={`orientation-btn ${gender === g.id ? "active" : ""}`} onClick={() => setGender(gender === g.id ? "" : g.id)}>
@@ -616,7 +624,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           </div>
 
           <div className="form-section">
-            <label className="form-label">Gender you're trying to attract <span className="form-label-optional">optional · pick all that apply</span></label>
+            <label className="form-label">Gender you're trying to attract <span className="form-label-optional">pick all that apply</span></label>
             <div className="orientation-grid">
               {PARTNER_PREFERENCES.map((p) => (
                 <button
