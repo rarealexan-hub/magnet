@@ -117,6 +117,52 @@ export default function App() {
       return;
     }
 
+    if (preview === 'results') {
+      window.history.replaceState({}, '', '/');
+      const mockResult: ProfileResult = {
+        score: { overall: 61, photoQuality: 54, attractionSignals: 58, personalitySignals: 72, matchTargeting: 49, firstImpression: 63 },
+        feedback: {
+          roast: "You've got charm buried under a pile of blurry photos, a group shot where nobody can tell which one you are, and a gym selfie that says 'I own a mirror' more than 'I have a life.' Your prompts are doing real work but your photos are actively working against you.",
+          mistakes: [
+            "Lead photo is a group shot — matches can't tell who you are in the first 2 seconds",
+            "Two photos taken in the same bathroom, same lighting, same angle — variety is nonexistent",
+            "Bio mentions 'love to laugh' — the single most overused phrase on dating apps",
+            "No photos showing hobbies, travel, or social life — profile reads as 'I own a couch'",
+          ],
+          profileType: "generic",
+          profileTypeExplanation: "Your profile hits the most common traps: safe photos, safe prompts, no real differentiation. You're not doing anything wrong, but you're not doing anything memorable either.",
+          categoryAnalysis: {
+            photoQuality: "Your photos are technically acceptable but strategically weak.",
+            attractionSignals: "There's a decent smile in photo 3, but it's buried at position 4 in your lineup.",
+            personalitySignals: "Your prompts are genuinely your strongest asset.",
+            matchTargeting: "Your profile doesn't clearly signal what kind of person you're looking for.",
+            firstImpression: "The first 2 seconds of your profile aren't landing the way they should.",
+          },
+          promptRecommendations: [],
+          photoSwapRecommendations: [],
+        },
+      };
+      const mockInput: ProfileInput = {
+        platform: "hinge",
+        email: "",
+        bio: "I love to laugh and have fun, looking for someone to go on adventures with",
+        prompts: ["My most controversial opinion: pineapple on pizza is actually fine"],
+        photoDescriptions: [],
+        screenshots: [],
+        currentPhotos: [],
+        additionalPhotos: [],
+        targetType: "ambitious-professionals",
+        gender: "man",
+        sexualOrientation: "straight",
+        partnerPreferences: ["women"],
+      };
+      setResult(mockResult);
+      setProfileInput(mockInput);
+      setFullReportViewed(false);
+      setView("results");
+      return;
+    }
+
     if (paymentStatus === 'success' && sessionId) {
       window.history.replaceState({}, '', '/');
       setView('payment-verifying');
