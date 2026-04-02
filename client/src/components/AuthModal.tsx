@@ -28,7 +28,8 @@ interface Props {
 }
 
 export function AuthModal({ onClose, onAuth, onGoogleAuth, context = "default", googleClientId }: Props) {
-  const [showEmailForm, setShowEmailForm] = useState(false);
+  const hasGoogle = !!(googleClientId || (window as any).__GOOGLE_CLIENT_ID__);
+  const [showEmailForm, setShowEmailForm] = useState(!hasGoogle);
   const [mode, setMode] = useState<"login" | "register">(context === "save-results" ? "register" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -113,25 +114,29 @@ export function AuthModal({ onClose, onAuth, onGoogleAuth, context = "default", 
 
         {error && <div className="auth-error">{error}</div>}
 
-        <div className="auth-google-btn-wrap">
-          <div ref={googleBtnRef} className="auth-google-btn-container" />
-          {loading && (
-            <div className="auth-google-loading">
-              <Loader2 size={18} className="spin" />
-            </div>
-          )}
-        </div>
+        {hasGoogle && (
+          <div className="auth-google-btn-wrap">
+            <div ref={googleBtnRef} className="auth-google-btn-container" />
+            {loading && (
+              <div className="auth-google-loading">
+                <Loader2 size={18} className="spin" />
+              </div>
+            )}
+          </div>
+        )}
 
-        <div className="auth-divider">
-          <button
-            className="auth-email-toggle"
-            onClick={() => setShowEmailForm(!showEmailForm)}
-            type="button"
-          >
-            {showEmailForm ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            {showEmailForm ? "Hide email sign-in" : "Continue with email instead"}
-          </button>
-        </div>
+        {hasGoogle && (
+          <div className="auth-divider">
+            <button
+              className="auth-email-toggle"
+              onClick={() => setShowEmailForm(!showEmailForm)}
+              type="button"
+            >
+              {showEmailForm ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              {showEmailForm ? "Hide email sign-in" : "Continue with email instead"}
+            </button>
+          </div>
+        )}
 
         {showEmailForm && (
           <form onSubmit={handleSubmit} className="auth-form">
