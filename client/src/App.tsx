@@ -180,7 +180,6 @@ export default function App() {
       }
 
       const token = localStorage.getItem('magnet_token');
-      const userEmail = restoredResult?.analysisId ? undefined : undefined;
 
       fetch('/api/checkout/verify', {
         method: 'POST',

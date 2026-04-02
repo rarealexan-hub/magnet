@@ -205,8 +205,11 @@ export function FullReport({ result, profileInput, onBack, purchased }: Props) {
                     const currentIdx = rec.currentPhoto
                       ? parseInt(rec.currentPhoto.replace(/\D/g, "")) - 1
                       : -1;
-                    const additionalIdx = rec.additionalPhoto
-                      ? rec.additionalPhoto.toUpperCase().charCodeAt(rec.additionalPhoto.length - 1) - 65
+                    const extraLetter = rec.additionalPhoto
+                      ? rec.additionalPhoto.match(/extra photo ([A-Z])/i)?.[1]
+                      : null;
+                    const additionalIdx = extraLetter
+                      ? extraLetter.toUpperCase().charCodeAt(0) - 65
                       : -1;
 
                     const currentPhotoRaw = currentIdx >= 0 ? profileInput.currentPhotos?.[currentIdx] : null;
@@ -271,9 +274,8 @@ export function FullReport({ result, profileInput, onBack, purchased }: Props) {
                 {feedback.photoOrderRecommendation.suggestedOrder.map((photoRef, i) => {
                   const isExtra = photoRef.toLowerCase().includes("extra");
                   const currentIdx = !isExtra ? parseInt(photoRef.replace(/\D/g, "")) - 1 : -1;
-                  const additionalIdx = isExtra
-                    ? photoRef.toUpperCase().charCodeAt(photoRef.length - 1) - 65
-                    : -1;
+                  const extraLetter = isExtra ? photoRef.match(/extra photo ([A-Z])/i)?.[1] : null;
+                  const additionalIdx = extraLetter ? extraLetter.toUpperCase().charCodeAt(0) - 65 : -1;
                   const rawPhoto = isExtra
                     ? profileInput.additionalPhotos?.[additionalIdx]
                     : profileInput.currentPhotos?.[currentIdx];
