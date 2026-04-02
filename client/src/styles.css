@@ -110,6 +110,10 @@ h1 {
   color: var(--text);
 }
 
+h2, h3, h4, h5, h6 {
+  color: var(--text);
+}
+
 .gradient-text {
   background: linear-gradient(135deg, #0EA5E9, #00C9A7);
   -webkit-background-clip: text;
