@@ -726,11 +726,8 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 );
               })}
             </div>
-            <div className="custom-target-block">
-              <div className="custom-target-header">
-                <span className="custom-target-title">Describe in your own words</span>
-                <span className="form-label-badge">optional</span>
-              </div>
+            <div style={{ marginTop: 14 }}>
+              <label className="form-label" style={{ marginBottom: 6 }}>Describe in your own words <span className="form-label-optional">optional</span></label>
               <textarea
                 className="form-textarea"
                 rows={2}
