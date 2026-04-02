@@ -219,7 +219,7 @@ async function buildUserContent(input: ProfileInput, promptText: string): Promis
       parts.push({ type: "text", text: `Photo #${i + 1}:` });
       parts.push({
         type: "image_url",
-        image_url: { url: `data:${img.mimeType};base64,${img.data}`, detail: "auto" },
+        image_url: { url: `data:${img.mimeType};base64,${img.data}`, detail: "high" },
       });
     }
   }
@@ -469,6 +469,29 @@ sampleProfile: Always include — it's the highest-value part of the full report
 
 
 
+function safeParseJSON(raw: string): any {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    const start = raw.indexOf("{");
+    if (start === -1) return {};
+    let depth = 0;
+    let end = -1;
+    for (let i = start; i < raw.length; i++) {
+      if (raw[i] === "{") depth++;
+      else if (raw[i] === "}") {
+        depth--;
+        if (depth === 0) { end = i; break; }
+      }
+    }
+    if (end !== -1) {
+      try { return JSON.parse(raw.slice(start, end + 1)); } catch {}
+    }
+    console.warn("AI response JSON unrecoverable, returning empty object. Raw length:", raw.length);
+    return {};
+  }
+}
+
 async function callWithRetry(
   fn: () => Promise<any>,
   maxRetries = 3,
@@ -505,12 +528,13 @@ export async function analyzeProfile(input: ProfileInput): Promise<ProfileResult
         { role: "user", content },
       ],
       response_format: { type: "json_object" },
-      temperature: 0.8,
+      temperature: 0.7,
+      max_tokens: 4096,
     })
   );
 
   const raw = response.choices[0]?.message?.content || "{}";
-  const parsed = JSON.parse(raw);
+  const parsed = safeParseJSON(raw);
   return {
     score: {
       overall: parsed.score?.overall ?? 50,
