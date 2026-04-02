@@ -119,7 +119,28 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   const [bioOpen, setBioOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
   const [error, setError] = useState("");
+
+  const LOADING_MESSAGES = [
+    "Reading your photos...",
+    "Scoring your first impression...",
+    "Identifying what's working...",
+    "Finding what's driving matches away...",
+    "Analyzing your signals...",
+    "Building your Magnet Score...",
+    "Checking your photo order...",
+    "Almost there...",
+  ];
+
+  useEffect(() => {
+    if (!loading) { setLoadingMsgIndex(0); return; }
+    const id = setInterval(() => {
+      setLoadingMsgIndex((i) => (i + 1) % LOADING_MESSAGES.length);
+    }, 2200);
+    return () => clearInterval(id);
+  }, [loading]);
+
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
@@ -439,6 +460,34 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   const platformInfo = PLATFORMS.find((p) => p.id === platform);
   const platformPrompts = PLATFORM_PROMPTS[platform] ?? null;
 
+
+  if (loading) {
+    return (
+      <div className="analyzing-overlay">
+        <div className="analyzing-inner">
+          <div className="analyzing-logo">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="url(#grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <defs>
+                <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#0EA5E9" />
+                  <stop offset="100%" stopColor="#00C9A7" />
+                </linearGradient>
+              </defs>
+              <path d="M10 2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h6z"/>
+              <path d="M10 12 4 18"/>
+              <path d="M14 2h6a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/>
+            </svg>
+          </div>
+          <h2 className="analyzing-title">Analyzing your profile</h2>
+          <p className="analyzing-msg">{LOADING_MESSAGES[loadingMsgIndex]}</p>
+          <div className="analyzing-bar-track">
+            <div className="analyzing-bar-fill" />
+          </div>
+          <p className="analyzing-note">This usually takes 20–40 seconds</p>
+        </div>
+      </div>
+    );
+  }
 
   if (step === "photos") {
     const leadPhoto = currentPhotos[0] ?? null;
