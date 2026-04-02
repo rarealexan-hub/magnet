@@ -21,7 +21,7 @@ export function Landing({ onStart }: Props) {
           <span className="gradient-text"> sending the wrong signals.</span>
         </h1>
         <p className="subtitle">
-          Somewhere, someone is swiping left on you right now — probably for one of five very fixable reasons. Magnet finds all of them: photos, prompts, first impression, and exactly who you're accidentally calling in.
+          Somewhere, someone is swiping left on you right now — for entirely fixable reasons. Magnet finds all of them: photos, prompts, first impression, and exactly who you're accidentally calling in.
         </p>
         <p className="subtitle-small">
           The analysis your best friend wishes they could give you.
