@@ -424,6 +424,10 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
       setError("Please select at least one gender you're trying to attract.");
       return;
     }
+    if (screenshots.length === 0 && !bio.trim()) {
+      setError("Please upload a screenshot or type out the first thing written on your profile.");
+      return;
+    }
     setError("");
     runAnalysis();
   };
@@ -642,48 +646,40 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           </div>
 
           <div className="form-section">
-            <button type="button" className="context-toggle-btn" onClick={() => setContextOpen(!contextOpen)}>
-              <span>What's the first thing written on your profile?</span>
-              <span className="form-label-badge">optional</span>
-              {contextOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-            <p className="form-hint" style={{ marginTop: 6 }}>Could be your age, job, a prompt answer — whatever shows up first.</p>
-            {contextOpen && (
-              <div className="context-toggle-body">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,.heic,.heif"
-                  multiple
-                  style={{ display: "none" }}
-                  onChange={handleScreenshotSelect}
-                />
-                <div className="bio-screenshot-row">
-                  {screenshots.map((s, i) => (
-                    <div key={i} className="bio-screenshot-thumb">
-                      <img src={s.preview} alt={`screenshot ${i + 1}`} />
-                      <button type="button" className="bio-screenshot-remove" onClick={() => removeScreenshot(i)}>
-                        <X size={12} />
-                      </button>
-                    </div>
-                  ))}
-                  {screenshots.length < MAX_SCREENSHOTS && (
-                    <button type="button" className="bio-screenshot-add" onClick={() => fileInputRef.current?.click()}>
-                      <Camera size={15} />
-                      Upload screenshot of first prompt
-                    </button>
-                  )}
+            <label className="form-label">What's the first thing written on your profile?</label>
+            <p className="form-hint">Could be your age, job, a prompt answer — whatever shows up first.</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.heic,.heif"
+              multiple
+              style={{ display: "none" }}
+              onChange={handleScreenshotSelect}
+            />
+            <div className="bio-screenshot-row">
+              {screenshots.map((s, i) => (
+                <div key={i} className="bio-screenshot-thumb">
+                  <img src={s.preview} alt={`screenshot ${i + 1}`} />
+                  <button type="button" className="bio-screenshot-remove" onClick={() => removeScreenshot(i)}>
+                    <X size={12} />
+                  </button>
                 </div>
-                <label className="form-sublabel" style={{ marginTop: 12 }}>Or type it out</label>
-                <textarea
-                  className="form-textarea"
-                  rows={3}
-                  placeholder="e.g. '28 · Designer · Boston' or paste your first prompt answer..."
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                />
-              </div>
-            )}
+              ))}
+              {screenshots.length < MAX_SCREENSHOTS && (
+                <button type="button" className="bio-screenshot-add" onClick={() => fileInputRef.current?.click()}>
+                  <Camera size={15} />
+                  Upload screenshot of first prompt
+                </button>
+              )}
+            </div>
+            <label className="form-sublabel" style={{ marginTop: 12 }}>Or type it out</label>
+            <textarea
+              className="form-textarea"
+              rows={3}
+              placeholder="e.g. '28 · Designer · Boston' or paste your first prompt answer..."
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+            />
           </div>
 
           <div className="form-section">
