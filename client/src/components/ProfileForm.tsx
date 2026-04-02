@@ -33,7 +33,7 @@ const MAX_SCREENSHOTS = 6;
 const MAX_CURRENT_PHOTOS = 9;
 const MAX_ADDITIONAL_PHOTOS = 10;
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
-const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif", "image/bmp", "image/tiff", "image/svg+xml"];
 const HEIC_TYPES = ["image/heic", "image/heif"];
 
 function isHeic(file: File): boolean {
@@ -178,8 +178,8 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
             skipped.push(`${file.name} (failed to convert HEIC)`);
             continue;
           }
-        } else if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
-          skipped.push(`${file.name} (use JPG, PNG, GIF, WebP, or HEIC)`);
+        } else if (!file.type.startsWith("image/")) {
+          skipped.push(`${file.name} (unsupported file type)`);
           continue;
         } else {
           processed = file;
@@ -210,8 +210,8 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
     if (isHeic(file)) {
       try { processed = await convertHeicToJpeg(file); }
       catch { setError("Couldn't convert this HEIC file."); return; }
-    } else if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
-      setError("Use JPG, PNG, WebP, or HEIC."); return;
+    } else if (!file.type.startsWith("image/")) {
+      setError("Please upload an image file."); return;
     } else {
       processed = file;
     }
@@ -299,8 +299,8 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           skipped.push(`${file.name} (couldn't process this image)`);
           continue;
         }
-      } else if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
-        skipped.push(`${file.name} (unsupported format)`);
+      } else if (!file.type.startsWith("image/")) {
+        skipped.push(`${file.name} (unsupported file type)`);
         continue;
       } else {
         processed = file;
@@ -461,7 +461,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               <label htmlFor="lead-photo-input" className="lead-photo-dropzone">
                 <ImagePlus size={32} strokeWidth={1.5} />
                 <span className="photos-hero-title">Upload lead photo</span>
-                <span className="photos-hero-hint">Screenshots work too · PNG, JPG, HEIC</span>
+                <span className="photos-hero-hint">Screenshots work too · JPG, PNG, HEIC, WebP, AVIF & more</span>
               </label>
             )}
           </div>
@@ -503,7 +503,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               <Plus size={16} />
               <div className="upload-btn-text">
                 <span className="upload-btn-title">{otherPhotos.length === 0 ? "Add other profile photos" : "Add more photos"}</span>
-                <span className="upload-btn-hint">Screenshots of your profile work great · PNG, JPG, HEIC</span>
+                <span className="upload-btn-hint">Screenshots work great · JPG, PNG, HEIC, WebP, AVIF & more</span>
               </div>
             </label>
           </div>
