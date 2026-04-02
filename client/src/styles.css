@@ -45,7 +45,13 @@
 .basic-suggestions-section,
 .report-section-card,
 .dashboard-card,
-.dashboard-features {
+.dashboard-features,
+.user-menu-trigger,
+.user-menu-dropdown,
+.auth-modal,
+.upgrade-modal,
+.payment-verifying-card,
+.save-results-prompt {
   --text: #0f172a;
   --text-muted: #1e293b;
   --text-dim: #334155;
@@ -1685,7 +1691,7 @@ h2, h3, h4, h5, h6 {
 
 .analyzing-note {
   font-size: 12px;
-  color: #5a7a94;
+  color: #94b8d0;
 }
 
 /* Results Page */
