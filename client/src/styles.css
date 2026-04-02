@@ -47,8 +47,8 @@
 .dashboard-card,
 .dashboard-features {
   --text: #0f172a;
-  --text-muted: #3d5166;
-  --text-dim: #5a6f82;
+  --text-muted: #1e293b;
+  --text-dim: #334155;
 }
 
 body {

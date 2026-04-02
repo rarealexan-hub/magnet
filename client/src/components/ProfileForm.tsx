@@ -502,7 +502,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
             <label htmlFor="other-photos-input" className="upload-btn">
               <Plus size={16} />
               <div className="upload-btn-text">
-                <span className="upload-btn-title">{otherPhotos.length === 0 ? "Add other profile photos" : `${otherPhotos.length} added — add more`}</span>
+                <span className="upload-btn-title">{otherPhotos.length === 0 ? "Add other profile photos" : "Add more photos"}</span>
                 <span className="upload-btn-hint">Screenshots of your profile work great · PNG, JPG, HEIC</span>
               </div>
             </label>
