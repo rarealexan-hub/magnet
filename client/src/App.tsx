@@ -22,6 +22,7 @@ export default function App() {
   const [reportPurchased, setReportPurchased] = useState(false);
   const [authContext, setAuthContext] = useState<"default" | "save-results">("default");
   const [paymentVerifyError, setPaymentVerifyError] = useState<string | null>(null);
+  const [bypassPayment, setBypassPayment] = useState(false);
   const { user, loading, token, login, loginWithGoogle, register, logout } = useAuth();
 
   useEffect(() => {
@@ -29,6 +30,11 @@ export default function App() {
     const paymentStatus = params.get('payment');
     const sessionId = params.get('session_id');
     const preview = params.get('preview');
+
+    if (params.has('bypass')) {
+      setBypassPayment(true);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
 
     if (preview === 'full-report') {
       window.history.replaceState({}, '', '/');
@@ -365,11 +371,12 @@ export default function App() {
               result={result}
               profileInput={profileInput}
               onStartOver={handleStartOver}
-              onFullReport={() => { setFullReportViewed(true); setView("full-report"); }}
-              onBundle={() => { setFullReportViewed(true); setView("full-report"); }}
+              onFullReport={() => { setFullReportViewed(true); setReportPurchased(bypassPayment); setView("full-report"); }}
+              onBundle={() => { setFullReportViewed(true); setReportPurchased(bypassPayment); setView("full-report"); }}
               fullReportViewed={fullReportViewed}
               user={user}
               onSignIn={openAuthForResults}
+              bypassPayment={bypassPayment}
             />
           )}
           {view === "full-report" && result && profileInput && (

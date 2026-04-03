@@ -59,6 +59,7 @@ interface Props {
   fullReportViewed?: boolean;
   user?: AuthUser | null;
   onSignIn?: () => void;
+  bypassPayment?: boolean;
 }
 
 const BASIC_SUGGESTIONS: Record<string, { tip: string; locked: string }> = {
@@ -146,7 +147,7 @@ function BasicSuggestions({ score, onFullReport }: { score: ProfileResult["score
   );
 }
 
-export function Results({ result, profileInput, onStartOver, onFullReport, onBundle, fullReportViewed, user, onSignIn }: Props) {
+export function Results({ result, profileInput, onStartOver, onFullReport, onBundle, fullReportViewed, user, onSignIn, bypassPayment }: Props) {
   const [prices, setPrices] = useState<Record<string, string>>({});
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -166,6 +167,10 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
   }, []);
 
   const handleCheckout = async (type: 'full-report' | 'profile-pack') => {
+    if (bypassPayment) {
+      onFullReport();
+      return;
+    }
     const priceId = prices[type];
     if (!priceId) {
       setCheckoutError('Payment not available right now. Please try again.');
@@ -387,7 +392,7 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
                   onClick={() => handleCheckout('full-report')}
                   disabled={checkoutLoading === 'full-report'}
                 >
-                  {checkoutLoading === 'full-report' ? 'Loading…' : <><span>Get Full Report</span> <ArrowRight size={16} /></>}
+                  {checkoutLoading === 'full-report' ? 'Loading…' : <><span>{bypassPayment ? 'Preview Full Report' : 'Get Full Report'}</span> <ArrowRight size={16} /></>}
                 </button>
               </div>
             )}
@@ -420,7 +425,7 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
                 onClick={() => handleCheckout('profile-pack')}
                 disabled={checkoutLoading === 'profile-pack'}
               >
-                {checkoutLoading === 'profile-pack' ? 'Loading…' : <><span>Get Profile Pack</span> <ArrowRight size={16} /></>}
+                {checkoutLoading === 'profile-pack' ? 'Loading…' : <><span>{bypassPayment ? 'Preview Profile Pack' : 'Get Profile Pack'}</span> <ArrowRight size={16} /></>}
               </button>
             </div>
 
