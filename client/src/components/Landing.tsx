@@ -31,6 +31,7 @@ export function Landing({ onStart }: Props) {
           <ArrowRight size={16} />
         </button>
         <p className="cta-sub">AI trained on 50,000+ top-performing profiles across Hinge, Bumble &amp; Tinder</p>
+        <p className="cta-sub" style={{ marginTop: 6, fontSize: 12, opacity: 0.75 }}>Personally prompted by the creator to flag the exact green flags, red flags, and conversion killers that most analyses miss</p>
       </div>
 
       <div className="stats-strip">
