@@ -1804,9 +1804,14 @@ h2, h3, h4, h5, h6 {
 .breakdown-bar-wrap {
   flex: 1;
   height: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 4px;
   overflow: hidden;
+}
+
+.score-card .breakdown-bar-wrap,
+.report-section-card .breakdown-bar-wrap {
+  background: rgba(0, 0, 0, 0.07);
 }
 
 .breakdown-bar {
@@ -1821,6 +1826,7 @@ h2, h3, h4, h5, h6 {
   font-weight: 700;
   min-width: 28px;
   text-align: right;
+  color: var(--text);
 }
 
 .breakdown-row--locked .breakdown-label {
@@ -5215,7 +5221,7 @@ button {
 }
 
 .prompt-rec-item {
-  background: rgba(255,255,255,0.02);
+  background: rgba(0,0,0,0.02);
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
@@ -5223,7 +5229,7 @@ button {
 
 .prompt-rec-current {
   padding: 12px 14px;
-  background: rgba(255,255,255,0.03);
+  background: rgba(0,0,0,0.02);
 }
 
 .prompt-rec-divider {
@@ -5272,7 +5278,7 @@ button {
 
 .prompt-rec-issue-text {
   font-size: 13px;
-  color: #fca5a5;
+  color: #dc2626;
   margin: 0;
   line-height: 1.5;
 }
@@ -5332,7 +5338,7 @@ button {
   align-items: center;
   gap: 12px;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(0,0,0,0.07);
 }
 
 .photo-order-item:last-child {
@@ -5952,7 +5958,7 @@ button {
 }
 
 .sample-profile-mock {
-  background: rgba(255,255,255,0.03);
+  background: rgba(0,0,0,0.02);
   border: 1px solid var(--border);
   border-radius: 16px;
   overflow: hidden;
@@ -6011,8 +6017,8 @@ button {
 }
 
 .sample-mock-prompt-card {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(0,0,0,0.03);
+  border: 1px solid rgba(0,0,0,0.08);
   border-radius: 12px;
   padding: 13px 15px;
 }
@@ -6039,7 +6045,7 @@ button {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  color: #7dd3fc;
+  color: var(--accent);
   font-size: 13px;
   line-height: 1.6;
 }
@@ -6126,7 +6132,7 @@ button {
   padding: 2px 9px;
   border-radius: 20px;
   background: rgba(59, 130, 246, 0.12);
-  color: #93c5fd;
+  color: #2563eb;
   border: 1px solid rgba(59, 130, 246, 0.25);
   white-space: nowrap;
 }
@@ -6329,7 +6335,7 @@ button {
 }
 
 .match-potential-box.current {
-  background: rgba(255,255,255,0.04);
+  background: rgba(0,0,0,0.03);
   border: 1px solid var(--border);
 }
 
