@@ -634,7 +634,7 @@ export async function analyzeProfile(input: ProfileInput): Promise<ProfileResult
       ],
       response_format: { type: "json_object" },
       temperature: 0.7,
-      max_tokens: 4096,
+      max_completion_tokens: 4096,
     })
   );
 
