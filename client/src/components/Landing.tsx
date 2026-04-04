@@ -31,9 +31,6 @@ export function Landing({ onStart }: Props) {
           <ArrowRight size={16} />
         </button>
         <p className="cta-sub">AI trained on 50,000+ top-performing profiles across Hinge, Bumble &amp; Tinder</p>
-        <span className="credibility-cue">
-          <span>⚡</span> Results in under 60 seconds &nbsp;·&nbsp; No signup required
-        </span>
       </div>
 
       <div className="stats-strip">
