@@ -98,6 +98,8 @@ export interface PromptRecommendation {
   currentPrompt: string;
   issue: string;
   suggestion: string;
+  rewriteA?: string;
+  rewriteB?: string;
 }
 
 export interface PhotoOrderRecommendation {

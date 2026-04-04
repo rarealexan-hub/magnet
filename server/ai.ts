@@ -456,7 +456,9 @@ Respond in this exact JSON format:
         "promptIndex": <1-based>,
         "currentPrompt": "<exact quote>",
         "issue": "<specific diagnosis. First: is this prompt sarcastic, deadpan, self-deprecating, absurdist, or a cliché subversion? If yes — does it land? If it lands, this field should say 'This is working' and explain what type of humor it is and why it functions. If it genuinely needs work: name the specific failure (invisible/generic/no hook/unrespondable/listing instead of showing).>",
-        "suggestion": "<If it's working: affirm it clearly and explain what audience it attracts and why this style is effective. If it needs work: give a specific direction with a micro-example of the approach — NOT a full rewrite. Never suggest making a sarcastic/ironic/deadpan prompt more earnest or sincere. If a witty prompt could be heightened, suggest the escalation direction, not a pivot to warmth.>"
+        "suggestion": "<If it's working: affirm it clearly and explain what audience it attracts and why this style is effective. If it needs work: give a specific direction with a micro-example of the approach — NOT a full rewrite. Never suggest making a sarcastic/ironic/deadpan prompt more earnest or sincere. If a witty prompt could be heightened, suggest the escalation direction, not a pivot to warmth.>",
+        "rewriteA": "<Variant A — a ready-to-paste rewrite STRICTLY under 150 characters. This is a complete, usable answer — not a direction. Match their voice. If the original was witty, keep it witty. If serious, keep substance. Different angle or opener than Variant B. Omit if the prompt is already working perfectly.>",
+        "rewriteB": "<Variant B — another ready-to-paste rewrite STRICTLY under 150 characters. Meaningfully different from Variant A in tone, angle, or structure. One can be funnier, one can be more specific, one can lean into a different aspect of their personality. Omit if the prompt is already working perfectly.>"
       }
     ],
     "photoSwapRecommendations": [

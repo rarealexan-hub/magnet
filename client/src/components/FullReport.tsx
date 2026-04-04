@@ -1,4 +1,5 @@
-import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight, ArrowLeftRight, PlusCircle, MinusCircle, MoveVertical, ListOrdered, MessageSquare, AlertCircle, Lightbulb, Sparkles, Quote, TrendingUp, Users, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight, ArrowLeftRight, PlusCircle, MinusCircle, MoveVertical, ListOrdered, MessageSquare, AlertCircle, Lightbulb, Sparkles, Quote, TrendingUp, Users, ChevronRight, Copy, Check, TrendingDown, Minus, Send } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { PLATFORM_COLOR, PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
@@ -38,6 +39,41 @@ export function FullReport({ result, profileInput, onBack, purchased }: Props) {
   const { score, feedback } = result;
   const platform = profileInput.platform || "other";
   const platformLabel = PLATFORM_LABEL[platform] ?? platform;
+
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [progressOutcome, setProgressOutcome] = useState<"improved" | "same" | "worse" | null>(null);
+  const [progressNotes, setProgressNotes] = useState("");
+  const [progressSubmitted, setProgressSubmitted] = useState(false);
+  const [progressSubmitting, setProgressSubmitting] = useState(false);
+
+  const copyToClipboard = (text: string, key: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 2000);
+    });
+  };
+
+  const submitProgress = async () => {
+    if (!progressOutcome) return;
+    setProgressSubmitting(true);
+    try {
+      await fetch("/api/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          analysisId: result.analysisId || null,
+          userEmail: profileInput.email || null,
+          outcome: progressOutcome,
+          notes: progressNotes || null,
+        }),
+      });
+      setProgressSubmitted(true);
+    } catch {
+      setProgressSubmitted(true);
+    } finally {
+      setProgressSubmitting(false);
+    }
+  };
 
   const scoreCategories = [
     { key: "photoQuality" as const, label: "Photo Quality", icon: Camera, analysisKey: "photoQuality" as const },
@@ -152,13 +188,50 @@ export function FullReport({ result, profileInput, onBack, purchased }: Props) {
                       </div>
                       <div className="prompt-rec-divider" />
                       <div className="prompt-rec-issue">
-                        <span className="prompt-rec-label issue-label"><AlertCircle size={12} /> Problem</span>
+                        <span className="prompt-rec-label issue-label"><AlertCircle size={12} /> Honest take</span>
                         <p className="prompt-rec-issue-text">{rec.issue}</p>
                       </div>
                       <div className="prompt-rec-suggestion">
                         <span className="prompt-rec-label suggest-label"><Lightbulb size={12} /> Direction</span>
                         <p className="prompt-rec-suggest-text">{rec.suggestion}</p>
                       </div>
+                      {(rec.rewriteA || rec.rewriteB) && (
+                        <div className="prompt-rewrites">
+                          <span className="prompt-rewrites-label">Ready-to-paste rewrites</span>
+                          <div className="prompt-rewrite-variants">
+                            {rec.rewriteA && (
+                              <div className="prompt-rewrite-variant">
+                                <div className="prompt-rewrite-header">
+                                  <span className="prompt-rewrite-tag">Variant A</span>
+                                  <span className="prompt-rewrite-chars">{rec.rewriteA.length} chars</span>
+                                </div>
+                                <p className="prompt-rewrite-text">"{rec.rewriteA}"</p>
+                                <button
+                                  className={`prompt-copy-btn ${copiedKey === `${i}-a` ? "copied" : ""}`}
+                                  onClick={() => copyToClipboard(rec.rewriteA!, `${i}-a`)}
+                                >
+                                  {copiedKey === `${i}-a` ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy</>}
+                                </button>
+                              </div>
+                            )}
+                            {rec.rewriteB && (
+                              <div className="prompt-rewrite-variant">
+                                <div className="prompt-rewrite-header">
+                                  <span className="prompt-rewrite-tag">Variant B</span>
+                                  <span className="prompt-rewrite-chars">{rec.rewriteB.length} chars</span>
+                                </div>
+                                <p className="prompt-rewrite-text">"{rec.rewriteB}"</p>
+                                <button
+                                  className={`prompt-copy-btn ${copiedKey === `${i}-b` ? "copied" : ""}`}
+                                  onClick={() => copyToClipboard(rec.rewriteB!, `${i}-b`)}
+                                >
+                                  {copiedKey === `${i}-b` ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy</>}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -448,6 +521,67 @@ export function FullReport({ result, profileInput, onBack, purchased }: Props) {
             </div>
           </div>
         )}
+
+        {/* ── Report Back ── */}
+        <div className="report-section-card report-back-card">
+          <div className="report-section-header">
+            <div className="report-section-icon">
+              <TrendingUp size={18} />
+            </div>
+            <h3>Report Back</h3>
+          </div>
+          <div className="report-section-body">
+            {progressSubmitted ? (
+              <div className="report-back-submitted">
+                <Check size={28} className="report-back-check" />
+                <p className="report-back-submitted-title">Thanks for reporting back.</p>
+                <p className="report-back-submitted-sub">This helps us understand what's actually moving the needle for real profiles.</p>
+              </div>
+            ) : (
+              <>
+                <p className="report-back-prompt">After you make these changes — did your matches improve?</p>
+                <div className="report-back-options">
+                  <button
+                    className={`report-back-btn improved ${progressOutcome === "improved" ? "selected" : ""}`}
+                    onClick={() => setProgressOutcome("improved")}
+                  >
+                    <TrendingUp size={15} /> Yes, improved
+                  </button>
+                  <button
+                    className={`report-back-btn same ${progressOutcome === "same" ? "selected" : ""}`}
+                    onClick={() => setProgressOutcome("same")}
+                  >
+                    <Minus size={15} /> About the same
+                  </button>
+                  <button
+                    className={`report-back-btn worse ${progressOutcome === "worse" ? "selected" : ""}`}
+                    onClick={() => setProgressOutcome("worse")}
+                  >
+                    <TrendingDown size={15} /> Worse somehow
+                  </button>
+                </div>
+                {progressOutcome && (
+                  <>
+                    <textarea
+                      className="report-back-notes"
+                      placeholder="Anything specific? (optional — e.g. 'opened more but fewer matches' or 'finally getting more likes')"
+                      value={progressNotes}
+                      onChange={e => setProgressNotes(e.target.value)}
+                      rows={3}
+                    />
+                    <button
+                      className="report-back-submit"
+                      onClick={submitProgress}
+                      disabled={progressSubmitting}
+                    >
+                      {progressSubmitting ? "Saving…" : <><Send size={13} /> Submit</>}
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </div>
 
         <div className="report-footer">
           <button className="results-start-over-btn" onClick={onBack}>

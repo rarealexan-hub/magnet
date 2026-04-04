@@ -63,12 +63,16 @@ export default function App() {
               currentPrompt: "I love to laugh and have fun, looking for someone to go on adventures with",
               issue: "This is the most generic bio opener on every dating app. 'I love to laugh' appears in roughly 40% of all profiles — it signals nothing about who you are and everything about playing it safe.",
               suggestion: "Cut this entirely and open with something specific. What's an adventure you actually went on recently? Lead with that. The goal is to make someone think 'oh, this person is interesting' in the first sentence.",
+              rewriteA: "Got lost in Lisbon for 4 hours last spring. Best day of the year. Looking for someone who can navigate worse than me.",
+              rewriteB: "I plan the trip, you pick the restaurant. Neither of us checks reviews. This is how we'll end up somewhere great.",
             },
             {
               promptIndex: 2,
               currentPrompt: "My most controversial opinion: pineapple on pizza is actually fine",
               issue: "Not actually a problem — this is working. The pineapple opinion is overused but your specific framing of it has personality. Consider keeping it but following it with a stranger, more specific take.",
               suggestion: "Add a second line that's more niche. The pineapple thing is the warm-up — what's the take that's actually yours?",
+              rewriteA: "Pineapple on pizza is fine. The real villain is putting chicken in pasta. I will die on this hill and I will die well-fed.",
+              rewriteB: "Hot take: pineapple on pizza is fine, brunch is overrated, and Die Hard is a Christmas movie. I've done the math.",
             },
           ],
           photoSwapRecommendations: [

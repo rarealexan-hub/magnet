@@ -145,6 +145,16 @@ async function initAuditTracking() {
         created_at TIMESTAMP DEFAULT NOW()
       )
     `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS profile_progress (
+        id SERIAL PRIMARY KEY,
+        analysis_id INTEGER,
+        user_email TEXT,
+        outcome TEXT NOT NULL,
+        notes TEXT,
+        reported_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
   } catch (err) {
     console.error("Failed to create audit tracking table:", err);
   }
@@ -833,6 +843,24 @@ app.post(
     }
   },
 );
+
+app.post("/api/progress", async (req: Request, res: Response) => {
+  try {
+    const { analysisId, userEmail, outcome, notes } = req.body;
+    if (!outcome || !["improved", "same", "worse"].includes(outcome)) {
+      res.status(400).json({ error: "outcome must be improved, same, or worse" });
+      return;
+    }
+    await pool.query(
+      `INSERT INTO profile_progress (analysis_id, user_email, outcome, notes) VALUES ($1, $2, $3, $4)`,
+      [analysisId || null, userEmail || null, outcome, notes || null]
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Progress submission error:", error);
+    res.status(500).json({ error: "Failed to save progress" });
+  }
+});
 
 app.post("/api/feedback", async (req: Request, res: Response) => {
   try {
