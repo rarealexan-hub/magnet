@@ -335,7 +335,27 @@ async function buildUserContent(input: ProfileInput, promptText: string): Promis
 }
 
 function buildProfileText(input: ProfileInput): string {
-  let message = `Platform: ${input.platform}\n`;
+  let message = "";
+
+  // ── IDENTITY CONTEXT FIRST — calibrates ALL scoring that follows ──
+  const hasGender = input.gender && input.gender !== "prefer-not-to-say";
+  const hasOrientation = input.sexualOrientation && input.sexualOrientation !== "prefer-not-to-say";
+  const hasPartnerPrefs = input.partnerPreferences && input.partnerPreferences.length > 0;
+
+  if (hasGender || hasOrientation || hasPartnerPrefs) {
+    message += `━━━ IDENTITY CONTEXT — apply to ALL scoring below ━━━\n`;
+    if (hasGender) message += `User gender: ${input.gender}\n`;
+    if (hasOrientation) message += `Sexual orientation: ${input.sexualOrientation}\n`;
+    if (hasPartnerPrefs) message += `Attracted to: ${input.partnerPreferences!.join(", ")}\n`;
+
+    // Derive a plain-English audience statement to anchor all scoring
+    const genderLabel = input.gender || "person";
+    const attractsLabel = hasPartnerPrefs ? input.partnerPreferences!.join(" and ") : "others";
+    message += `\nScoring mandate: You are evaluating a ${genderLabel}'s profile as it will be seen by ${attractsLabel}. Every score — photoQuality, attractionSignals, personalitySignals, firstImpression — must be calibrated to what THIS specific audience responds to, not a generic standard.\n`;
+    message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  }
+
+  message += `Platform: ${input.platform}\n`;
 
   if (input.bio) {
     message += `\nBio:\n"${input.bio}"\n`;
@@ -359,18 +379,6 @@ function buildProfileText(input: ProfileInput): string {
         message += `${i + 1}. ${p}\n`;
       });
     }
-  }
-
-  if (input.gender && input.gender !== "prefer-not-to-say") {
-    message += `\nUser's gender: ${input.gender}\n`;
-  }
-
-  if (input.sexualOrientation && input.sexualOrientation !== "prefer-not-to-say") {
-    message += `\nUser's sexual orientation: ${input.sexualOrientation}\n`;
-  }
-
-  if (input.partnerPreferences && input.partnerPreferences.length > 0) {
-    message += `\nUser is attracted to: ${input.partnerPreferences.join(", ")}\n`;
   }
 
   if (input.photoTasteSelections && input.photoTasteSelections.length > 0) {
@@ -524,10 +532,40 @@ SCORING RULES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Overall score weighting: photos = 70% (lead photo alone = 42% of total), bio/prompts = 20%, match targeting coherence = 10%.
 
+CRITICAL: The user's gender and who they are attracted to must anchor every score. Read the identity context block at the top of the user message before evaluating anything. A profile cannot be scored without knowing who is looking at it.
+
+AUDIENCE-SPECIFIC SCORING MATRIX:
+
+Man attracting women (straight/bi):
+- photoQuality: Status + warmth combination is the gold standard. High-quality lifestyle context (travel, career, social leadership) + genuine expression. A gym selfie with no warmth scores low even if technically well-lit. A candid laughing shot in an interesting setting scores high.
+- attractionSignals: Ambition, emotional availability, social proof, leadership context. Women screen heavily for safety and long-term potential — photos that signal "going somewhere in life" while also showing warmth are the highest performers.
+- firstImpression: Does the lead photo make a woman feel safe, intrigued, and attracted simultaneously? That's the bar. Cold confidence scores lower than warm confidence.
+- personalitySignals: Humor, depth, and self-awareness in prompts score highest. Boring, generic bios score very low regardless of career credentials.
+
+Man attracting men (gay/bi):
+- photoQuality: Physical presence matters more than in hetero dynamics. Grooming, physique, and aesthetic put-together-ness carry significant weight. Eye contact and directness score higher.
+- attractionSignals: Physical vitality, personality distinctiveness, lifestyle authenticity. Social proof still matters. Niche personality signals work well — being clearly "a type" is an asset.
+- firstImpression: Confidence and sexual presence in the lead photo. Approachability matters less; directness matters more.
+- personalitySignals: Wit, boldness, and sexual confidence. Being too soft or vague scores lower than being clearly yourself.
+
+Woman attracting men (straight/bi):
+- photoQuality: Authenticity + physical vitality dominate. Genuine joy, healthy energy, looking like yourself rather than a filtered version. Over-editing scores lower than genuine candid shots. Full-body shots matter more for this audience.
+- attractionSignals: Warmth, approachability, fun energy. Men respond to profiles that feel "real" and easy to approach. High-maintenance signals (overly posed, too polished, sunglasses in every shot) reduce match quality.
+- firstImpression: Does she look like she'd be fun and real to meet? Lead photo should feel approachable. Serious/cold/distant poses score lower.
+- personalitySignals: Personality > credentials for this audience. Humor and warmth in prompts score high. Listing achievements without personality connection scores lower.
+
+Woman attracting women (lesbian/bi):
+- photoQuality: Authenticity and shared-values signals dominate. Photos that show who she actually is — hobbies, lifestyle, genuine moments — score highest. Polish matters less than realness.
+- attractionSignals: Personality clarity, lifestyle alignment, shared values signals. Photos and prompts that give a clear sense of "what life with this person is like" score very high.
+- firstImpression: Does she feel like a complete, interesting person with a clear sense of self? That's the standard.
+- personalitySignals: Depth, opinions, and genuine self-expression score highest. Generic profiles score very low — the bar for personality differentiation is higher.
+
+Non-binary / other gender combinations: Apply the closest audience logic above based on who they're attracting, with extra weight on personality signals and authenticity.
+
 All 5 sub-scores must be calibrated to the user's identity context:
-- photoQuality: Score against what performs for THIS person's gender, presenting to THEIR audience. A warm candid smile scores differently for a woman attracting men vs. a man attracting women (who need status + warmth together). Same technical quality, different strategic score.
+- photoQuality: Score against what performs for THIS person's gender, presenting to THEIR audience. Same technical quality, very different strategic score depending on the pairing.
 - attractionSignals: Score based on whether signals match what the TARGET AUDIENCE responds to. Gay men vs. straight men, women attracting men vs. women attracting women — all have distinct signal hierarchies.
-- personalitySignals: Score against whether the personality shown is what their target audience finds compelling. An intellectual target audience scores verbose philosophical prompts higher than a playful social audience would.
+- personalitySignals: Score against whether the personality shown is what their target audience finds compelling. Frame the score from the perspective of someone in their attracted-to group reading this profile.
 - matchTargeting: Score on content-audience alignment. A profile targeting "ambitious professionals" that has no ambition signals scores low here regardless of photo quality.
 - firstImpression: Score the lead photo against what creates the strongest first impression for this specific person's gender presenting to their stated audience — not generic "good photo" logic.
 
