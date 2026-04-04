@@ -445,14 +445,6 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
       setError("Please select at least one gender you're trying to attract.");
       return;
     }
-    if (screenshots.length === 0 && !bio.trim()) {
-      setError("Please upload a screenshot or type out the first thing written on your profile.");
-      return;
-    }
-    if (!customTarget.trim()) {
-      setError("Please describe in your own words who you're trying to attract.");
-      return;
-    }
     setError("");
     runAnalysis();
   };
@@ -699,7 +691,10 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           </div>
 
           <div className="form-section">
-            <label className="form-label">What's the first thing written on your profile?</label>
+            <div className="form-label-row">
+              <label className="form-label">What's the first thing written on your profile?</label>
+              <span className="form-label-badge">optional</span>
+            </div>
             <p className="form-hint">Could be your age, job, a prompt answer — whatever shows up first.</p>
             <input
               ref={fileInputRef}
@@ -785,7 +780,10 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               })}
             </div>
             <div style={{ marginTop: 14 }}>
-              <label className="form-label" style={{ marginBottom: 6 }}>Describe in your own words</label>
+              <div className="form-label-row" style={{ marginBottom: 6 }}>
+                <label className="form-label" style={{ marginBottom: 0 }}>Describe in your own words</label>
+                <span className="form-label-badge">optional</span>
+              </div>
               <textarea
                 className="form-textarea"
                 rows={2}

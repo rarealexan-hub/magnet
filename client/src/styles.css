@@ -693,6 +693,7 @@ h2, h3, h4, h5, h6 {
   font-size: 15px;
   font-weight: 600;
   margin-bottom: 8px;
+  color: var(--text);
 }
 
 .form-hint {
