@@ -22,7 +22,7 @@ export default function App() {
   const [reportPurchased, setReportPurchased] = useState(false);
   const [authContext, setAuthContext] = useState<"default" | "save-results">("default");
   const [paymentVerifyError, setPaymentVerifyError] = useState<string | null>(null);
-  const [bypassPayment, setBypassPayment] = useState(false);
+  const [bypassPayment, setBypassPayment] = useState(true);
   const { user, loading, token, login, loginWithGoogle, register, logout } = useAuth();
 
   useEffect(() => {
