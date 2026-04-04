@@ -202,7 +202,7 @@ export function FullReport({ result, profileInput, onBack, purchased }: Props) {
                             {rec.rewriteA && (
                               <div className="prompt-rewrite-variant">
                                 <div className="prompt-rewrite-header">
-                                  <span className="prompt-rewrite-tag">Variant A</span>
+                                  <span className="prompt-rewrite-tag">{rec.rewriteAAngle || "Option A"}</span>
                                   <span className="prompt-rewrite-chars">{rec.rewriteA.length} chars</span>
                                 </div>
                                 <p className="prompt-rewrite-text">"{rec.rewriteA}"</p>
@@ -217,7 +217,7 @@ export function FullReport({ result, profileInput, onBack, purchased }: Props) {
                             {rec.rewriteB && (
                               <div className="prompt-rewrite-variant">
                                 <div className="prompt-rewrite-header">
-                                  <span className="prompt-rewrite-tag">Variant B</span>
+                                  <span className="prompt-rewrite-tag">{rec.rewriteBAngle || "Option B"}</span>
                                   <span className="prompt-rewrite-chars">{rec.rewriteB.length} chars</span>
                                 </div>
                                 <p className="prompt-rewrite-text">"{rec.rewriteB}"</p>
@@ -294,21 +294,25 @@ export function FullReport({ result, profileInput, onBack, purchased }: Props) {
                           <span className={`swap-action-badge swap-action-${rec.action}`}>
                             {actionIcon} {actionLabel}
                           </span>
-                          {rec.currentPhoto && <span className="swap-photo-label">{rec.currentPhoto}</span>}
-                          {rec.currentPhoto && rec.additionalPhoto && <ArrowRight size={12} style={{ opacity: 0.4 }} />}
-                          {rec.additionalPhoto && <span className="swap-photo-label">{rec.additionalPhoto}</span>}
+                          {!(currentPhotoRaw || additionalPhotoRaw) && (
+                            <>
+                              {rec.currentPhoto && <span className="swap-photo-label">{rec.currentPhoto}</span>}
+                              {rec.currentPhoto && rec.additionalPhoto && <ArrowRight size={12} style={{ opacity: 0.4 }} />}
+                              {rec.additionalPhoto && <span className="swap-photo-label">{rec.additionalPhoto}</span>}
+                            </>
+                          )}
                         </div>
 
                         {(currentPhotoRaw || additionalPhotoRaw) && (
                           <div className="swap-photo-thumbs">
                             {currentPhotoRaw && (
-                              <PhotoThumb raw={currentPhotoRaw} label={rec.currentPhoto || "Current"} />
+                              <PhotoThumb raw={currentPhotoRaw} label="Current" />
                             )}
                             {currentPhotoRaw && additionalPhotoRaw && (
                               <div className="swap-thumb-arrow"><ArrowRight size={16} /></div>
                             )}
                             {additionalPhotoRaw && (
-                              <PhotoThumb raw={additionalPhotoRaw} label={rec.additionalPhoto || "New"} />
+                              <PhotoThumb raw={additionalPhotoRaw} label="Replace with" />
                             )}
                           </div>
                         )}
@@ -367,7 +371,7 @@ export function FullReport({ result, profileInput, onBack, purchased }: Props) {
                           <Camera size={16} />
                         </div>
                       )}
-                      <span className="photo-order-ref">{photoRef}</span>
+                      {!rawPhoto && <span className="photo-order-ref">{photoRef}</span>}
                       {i === 0 && <span className="photo-order-badge first-badge">Lead photo</span>}
                       {isExtra && <span className="photo-order-badge new-badge">New addition</span>}
                     </div>

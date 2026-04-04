@@ -99,7 +99,9 @@ export interface PromptRecommendation {
   issue: string;
   suggestion: string;
   rewriteA?: string;
+  rewriteAAngle?: string;
   rewriteB?: string;
+  rewriteBAngle?: string;
 }
 
 export interface PhotoOrderRecommendation {
