@@ -101,7 +101,7 @@ export function Landing({ onStart }: Props) {
                   <span className="ba-score good">82 / 100</span>
                   <span className="ba-type-tag high-signal">High-Signal</span>
                 </div>
-                <p className="ba-bio">"I make a mean shakshuka at 2am and argue about architecture nobody asked about. Currently training for a half marathon I'll probably regret."</p>
+                <p className="ba-bio">"I make unnecessarily complex playlists for ordinary activities and have argued about fonts at least once this week. Currently attempting sourdough for the third time like it'll be different."</p>
                 <div className="ba-fixes">
                   <p className="ba-issue-title">What changed</p>
                   <ul>
