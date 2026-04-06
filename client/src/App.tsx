@@ -226,6 +226,13 @@ export default function App() {
     }
   }, []);
 
+  // When auth resolves and user is already logged in, send them straight to their dashboard
+  useEffect(() => {
+    if (!loading && user && view === "landing") {
+      setView("dashboard");
+    }
+  }, [user, loading]);
+
   const handleStartAudit = () => setView("form");
 
   const handleResult = (data: ProfileResult, input: ProfileInput) => {
