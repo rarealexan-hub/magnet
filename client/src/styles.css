@@ -4777,8 +4777,8 @@ button {
   }
 
   .section-title {
-    font-size: 20px;
-    margin-bottom: 16px;
+    font-size: 10px;
+    margin-bottom: 14px;
   }
 
   /* ── Form ── */
@@ -6851,6 +6851,199 @@ button {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ══════════════════════════════════════════════
+   FINAL MOBILE PASS — safe areas, sheets, clearance
+═══════════════════════════════════════════════ */
+
+/* Fixed header clearance on mobile — header is ~56px tall */
+@media (max-width: 640px) {
+  .landing {
+    padding-top: 72px;
+  }
+
+  .form-page {
+    padding-top: 64px;
+  }
+
+  .results-page {
+    padding-top: 64px;
+  }
+
+  /* Before/after toggle buttons should fill row on mobile */
+  .ba-toggle-row {
+    gap: 6px;
+  }
+
+  .ba-toggle-btn {
+    flex: 1;
+    justify-content: center;
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  /* Full-width landing CTA on mobile */
+  .cta-button {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Potential match cards tighter on mobile */
+  .potential-match-card {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .potential-match-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  /* Sample mock header smaller */
+  .sample-mock-headline {
+    font-size: 16px;
+  }
+
+  /* Dashboard button groups */
+  .dash-view-btn-group {
+    gap: 6px;
+  }
+
+  .dash-view-full-btn,
+  .dash-unlock-btn {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+
+  /* Bottom sheet: auth modal */
+  .auth-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .auth-modal {
+    max-width: 100%;
+    border-radius: 24px 24px 0 0;
+    padding: 28px 24px 40px;
+  }
+
+  /* Bottom sheet: upgrade/payment modal */
+  .upgrade-modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .upgrade-modal {
+    max-width: 100%;
+    border-radius: 24px 24px 0 0;
+    padding: 28px 24px 40px;
+  }
+
+  /* Match volume label overflow */
+  .match-volume-label {
+    font-size: 12px;
+  }
+
+  /* Ensure form textarea and input don't zoom on iOS */
+  .form-textarea,
+  .form-input,
+  textarea,
+  input,
+  select {
+    font-size: 16px;
+  }
+
+  /* Make copy buttons full width in prompt rewrites */
+  .prompt-copy-btn {
+    min-height: 36px;
+  }
+
+  /* Wider touch targets for remove buttons */
+  .screenshot-remove,
+  .bio-screenshot-remove,
+  .category-photo-remove,
+  .prompt-answer-remove {
+    min-width: 36px;
+    min-height: 36px;
+  }
+}
+
+/* Safe area insets for notched/pill-shaped phones (iPhone X+) */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .landing,
+  .form-page,
+  .results-page {
+    padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom)));
+  }
+
+  .auth-modal {
+    padding-bottom: max(40px, calc(24px + env(safe-area-inset-bottom)));
+  }
+
+  .upgrade-modal {
+    padding-bottom: max(40px, calc(24px + env(safe-area-inset-bottom)));
+  }
+
+  .app-header {
+    padding-top: max(14px, env(safe-area-inset-top));
+  }
+}
+
+/* Very small screens (iPhone SE 1st gen, 320px) */
+@media (max-width: 380px) {
+  h1 {
+    font-size: 26px;
+  }
+
+  .form-container {
+    padding: 16px;
+  }
+
+  .breakdown-label {
+    min-width: 78px;
+    font-size: 10px;
+  }
+
+  .match-volume-row {
+    grid-template-columns: 82px 1fr 72px;
+    gap: 6px;
+  }
+
+  .match-volume-label,
+  .match-volume-count {
+    font-size: 11px;
+  }
+
+  .score-breakdown {
+    padding: 0 14px 14px;
+  }
+
+  .roast-card {
+    padding: 16px;
+  }
+
+  .roast-text {
+    font-size: 14px;
+  }
+
+  .stat-pill {
+    padding: 12px 10px;
+  }
+
+  .stat-number {
+    font-size: 16px;
+  }
+
+  .upgrade-section {
+    padding: 16px;
+  }
+
+  .pricing-card {
+    padding: 16px;
+  }
 }
 
 /* ── Payment error banner ── */
