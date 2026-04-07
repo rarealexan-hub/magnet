@@ -118,7 +118,6 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   const [contextOpen, setContextOpen] = useState(false);
   const [bioOpen, setBioOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [showPhotoGuide, setShowPhotoGuide] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
   const [error, setError] = useState("");
@@ -506,78 +505,6 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           <input ref={selfiesRef} type="file" accept="image/*,.heic,.heif" multiple onChange={makeCategoryHandler(setSelfiePhotos, selfiePhotos, selfiesRef)} style={{ display: "none" }} />
           <input ref={familyRef} type="file" accept="image/*,.heic,.heif" multiple onChange={makeCategoryHandler(setFamilyPhotos, familyPhotos, familyRef)} style={{ display: "none" }} />
           <input ref={activitiesRef} type="file" accept="image/*,.heic,.heif" multiple onChange={makeCategoryHandler(setActivitiesPhotos, activitiesPhotos, activitiesRef)} style={{ display: "none" }} />
-
-          {/* How to get your photos guide */}
-          {(() => {
-            const guides: Record<string, { title: string; steps: { text: string; sub?: string }[] }> = {
-              hinge: {
-                title: "How to get your photos from Hinge",
-                steps: [
-                  { text: "Open Hinge → tap the profile icon (👤) at the bottom right" },
-                  { text: "Tap \"Edit profile\" — your photos appear in profile order" },
-                  { text: "Tap any photo → press & hold → \"Save\" to add it to your camera roll" },
-                  { text: "To grab your profile link: tap ⋯ (top right) → \"Share profile\" → copy the link", sub: "Note: the link only opens inside the Hinge app, so photos must be uploaded directly here." },
-                  { text: "Upload your photos here in the same order they appear on your profile" },
-                ],
-              },
-              tinder: {
-                title: "How to get your photos from Tinder",
-                steps: [
-                  { text: "Open Tinder → tap your profile photo in the top left corner" },
-                  { text: "Tap \"Edit Info\" — you'll see all your photos in order" },
-                  { text: "Tap a photo to view it full-screen, then screenshot it" },
-                  { text: "Or: long-press a photo → \"Save\" to add it to your camera roll" },
-                  { text: "Upload them here in the same order they appear on your profile" },
-                ],
-              },
-              bumble: {
-                title: "How to get your photos from Bumble",
-                steps: [
-                  { text: "Open Bumble → tap the profile icon at the bottom right" },
-                  { text: "Tap the pencil (edit) icon at the top right of your profile" },
-                  { text: "Tap a photo to view it full-screen, then screenshot it" },
-                  { text: "Or access your camera roll directly — Bumble photos come from there" },
-                  { text: "Upload them here in the same order they appear on your profile" },
-                ],
-              },
-              default: {
-                title: "How to get your profile photos",
-                steps: [
-                  { text: "Open your dating app and navigate to your profile" },
-                  { text: "Tap \"Edit profile\" to see your photos in the order they appear" },
-                  { text: "Screenshot or save each photo to your camera roll" },
-                  { text: "Upload them here in the same order they appear on your profile" },
-                ],
-              },
-            };
-            const guide = guides[platform] ?? guides.default;
-            return (
-              <div className="photo-guide-panel">
-                <button
-                  type="button"
-                  className="photo-guide-toggle"
-                  onClick={() => setShowPhotoGuide((v) => !v)}
-                >
-                  <span className="photo-guide-icon">📸</span>
-                  <span className="photo-guide-toggle-label">{guide.title}</span>
-                  <span className="photo-guide-chevron">{showPhotoGuide ? "▲" : "▼"}</span>
-                </button>
-                {showPhotoGuide && (
-                  <ol className="photo-guide-steps">
-                    {guide.steps.map((s, i) => (
-                      <li key={i} className="photo-guide-step">
-                        <span className="photo-guide-step-num">{i + 1}</span>
-                        <span className="photo-guide-step-body">
-                          {s.text}
-                          {s.sub && <span className="photo-guide-step-sub">{s.sub}</span>}
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </div>
-            );
-          })()}
 
           {/* Lead photo */}
           <div className="photos-section">
