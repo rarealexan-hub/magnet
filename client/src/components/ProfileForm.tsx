@@ -177,16 +177,31 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
     setSelectedPrompts((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const updatePromptQuestion = (index: number, question: string) => {
-    setSelectedPrompts((prev) => {
+  const [additionalPromptEntries, setAdditionalPromptEntries] = useState<
+    { screenshot: { file: File; preview: string } | null; text: string }[]
+  >([]);
+  const additionalPromptFileRef = useRef<HTMLInputElement>(null);
+  const additionalPromptEditIndex = useRef<number>(-1);
+
+  const handleAdditionalPromptScreenshot = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const idx = additionalPromptEditIndex.current;
+    if (!file || idx < 0) return;
+    const preview = URL.createObjectURL(file);
+    setAdditionalPromptEntries((prev) => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], question };
+      updated[idx] = { ...updated[idx], screenshot: { file, preview } };
       return updated;
     });
+    e.target.value = "";
   };
 
-  const addBlankPrompt = () => {
-    setSelectedPrompts((prev) => [...prev, { question: "", answer: "" }]);
+  const addAdditionalPrompt = () => {
+    setAdditionalPromptEntries((prev) => [...prev, { screenshot: null, text: "" }]);
+  };
+
+  const removeAdditionalPrompt = (i: number) => {
+    setAdditionalPromptEntries((prev) => prev.filter((_, idx) => idx !== i));
   };
 
   const processFiles = useCallback(
@@ -383,6 +398,13 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
     selectedPrompts
       .filter((sp) => sp.answer.trim())
       .forEach((sp) => fd.append("prompts", `${sp.question}: ${sp.answer}`));
+    additionalPromptEntries.forEach((entry, i) => {
+      if (entry.screenshot) {
+        fd.append("screenshots", entry.screenshot.file);
+        fd.append("screenshotLabels", `Additional prompt ${i + 1}`);
+      }
+      if (entry.text.trim()) fd.append("prompts", entry.text.trim());
+    });
     screenshots.forEach((s) => { fd.append("screenshots", s.file); fd.append("screenshotLabels", s.label || ""); });
     currentPhotos.forEach((p) => fd.append("currentPhotos", p.file));
     const addLabeled = (photos: UploadedPhoto[], label: string) => {
@@ -766,30 +788,60 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               <span className="form-label-badge">optional</span>
             </div>
             <p className="form-hint">Add any other prompts from your profile so we can review them too.</p>
-            {selectedPrompts.map((sp, i) => (
+            <input
+              ref={additionalPromptFileRef}
+              type="file"
+              accept="image/*,.heic,.heif"
+              style={{ display: "none" }}
+              onChange={handleAdditionalPromptScreenshot}
+            />
+            {additionalPromptEntries.map((entry, i) => (
               <div key={i} className="prompt-answer-item">
                 <div className="prompt-answer-header">
-                  <input
-                    className="form-input prompt-answer-question"
-                    type="text"
-                    placeholder="Prompt question (e.g. 'My love language is…')"
-                    value={sp.question}
-                    onChange={(e) => updatePromptQuestion(i, e.target.value)}
-                  />
-                  <button type="button" className="prompt-answer-remove" onClick={() => removeSelectedPrompt(i)}>
+                  <span className="prompt-answer-question" style={{ fontWeight: 500, fontSize: 13 }}>Prompt {i + 1}</span>
+                  <button type="button" className="prompt-answer-remove" onClick={() => removeAdditionalPrompt(i)}>
                     <X size={14} />
                   </button>
                 </div>
+                <div className="bio-screenshot-row" style={{ marginBottom: 8 }}>
+                  {entry.screenshot && (
+                    <div className="bio-screenshot-thumb">
+                      <img src={entry.screenshot.preview} alt={`prompt ${i + 1} screenshot`} />
+                      <button type="button" className="bio-screenshot-remove" onClick={() =>
+                        setAdditionalPromptEntries((prev) => {
+                          const updated = [...prev];
+                          updated[i] = { ...updated[i], screenshot: null };
+                          return updated;
+                        })
+                      }>
+                        <X size={12} />
+                      </button>
+                    </div>
+                  )}
+                  {!entry.screenshot && (
+                    <button type="button" className="bio-screenshot-add" onClick={() => {
+                      additionalPromptEditIndex.current = i;
+                      additionalPromptFileRef.current?.click();
+                    }}>
+                      <Camera size={15} />
+                      Upload screenshot
+                    </button>
+                  )}
+                </div>
                 <textarea
-                  className="form-textarea prompt-answer-textarea"
+                  className="form-textarea"
                   rows={2}
-                  placeholder="Your answer…"
-                  value={sp.answer}
-                  onChange={(e) => updatePromptAnswer(i, e.target.value)}
+                  placeholder="Or type the prompt and your answer…"
+                  value={entry.text}
+                  onChange={(e) => setAdditionalPromptEntries((prev) => {
+                    const updated = [...prev];
+                    updated[i] = { ...updated[i], text: e.target.value };
+                    return updated;
+                  })}
                 />
               </div>
             ))}
-            <button type="button" className="bio-screenshot-add" style={{ marginTop: 8 }} onClick={addBlankPrompt}>
+            <button type="button" className="bio-screenshot-add" style={{ marginTop: 8 }} onClick={addAdditionalPrompt}>
               <Plus size={15} />
               Add prompt
             </button>
