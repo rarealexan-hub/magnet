@@ -25,6 +25,7 @@ export default function App() {
   const [authContext, setAuthContext] = useState<"default" | "save-results">("default");
   const [paymentVerifyError, setPaymentVerifyError] = useState<string | null>(null);
   const [bypassPayment, setBypassPayment] = useState(false);
+  const [pendingProductType, setPendingProductType] = useState<string | null>(null);
   const { user, loading, token, login, loginWithGoogle, register, logout } = useAuth();
 
   useEffect(() => {
@@ -188,6 +189,7 @@ export default function App() {
           const parsed = JSON.parse(pending);
           restoredResult = parsed.result;
           restoredInput = parsed.profileInput;
+          setPendingProductType(parsed.productType || null);
         } catch {}
       }
 
@@ -236,12 +238,14 @@ export default function App() {
     }
   }, []);
 
-  // When auth resolves and user is already logged in, send them straight to their dashboard
+  // When auth resolves and user is already logged in, send them straight to their dashboard.
+  // Also fires when view changes to "landing" (e.g. Back on form, Start Over) so logged-in
+  // users are never left stranded on the landing page.
   useEffect(() => {
     if (!loading && user && view === "landing") {
       setView("dashboard");
     }
-  }, [user, loading]);
+  }, [user, loading, view]);
 
   const handleStartAudit = () => setView("form");
 
@@ -257,6 +261,8 @@ export default function App() {
     setProfileInput(null);
     setPreselectedPlatform(undefined);
     setFullReportViewed(false);
+    setReportPurchased(false);
+    setReportPurchaseType(null);
     window.history.pushState({}, "", "/");
   };
 
@@ -351,7 +357,7 @@ export default function App() {
         <div className="payment-verifying-screen">
           <div className="payment-verifying-card">
             <div className="payment-verifying-spinner" />
-            <h2>Unlocking your Full Report…</h2>
+            <h2>{pendingProductType === 'add-on-report' ? 'Getting ready for your next analysis…' : 'Unlocking your Full Report…'}</h2>
             <p>Verifying your payment, just a moment.</p>
           </div>
         </div>
@@ -409,7 +415,7 @@ export default function App() {
               onBack={() => setView("results")}
               purchased={reportPurchased}
               purchaseType={reportPurchaseType}
-              onAnalyzeAnother={() => setView("form")}
+              onAnalyzeAnother={() => { setReportPurchased(false); setFullReportViewed(false); setResult(null); setProfileInput(null); setView("form"); }}
             />
           )}
           {view === "dashboard" && (
