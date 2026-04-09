@@ -6072,6 +6072,9 @@ button {
   .pref-btn {
     font-size: 12px;
     padding: 7px 13px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
   }
 }
 
@@ -6214,7 +6217,11 @@ button {
   font-size: 13px;
   cursor: pointer;
   text-align: center;
-  padding: 4px;
+  padding: 10px 16px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: color 0.15s;
 }
 
