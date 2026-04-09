@@ -856,7 +856,7 @@ app.post(
 );
 
 app.get("/api/analyze/result/:jobId", (req: Request, res: Response) => {
-  const job = analysisJobs.get(req.params.jobId);
+  const job = analysisJobs.get(String(req.params.jobId));
   if (!job) {
     res.status(404).json({ error: "Job not found or expired." });
     return;
