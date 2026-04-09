@@ -16,10 +16,10 @@ async function createProducts() {
           console.log(`  ${p.name} → price ${pr.id} ($${(pr.unit_amount! / 100).toFixed(2)})`);
         }
       }
-      const bundleExisting = await stripe.products.search({
-        query: "name:'Magnet Profile Pack' AND active:'true'",
+      const addonExisting = await stripe.products.search({
+        query: "name:'Magnet Analyze Another App' AND active:'true'",
       });
-      for (const p of bundleExisting.data) {
+      for (const p of addonExisting.data) {
         const prices = await stripe.prices.list({ product: p.id, active: true });
         for (const pr of prices.data) {
           console.log(`  ${p.name} → price ${pr.id} ($${(pr.unit_amount! / 100).toFixed(2)})`);
@@ -42,23 +42,23 @@ async function createProducts() {
     });
     console.log(`Created price: $2.99 one-time (${fullReportPrice.id})`);
 
-    const profilePack = await stripe.products.create({
-      name: 'Magnet Profile Pack',
-      description: '3 Full Reports — use across any platforms. Never expires.',
-      metadata: { type: 'profile-pack' },
+    const addOnReport = await stripe.products.create({
+      name: 'Magnet Analyze Another App',
+      description: 'Analyze a different dating app platform — full report included. Works on Tinder, Bumble, Hinge & more.',
+      metadata: { type: 'add-on-report' },
     });
-    console.log(`Created product: ${profilePack.name} (${profilePack.id})`);
+    console.log(`Created product: ${addOnReport.name} (${addOnReport.id})`);
 
-    const profilePackPrice = await stripe.prices.create({
-      product: profilePack.id,
-      unit_amount: 599,
+    const addOnReportPrice = await stripe.prices.create({
+      product: addOnReport.id,
+      unit_amount: 199,
       currency: 'usd',
     });
-    console.log(`Created price: $5.99 one-time (${profilePackPrice.id})`);
+    console.log(`Created price: $1.99 one-time (${addOnReportPrice.id})`);
 
     console.log('\nDone! Price IDs for reference:');
-    console.log(`  Full Report:   ${fullReportPrice.id}`);
-    console.log(`  Profile Pack:  ${profilePackPrice.id}`);
+    console.log(`  Full Report:         ${fullReportPrice.id}`);
+    console.log(`  Analyze Another App: ${addOnReportPrice.id}`);
   } catch (error: any) {
     console.error('Error creating products:', error.message);
     process.exit(1);

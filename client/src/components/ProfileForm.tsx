@@ -117,7 +117,6 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   const [step, setStep] = useState<Step>("photos");
   const [contextOpen, setContextOpen] = useState(false);
   const [bioOpen, setBioOpen] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
   const [error, setError] = useState("");
@@ -702,7 +701,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           <div className="form-section">
             <div className="form-label-row">
               <label className="form-label">Which app?</label>
-              <span className="platform-limit-note">Pick one · <span className="platform-upgrade-link" onClick={() => setShowUpgradeModal(true)}>Upgrade for multi-app</span></span>
+              <span className="platform-limit-note">Pick one</span>
             </div>
             <div className="platform-select">
               {PLATFORMS.map((p) => (
@@ -922,30 +921,6 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
         </div>
       </div>
 
-      {showUpgradeModal && (
-        <div className="upgrade-modal-backdrop" onClick={() => setShowUpgradeModal(false)}>
-          <div className="upgrade-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="upgrade-modal-close" onClick={() => setShowUpgradeModal(false)}>
-              <X size={18} />
-            </button>
-            <div className="upgrade-modal-icon">🔥</div>
-            <h3 className="upgrade-modal-title">Multi-app analysis</h3>
-            <p className="upgrade-modal-desc">
-              Run a full analysis across multiple dating apps in one go — Tinder, Hinge, Bumble and more. See exactly how your profile performs on each platform and what to change per app.
-            </p>
-            <div className="upgrade-modal-pricing">
-              <div className="upgrade-modal-price-row">
-                <span className="upgrade-modal-plan">Profile Pack</span>
-                <span className="upgrade-modal-amount">$5.99</span>
-              </div>
-              <p className="upgrade-modal-plan-desc">3 full reports — everything in the Full Report, for 3 separate dating app profiles</p>
-            </div>
-            <button className="upgrade-modal-cta" disabled>
-              Coming soon — join the waitlist below
-            </button>
-          </div>
-        </div>
-      )}
       </>
     );
   }

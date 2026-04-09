@@ -205,7 +205,14 @@ export default function App() {
         .then(data => {
           if (data.success) {
             sessionStorage.removeItem('magnet_pending_purchase');
-            if (restoredResult && restoredInput) {
+            if (data.productType === 'add-on-report') {
+              setReportPurchased(true);
+              setReportPurchaseType('add-on-report');
+              setResult(null);
+              setProfileInput(null);
+              setFullReportViewed(false);
+              setView('form');
+            } else if (restoredResult && restoredInput) {
               setResult(restoredResult);
               setProfileInput(restoredInput);
               setFullReportViewed(true);

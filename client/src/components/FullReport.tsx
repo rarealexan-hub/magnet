@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight, ArrowLeftRight, PlusCircle, MinusCircle, MoveVertical, ListOrdered, MessageSquare, AlertCircle, Lightbulb, Sparkles, Quote, TrendingUp, Users, ChevronRight, Copy, Check, TrendingDown, Minus, Send, Layers } from "lucide-react";
+import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight, ArrowLeftRight, PlusCircle, MinusCircle, MoveVertical, ListOrdered, MessageSquare, AlertCircle, Lightbulb, Sparkles, Quote, TrendingUp, Users, ChevronRight, Copy, Check, TrendingDown, Minus, Send, Smartphone } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { PLATFORM_COLOR, PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
@@ -621,18 +621,18 @@ export function FullReport({ result, profileInput, onBack, purchased, purchaseTy
           </div>
         </div>
 
-        {purchaseType === "profile-pack" && onAnalyzeAnother && (
+        {onAnalyzeAnother && (
           <div className="report-section-card" style={{ textAlign: "center", padding: "32px 24px" }}>
             <div style={{ marginBottom: "8px" }}>
-              <Layers size={28} style={{ color: "#0EA5E9", margin: "0 auto" }} />
+              <Smartphone size={28} style={{ color: "#0EA5E9", margin: "0 auto" }} />
             </div>
-            <h3 style={{ marginBottom: "8px", fontSize: "18px" }}>You have reports left in your pack.</h3>
+            <h3 style={{ marginBottom: "8px", fontSize: "18px" }}>On another app too?</h3>
             <p style={{ color: "#6b7280", marginBottom: "20px", fontSize: "14px" }}>
-              Use your next report to analyze a different app — or the same one after making changes.
+              Analyze a different platform for $1.99 — full report included. Works on Tinder, Bumble, Hinge & more.
             </p>
             <button
               className="cta-button"
-              style={{ maxWidth: "260px", margin: "0 auto" }}
+              style={{ maxWidth: "280px", margin: "0 auto" }}
               onClick={onAnalyzeAnother}
             >
               Analyze Another App <ArrowRight size={16} />

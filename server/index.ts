@@ -346,7 +346,7 @@ app.post('/api/checkout/verify', async (req: Request, res: Response) => {
     const analysisId = session.metadata?.analysisId ? parseInt(session.metadata.analysisId) : null;
     const productType = session.metadata?.productType || 'full-report';
     const email = userEmail || session.metadata?.userEmail || session.customer_details?.email || '';
-    const creditsRemaining = productType === 'profile-pack' ? 2 : 0;
+    const creditsRemaining = 0;
 
     const existing = await pool.query(
       'SELECT id FROM purchases WHERE stripe_session_id = $1',

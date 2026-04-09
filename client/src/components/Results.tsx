@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { AlertTriangle, Crosshair, ArrowRight, FileText, Zap, Lightbulb, Lock, Layers, TrendingUp, BookMarked, X } from "lucide-react";
+import { AlertTriangle, Crosshair, ArrowRight, FileText, Zap, Lightbulb, Lock, TrendingUp, BookMarked, X, Smartphone } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
@@ -166,7 +166,7 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
       .catch(() => {});
   }, []);
 
-  const handleCheckout = async (type: 'full-report' | 'profile-pack') => {
+  const handleCheckout = async (type: 'full-report' | 'add-on-report') => {
     if (bypassPayment) {
       onFullReport();
       return;
@@ -418,35 +418,32 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
               </div>
             )}
 
-            <div className="pricing-card featured">
-              <div className="pricing-badge">Best Value</div>
+            <div className="pricing-card">
               <div className="pricing-card-header">
-                <div className="pricing-icon featured-icon">
-                  <Layers size={22} />
+                <div className="pricing-icon">
+                  <Smartphone size={22} />
                 </div>
                 <div>
-                  <h4>Profile Pack</h4>
-                  <p className="pricing-tagline">3 full reports · $2.00 each</p>
+                  <h4>Analyze Another App</h4>
+                  <p className="pricing-tagline">Full report included</p>
                 </div>
               </div>
               <div className="pricing-price">
-                <span className="price-amount">$5.99</span>
+                <span className="price-amount">$1.99</span>
                 <span className="price-period">one time</span>
               </div>
               <ul className="pricing-features">
-                <li><Zap size={14} /> Everything in the Full Report — for 3 separate dating app profiles</li>
-                <li><Zap size={14} /> Per-photo breakdown with exact swap suggestions on each profile</li>
-                <li><Zap size={14} /> Prompt coaching & optimal photo order for each profile</li>
-                <li><Zap size={14} /> Category-level AI analysis written per profile</li>
-                <li><Zap size={14} /> Use across any platforms — Hinge, Tinder, Bumble & more</li>
-                <li><Zap size={14} /> Never expires — use whenever you update your profiles</li>
+                <li><Zap size={14} /> Complete full report for a different dating app</li>
+                <li><Zap size={14} /> Per-photo breakdown with exact swap suggestions</li>
+                <li><Zap size={14} /> Prompt coaching & optimal photo order</li>
+                <li><Zap size={14} /> Works on Tinder, Bumble, Hinge & more</li>
               </ul>
               <button
-                className="pricing-btn featured-btn"
-                onClick={() => handleCheckout('profile-pack')}
-                disabled={checkoutLoading === 'profile-pack'}
+                className="pricing-btn"
+                onClick={() => handleCheckout('add-on-report')}
+                disabled={checkoutLoading === 'add-on-report'}
               >
-                {checkoutLoading === 'profile-pack' ? 'Loading…' : <><span>{bypassPayment ? 'Preview Profile Pack' : 'Get Profile Pack'}</span> <ArrowRight size={16} /></>}
+                {checkoutLoading === 'add-on-report' ? 'Loading…' : <><span>Analyze Another App</span> <ArrowRight size={16} /></>}
               </button>
             </div>
 
