@@ -177,6 +177,18 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
     setSelectedPrompts((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const updatePromptQuestion = (index: number, question: string) => {
+    setSelectedPrompts((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], question };
+      return updated;
+    });
+  };
+
+  const addBlankPrompt = () => {
+    setSelectedPrompts((prev) => [...prev, { question: "", answer: "" }]);
+  };
+
   const processFiles = useCallback(
     async (
       files: FileList,
@@ -746,6 +758,41 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               value={bio}
               onChange={(e) => setBio(e.target.value)}
             />
+          </div>
+
+          <div className="form-section">
+            <div className="form-label-row">
+              <label className="form-label">Additional prompts</label>
+              <span className="form-label-badge">optional</span>
+            </div>
+            <p className="form-hint">Add any other prompts from your profile so we can review them too.</p>
+            {selectedPrompts.map((sp, i) => (
+              <div key={i} className="prompt-answer-item">
+                <div className="prompt-answer-header">
+                  <input
+                    className="form-input prompt-answer-question"
+                    type="text"
+                    placeholder="Prompt question (e.g. 'My love language is…')"
+                    value={sp.question}
+                    onChange={(e) => updatePromptQuestion(i, e.target.value)}
+                  />
+                  <button type="button" className="prompt-answer-remove" onClick={() => removeSelectedPrompt(i)}>
+                    <X size={14} />
+                  </button>
+                </div>
+                <textarea
+                  className="form-textarea prompt-answer-textarea"
+                  rows={2}
+                  placeholder="Your answer…"
+                  value={sp.answer}
+                  onChange={(e) => updatePromptAnswer(i, e.target.value)}
+                />
+              </div>
+            ))}
+            <button type="button" className="bio-screenshot-add" style={{ marginTop: 8 }} onClick={addBlankPrompt}>
+              <Plus size={15} />
+              Add prompt
+            </button>
           </div>
 
           <div className="form-reminder">
