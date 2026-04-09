@@ -3,10 +3,11 @@ import { ArrowRight, Magnet as MagnetIcon, Target, Sparkles, TrendingUp, Zap, X,
 
 interface Props {
   onStart: () => void;
+  onPrivacy: () => void;
 }
 
 
-export function Landing({ onStart }: Props) {
+export function Landing({ onStart, onPrivacy }: Props) {
   const [baView, setBaView] = useState<"before" | "after">("before");
 
   return (
@@ -157,6 +158,14 @@ export function Landing({ onStart }: Props) {
           <span className="proof-stat">3×</span>
           <span className="proof-label">more matches with a high-signal profile</span>
         </div>
+      </div>
+
+      <div className="landing-footer">
+        <span className="landing-footer-copy">© {new Date().getFullYear()} Magnet</span>
+        <span className="landing-footer-dot">·</span>
+        <button className="landing-footer-link" onClick={onPrivacy}>Privacy Policy</button>
+        <span className="landing-footer-dot">·</span>
+        <a className="landing-footer-link" href="mailto:hello@trymagnetapp.com">Contact</a>
       </div>
     </div>
   );

@@ -25,9 +25,10 @@ interface Props {
   onGoogleAuth?: (credential: string) => Promise<{ success: boolean; error?: string }>;
   context?: "default" | "save-results";
   googleClientId?: string;
+  onPrivacy?: () => void;
 }
 
-export function AuthModal({ onClose, onAuth, onGoogleAuth, context = "default", googleClientId }: Props) {
+export function AuthModal({ onClose, onAuth, onGoogleAuth, context = "default", googleClientId, onPrivacy }: Props) {
   const hasGoogle = !!(googleClientId || (window as any).__GOOGLE_CLIENT_ID__);
   const [showEmailForm, setShowEmailForm] = useState(!hasGoogle);
   const [mode, setMode] = useState<"login" | "register">(context === "save-results" ? "register" : "login");
@@ -183,6 +184,12 @@ export function AuthModal({ onClose, onAuth, onGoogleAuth, context = "default", 
                 {mode === "login" ? "Sign up" : "Sign in"}
               </button>
             </div>
+            {mode === "register" && (
+              <p className="auth-privacy-note">
+                By creating an account you agree that we may store your email address and analysis results. Photos are processed for analysis and not retained.{" "}
+                {onPrivacy && <button type="button" className="auth-privacy-link" onClick={() => { onClose(); onPrivacy(); }}>Privacy Policy</button>}
+              </p>
+            )}
           </form>
         )}
       </div>

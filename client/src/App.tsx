@@ -7,10 +7,11 @@ import { FullReport } from "./components/FullReport";
 import { Dashboard } from "./components/Dashboard";
 import { AuthModal } from "./components/AuthModal";
 import { UserMenu } from "./components/UserMenu";
+import { PrivacyPolicy } from "./components/PrivacyPolicy";
 import { useAuth } from "./hooks/useAuth";
 import type { ProfileInput, ProfileResult, AnalysisRecord } from "@shared/types";
 
-type View = "landing" | "form" | "results" | "full-report" | "dashboard" | "payment-verifying";
+type View = "landing" | "form" | "results" | "full-report" | "dashboard" | "payment-verifying" | "privacy";
 
 export default function App() {
   const [view, setView] = useState<View>("landing");
@@ -368,7 +369,8 @@ export default function App() {
             </div>
           )}
 
-          {view === "landing" && <Landing onStart={handleStartAudit} />}
+          {view === "landing" && <Landing onStart={handleStartAudit} onPrivacy={() => setView("privacy")} />}
+          {view === "privacy" && <PrivacyPolicy onBack={() => setView("landing")} />}
           {view === "form" && (
             <ProfileForm
               onResult={handleResult}
@@ -416,6 +418,7 @@ export default function App() {
               onGoogleAuth={handleGoogleAuth}
               googleClientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}
               context={authContext}
+              onPrivacy={() => { setShowAuth(false); setView("privacy"); }}
             />
           )}
         </>
