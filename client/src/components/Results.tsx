@@ -341,6 +341,27 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
 
         <BasicSuggestions score={score} onFullReport={onFullReport} />
 
+        {feedback.leadPhotoTeaser && (
+          <div className="basic-suggestion-item basic-suggestion-item--locked" onClick={onFullReport} style={{ cursor: "pointer" }}>
+            <div className="basic-suggestion-header">
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 15 }}>📸</span>
+                <span className="basic-suggestion-label">Lead Photo Intel</span>
+              </div>
+              <span className="basic-suggestion-score basic-suggestion-score--locked">
+                <Lock size={11} /> Full Report
+              </span>
+            </div>
+            <p className="basic-suggestion-tip basic-suggestion-tip--blurred" style={{ fontStyle: "italic" }}>
+              {feedback.leadPhotoTeaser}
+            </p>
+            <div className="basic-suggestion-locked">
+              <Lock size={11} />
+              <span>Unlock to see the exact photo that should be your lead — and why</span>
+            </div>
+          </div>
+        )}
+
         <MatchVolumeBlock score={score.overall} platform={profileInput.platform} />
 
         {!user && onSignIn && (

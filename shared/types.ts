@@ -155,6 +155,8 @@ export interface ProfileFeedback {
   sampleProfile?: SampleProfile;
   potentialMatches?: PotentialMatch[];
   matchPotential?: MatchPotential;
+  leadPhotoTeaser?: string | null;
+  betterLeadPhotoSuggestion?: string | null;
 }
 
 export interface ProfileResult {

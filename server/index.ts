@@ -573,6 +573,7 @@ app.get(
             sampleProfile: fullReportData.sampleProfile,
             matchPotential: fullReportData.matchPotential,
             potentialMatches: fullReportData.potentialMatches,
+            betterLeadPhotoSuggestion: fullReportData.betterLeadPhotoSuggestion,
           },
           created_at: r.created_at,
           purchased: !!r.purchase_id,
@@ -814,6 +815,7 @@ app.post(
           sampleProfile: result.feedback.sampleProfile,
           matchPotential: result.feedback.matchPotential,
           potentialMatches: result.feedback.potentialMatches,
+          betterLeadPhotoSuggestion: result.feedback.betterLeadPhotoSuggestion,
         };
 
         const insertResult = await pool.query(

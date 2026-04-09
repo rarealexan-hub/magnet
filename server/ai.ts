@@ -685,13 +685,18 @@ Respond in this exact JSON format:
         "bio": "<third distinct personality, career, and life context>",
         "whyTheySwipe": "<what specifically speaks to this person>"
       }
-    ]
+    ],
+    "leadPhotoTeaser": "<null if no additional photos were provided OR if the current lead photo is already the strongest option. Otherwise: one dry, witty, slightly stinging sentence that hints — without naming the specific photo — that a stronger lead exists in the extras. It should feel like the smartest person in the room quietly dropping a bomb. E.g. 'Somewhere in your extras, there's a photo that would stop a scroller cold — and it's not the one you've been trusting to do that job.' Be specific enough to create urgency, vague enough to require the upgrade.>",
+    "betterLeadPhotoSuggestion": "<null if no additional photos were provided OR if the current lead is already optimal. Otherwise: a specific, decisive recommendation — name the exact Extra Photo letter (e.g. Extra Photo B), explain precisely why it outperforms the current lead in terms of expression quality, eye contact, context signal, energy, and audience fit for this user's specific demographic. Explain what the current lead is doing wrong by comparison. Be concrete, visual, and direct.>"
   }
 }
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SCORING RULES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LEAD PHOTO CROSS-ANALYSIS — mandatory when additional photos are provided:
+When the user has uploaded additional photos (Extra Photo A, B, C, etc.), you MUST compare every one of them against the current lead photo (Photo #1). The lead photo drives 42% of the total score — if a stronger lead candidate exists in the extras, this is the single highest-ROI recommendation you can make. Score the lead photo in context of ALL available photos, not in isolation. If any extra photo outperforms Photo #1 on expression quality, eye contact, context signal, energy, or audience fit — note it in the "leadPhotoTeaser" field (teaser) and "betterLeadPhotoSuggestion" field (full report detail). Do not soften this judgment out of politeness.
+
 Overall score weighting: photos = 70% (lead photo alone = 42% of total), bio/prompts = 20%, match targeting coherence = 10%.
 
 CRITICAL: The user's gender and who they are attracted to must anchor every score. Read the identity context block at the top of the user message before evaluating anything. A profile cannot be scored without knowing who is looking at it.

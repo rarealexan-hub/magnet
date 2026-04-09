@@ -247,6 +247,26 @@ export function FullReport({ result, profileInput, onBack, purchased }: Props) {
           </div>
         )}
 
+        {/* ── Better lead photo suggestion ── */}
+        {feedback.betterLeadPhotoSuggestion && (
+          <div className="report-section-card" style={{ borderLeft: "3px solid #0EA5E9" }}>
+            <div className="report-section-header">
+              <div className="report-section-icon">
+                <Camera size={18} />
+              </div>
+              <h3>Lead Photo Upgrade</h3>
+              <span className="report-section-badge" style={{ background: "rgba(14,165,233,0.15)", color: "#0EA5E9" }}>
+                High Impact
+              </span>
+            </div>
+            <div className="report-section-body">
+              <p className="report-section-analysis" style={{ whiteSpace: "pre-line" }}>
+                {feedback.betterLeadPhotoSuggestion}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* ── Photo swap recommendations ── */}
         {(feedback.photoSwapRecommendations && feedback.photoSwapRecommendations.length > 0) && (
           <div className="report-section-card">
