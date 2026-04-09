@@ -686,16 +686,16 @@ Respond in this exact JSON format:
         "whyTheySwipe": "<what specifically speaks to this person>"
       }
     ],
-    "leadPhotoTeaser": "<null if no additional photos were provided OR if the current lead photo is already the strongest option. Otherwise: one dry, witty, slightly stinging sentence that hints — without naming the specific photo — that a stronger lead exists in the extras. It should feel like the smartest person in the room quietly dropping a bomb. E.g. 'Somewhere in your extras, there's a photo that would stop a scroller cold — and it's not the one you've been trusting to do that job.' Be specific enough to create urgency, vague enough to require the upgrade.>",
-    "betterLeadPhotoSuggestion": "<null if no additional photos were provided OR if the current lead is already optimal. Otherwise: a specific, decisive recommendation — name the exact Extra Photo letter (e.g. Extra Photo B), explain precisely why it outperforms the current lead in terms of expression quality, eye contact, context signal, energy, and audience fit for this user's specific demographic. Explain what the current lead is doing wrong by comparison. Be concrete, visual, and direct.>"
+    "leadPhotoTeaser": "<MUST be null unless: (1) additional photos were provided AND (2) after visually comparing all of them against Photo #1, you have identified a specific extra photo that is genuinely, clearly superior as a lead. If the current lead is the strongest photo available, return null — do not generate a teaser just because extras exist. Only generate when you have real conviction a better lead is in the extras. When it does apply: one dry, witty, slightly stinging sentence hinting — without naming the specific photo — that a stronger lead exists. E.g. 'Somewhere in your extras, there's a photo that would stop a scroller cold — and it's not the one you've been trusting to do that job.'>",
+    "betterLeadPhotoSuggestion": "<MUST be null unless: (1) additional photos were provided AND (2) you have identified a specific extra photo that clearly outperforms Photo #1 as a lead. If no extra photo is meaningfully stronger, return null. When it does apply: name the exact Extra Photo letter (e.g. Extra Photo B), explain precisely why it outperforms the current lead — expression quality, eye contact, context signal, energy, audience fit. Be concrete and visual.>"
   }
 }
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SCORING RULES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-LEAD PHOTO CROSS-ANALYSIS — mandatory when additional photos are provided:
-When the user has uploaded additional photos (Extra Photo A, B, C, etc.), you MUST compare every one of them against the current lead photo (Photo #1). The lead photo drives 42% of the total score — if a stronger lead candidate exists in the extras, this is the single highest-ROI recommendation you can make. Score the lead photo in context of ALL available photos, not in isolation. If any extra photo outperforms Photo #1 on expression quality, eye contact, context signal, energy, or audience fit — note it in the "leadPhotoTeaser" field (teaser) and "betterLeadPhotoSuggestion" field (full report detail). Do not soften this judgment out of politeness.
+LEAD PHOTO CROSS-ANALYSIS — when additional photos are provided:
+When the user has uploaded additional photos (Extra Photo A, B, C, etc.), compare every one of them against the current lead photo (Photo #1). If and only if a specific extra photo is genuinely, clearly stronger as a lead — better expression, eye contact, context signal, energy, audience fit — populate "leadPhotoTeaser" and "betterLeadPhotoSuggestion". If no extra photo meaningfully outperforms Photo #1, leave both fields null. Do NOT generate a teaser as a default whenever extras exist — only when you have a concrete, specific better option identified.
 
 Overall score weighting: photos = 70% (lead photo alone = 42% of total), bio/prompts = 20%, match targeting coherence = 10%.
 
