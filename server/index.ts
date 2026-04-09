@@ -827,18 +827,20 @@ app.post(
       const analysisId = insertResult.rows[0]?.id;
       res.json({ ...result, analysisId });
     } catch (error: any) {
-      console.error("Analysis error:", error);
+      console.error("Analysis error — status:", error?.status, "message:", error?.message, "error body:", JSON.stringify(error?.error));
       const msg =
         error?.status === 413
           ? "Your photos are too large. Please try with fewer or smaller images."
-          : error?.status === 400 &&
-              error?.error?.message?.includes("internal error")
-            ? "The AI service is temporarily busy. Please wait a moment and try again."
-            : error?.status === 400 && error?.error?.message?.includes("image")
-              ? "One or more images couldn't be processed. Please use JPG, PNG, GIF, WebP, or HEIC format."
-              : error?.status === 429
-                ? "Too many requests. Please wait a minute and try again."
-                : "Failed to analyze profile. Please try again.";
+          : error?.status === 404
+            ? "AI model unavailable. Please try again shortly."
+            : error?.status === 400 &&
+                error?.error?.message?.includes("internal error")
+              ? "The AI service is temporarily busy. Please wait a moment and try again."
+              : error?.status === 400 && error?.error?.message?.includes("image")
+                ? "One or more images couldn't be processed. Please use JPG, PNG, GIF, WebP, or HEIC format."
+                : error?.status === 429
+                  ? "Too many requests. Please wait a minute and try again."
+                  : "Failed to analyze profile. Please try again.";
       res.status(500).json({ error: msg });
     }
   },

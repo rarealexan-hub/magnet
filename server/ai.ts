@@ -866,7 +866,7 @@ export async function analyzeProfile(input: ProfileInput): Promise<ProfileResult
 
   const response = await callWithRetry(() =>
     openai.chat.completions.create({
-      model: "gpt-5.4",
+      model: "gpt-5.2",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content },
