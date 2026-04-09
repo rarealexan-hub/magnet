@@ -398,7 +398,7 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
                   </div>
                 </div>
                 <div className="pricing-price">
-                  <span className="price-amount">$4.99</span>
+                  <span className="price-amount">$2.99</span>
                   <span className="price-period">one time</span>
                 </div>
                 <ul className="pricing-features">
@@ -426,11 +426,11 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
                 </div>
                 <div>
                   <h4>Profile Pack</h4>
-                  <p className="pricing-tagline">3 full reports · $3.66 each</p>
+                  <p className="pricing-tagline">3 full reports · $2.00 each</p>
                 </div>
               </div>
               <div className="pricing-price">
-                <span className="price-amount">$10.99</span>
+                <span className="price-amount">$5.99</span>
                 <span className="price-period">one time</span>
               </div>
               <ul className="pricing-features">

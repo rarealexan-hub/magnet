@@ -37,10 +37,10 @@ async function createProducts() {
 
     const fullReportPrice = await stripe.prices.create({
       product: fullReport.id,
-      unit_amount: 499,
+      unit_amount: 299,
       currency: 'usd',
     });
-    console.log(`Created price: $4.99 one-time (${fullReportPrice.id})`);
+    console.log(`Created price: $2.99 one-time (${fullReportPrice.id})`);
 
     const profilePack = await stripe.products.create({
       name: 'Magnet Profile Pack',
@@ -51,10 +51,10 @@ async function createProducts() {
 
     const profilePackPrice = await stripe.prices.create({
       product: profilePack.id,
-      unit_amount: 1099,
+      unit_amount: 599,
       currency: 'usd',
     });
-    console.log(`Created price: $10.99 one-time (${profilePackPrice.id})`);
+    console.log(`Created price: $5.99 one-time (${profilePackPrice.id})`);
 
     console.log('\nDone! Price IDs for reference:');
     console.log(`  Full Report:   ${fullReportPrice.id}`);
