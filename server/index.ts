@@ -26,6 +26,23 @@ import type {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
+interface AnalysisJob {
+  status: "pending" | "done" | "error";
+  result?: any;
+  error?: string;
+  createdAt: number;
+}
+const analysisJobs = new Map<string, AnalysisJob>();
+function newJobId(): string {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+setInterval(() => {
+  const cutoff = Date.now() - 30 * 60 * 1000;
+  for (const [id, job] of analysisJobs.entries()) {
+    if (job.createdAt < cutoff) analysisJobs.delete(id);
+  }
+}, 5 * 60 * 1000);
+
 const app = express();
 app.use(cors());
 
@@ -647,118 +664,104 @@ app.post(
     });
   },
   async (req: AuthRequest, res: Response) => {
-    try {
-      const files = req.files as
-        | Record<string, Express.Multer.File[]>
-        | undefined;
-      const body = req.body;
+    const files = req.files as Record<string, Express.Multer.File[]> | undefined;
+    const body = req.body;
 
-      const platform = body.platform;
-      const email = (req.user?.email || body.email || "").toLowerCase().trim();
-      const bio = body.bio || "";
-      const prompts = body.prompts
-        ? Array.isArray(body.prompts)
-          ? body.prompts
-          : [body.prompts]
-        : [];
-      const photoDescriptions = body.photoDescriptions
-        ? Array.isArray(body.photoDescriptions)
-          ? body.photoDescriptions
-          : [body.photoDescriptions]
-        : [];
-      const targetQualities = body.targetQualities
-        ? Array.isArray(body.targetQualities) ? body.targetQualities : [body.targetQualities]
-        : [];
-      const targetType = targetQualities.length > 0 ? targetQualities.join(", ") : (body.targetType || "");
-      const customTarget = body.customTarget;
-      const gender = body.gender || "";
-      const sexualOrientation = body.sexualOrientation || "";
-      const partnerPreferences = body.partnerPreferences
-        ? Array.isArray(body.partnerPreferences)
-          ? body.partnerPreferences
-          : [body.partnerPreferences]
-        : [];
-      const photoTasteSelections = body.photoTasteSelections
-        ? Array.isArray(body.photoTasteSelections)
-          ? body.photoTasteSelections
-          : [body.photoTasteSelections]
-        : [];
-      const screenshotLabels = body.screenshotLabels
-        ? Array.isArray(body.screenshotLabels)
-          ? body.screenshotLabels
-          : [body.screenshotLabels]
-        : [];
-      const additionalPhotoLabels: string[] = body.additionalPhotoLabels
-        ? Array.isArray(body.additionalPhotoLabels)
-          ? body.additionalPhotoLabels
-          : [body.additionalPhotoLabels]
-        : [];
+    const platform = body.platform;
+    const email = (req.user?.email || body.email || "").toLowerCase().trim();
+    const bio = body.bio || "";
+    const prompts = body.prompts
+      ? Array.isArray(body.prompts) ? body.prompts : [body.prompts]
+      : [];
+    const photoDescriptions = body.photoDescriptions
+      ? Array.isArray(body.photoDescriptions) ? body.photoDescriptions : [body.photoDescriptions]
+      : [];
+    const targetQualities = body.targetQualities
+      ? Array.isArray(body.targetQualities) ? body.targetQualities : [body.targetQualities]
+      : [];
+    const targetType = targetQualities.length > 0 ? targetQualities.join(", ") : (body.targetType || "");
+    const customTarget = body.customTarget;
+    const gender = body.gender || "";
+    const sexualOrientation = body.sexualOrientation || "";
+    const partnerPreferences = body.partnerPreferences
+      ? Array.isArray(body.partnerPreferences) ? body.partnerPreferences : [body.partnerPreferences]
+      : [];
+    const photoTasteSelections = body.photoTasteSelections
+      ? Array.isArray(body.photoTasteSelections) ? body.photoTasteSelections : [body.photoTasteSelections]
+      : [];
+    const screenshotLabels = body.screenshotLabels
+      ? Array.isArray(body.screenshotLabels) ? body.screenshotLabels : [body.screenshotLabels]
+      : [];
+    const additionalPhotoLabels: string[] = body.additionalPhotoLabels
+      ? Array.isArray(body.additionalPhotoLabels) ? body.additionalPhotoLabels : [body.additionalPhotoLabels]
+      : [];
 
-      const validPlatforms = ["hinge","tinder","bumble","okcupid","coffee-meets-bagel","match","happn","the-league","feeld","hily","plenty-of-fish","zoosk","grindr","badoo","blk","her","other"];
-      if (!platform || !validPlatforms.includes(platform)) {
-        res.status(400).json({ error: "Invalid platform" });
-        return;
-      }
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        res.status(400).json({ error: "Please provide a valid email address" });
-        return;
-      }
-      const screenshotFiles = files?.screenshots || [];
-      const currentPhotoFiles = files?.currentPhotos || [];
-      const additionalPhotoFiles = files?.additionalPhotos || [];
+    const validPlatforms = ["hinge","tinder","bumble","okcupid","coffee-meets-bagel","match","happn","the-league","feeld","hily","plenty-of-fish","zoosk","grindr","badoo","blk","her","other"];
+    if (!platform || !validPlatforms.includes(platform)) {
+      res.status(400).json({ error: "Invalid platform" });
+      return;
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      res.status(400).json({ error: "Please provide a valid email address" });
+      return;
+    }
 
-      const relationshipIntent = body.relationshipIntent || "";
-      const interests = body.interests
-        ? Array.isArray(body.interests) ? body.interests : [body.interests]
-        : [];
-      const partnerNonNegotiables = body.partnerNonNegotiables
-        ? Array.isArray(body.partnerNonNegotiables) ? body.partnerNonNegotiables : [body.partnerNonNegotiables]
-        : [];
-      const idealPartnerDescription = body.idealPartnerDescription || "";
-      const datingHistory = body.datingHistory || "";
-      const datingStruggle = body.datingStruggle || "";
-      const additionalContext = body.additionalContext || "";
+    const screenshotFiles = files?.screenshots || [];
+    const currentPhotoFiles = files?.currentPhotos || [];
+    const additionalPhotoFiles = files?.additionalPhotos || [];
 
-      const screenshotStrings = screenshotFiles.map((f, i) => {
+    const relationshipIntent = body.relationshipIntent || "";
+    const interests = body.interests
+      ? Array.isArray(body.interests) ? body.interests : [body.interests]
+      : [];
+    const partnerNonNegotiables = body.partnerNonNegotiables
+      ? Array.isArray(body.partnerNonNegotiables) ? body.partnerNonNegotiables : [body.partnerNonNegotiables]
+      : [];
+    const idealPartnerDescription = body.idealPartnerDescription || "";
+    const datingHistory = body.datingHistory || "";
+    const datingStruggle = body.datingStruggle || "";
+    const additionalContext = body.additionalContext || "";
+
+    const screenshotStrings = screenshotFiles.map((f: Express.Multer.File, i: number) => {
+      const data = f.buffer.toString("base64");
+      const mimeType = f.mimetype || "image/jpeg";
+      const label = screenshotLabels[i] || "";
+      return JSON.stringify({ data, mimeType, label });
+    });
+
+    const profileInput: ProfileInput = {
+      platform: platform as ProfileInput["platform"],
+      email,
+      bio,
+      prompts: prompts.filter((p: string) => typeof p === "string"),
+      photoDescriptions: photoDescriptions.filter((p: string) => typeof p === "string"),
+      screenshots: screenshotStrings,
+      currentPhotos: filesToBase64Strings(currentPhotoFiles),
+      additionalPhotos: additionalPhotoFiles.map((f: Express.Multer.File, i: number) => {
         const data = f.buffer.toString("base64");
         const mimeType = f.mimetype || "image/jpeg";
-        const label = screenshotLabels[i] || "";
+        const label = additionalPhotoLabels[i] || "";
         return JSON.stringify({ data, mimeType, label });
-      });
+      }),
+      targetType,
+      customTarget,
+      gender: gender || undefined,
+      sexualOrientation: sexualOrientation || undefined,
+      partnerPreferences: partnerPreferences.length > 0 ? partnerPreferences : undefined,
+      photoTasteSelections: photoTasteSelections.length > 0 ? photoTasteSelections : undefined,
+      relationshipIntent: relationshipIntent || undefined,
+      interests: interests.length > 0 ? interests : undefined,
+      partnerNonNegotiables: partnerNonNegotiables.length > 0 ? partnerNonNegotiables : undefined,
+      idealPartnerDescription: idealPartnerDescription || undefined,
+      datingHistory: datingHistory || undefined,
+      datingStruggle: datingStruggle || undefined,
+      additionalContext: additionalContext || undefined,
+    };
 
-      const profileInput: ProfileInput = {
-        platform: platform as ProfileInput["platform"],
-        email,
-        bio,
-        prompts: prompts.filter((p: string) => typeof p === "string"),
-        photoDescriptions: photoDescriptions.filter(
-          (p: string) => typeof p === "string",
-        ),
-        screenshots: screenshotStrings,
-        currentPhotos: filesToBase64Strings(currentPhotoFiles),
-        additionalPhotos: additionalPhotoFiles.map((f, i) => {
-          const data = f.buffer.toString("base64");
-          const mimeType = f.mimetype || "image/jpeg";
-          const label = additionalPhotoLabels[i] || "";
-          return JSON.stringify({ data, mimeType, label });
-        }),
-        targetType,
-        customTarget,
-        gender: gender || undefined,
-        sexualOrientation: sexualOrientation || undefined,
-        partnerPreferences: partnerPreferences.length > 0 ? partnerPreferences : undefined,
-        photoTasteSelections: photoTasteSelections.length > 0 ? photoTasteSelections : undefined,
-        relationshipIntent: relationshipIntent || undefined,
-        interests: interests.length > 0 ? interests : undefined,
-        partnerNonNegotiables: partnerNonNegotiables.length > 0 ? partnerNonNegotiables : undefined,
-        idealPartnerDescription: idealPartnerDescription || undefined,
-        datingHistory: datingHistory || undefined,
-        datingStruggle: datingStruggle || undefined,
-        additionalContext: additionalContext || undefined,
-      };
+    const isAuthenticated = !!req.user;
+    const ownerEmail = req.user?.email || email;
 
-      const isAuthenticated = !!req.user;
-
+    try {
       if (!isAuthenticated) {
         const existing = await pool.query(
           "SELECT platform FROM free_audits WHERE email = $1",
@@ -766,11 +769,7 @@ app.post(
         );
         if (existing.rows.length > 0) {
           const usedPlatform = existing.rows[0].platform;
-          if (
-            existing.rows.some(
-              (r: { platform: string }) => r.platform === platform,
-            )
-          ) {
+          if (existing.rows.some((r: { platform: string }) => r.platform === platform)) {
             res.status(403).json({
               error: `You've already used your free Magnet analysis for ${platform}.`,
               code: "AUDIT_LIMIT_REACHED",
@@ -784,67 +783,94 @@ app.post(
           return;
         }
       }
-
-      const result = await analyzeProfile(profileInput);
-
-      if (!isAuthenticated) {
-        await pool.query(
-          "INSERT INTO free_audits (email, platform) VALUES ($1, $2) ON CONFLICT (email, platform) DO NOTHING",
-          [email, platform],
-        );
-      }
-
-      const ownerEmail = req.user?.email || email;
-      const fullReportData = {
-        categoryAnalysis: result.feedback.categoryAnalysis,
-        promptRecommendations: result.feedback.promptRecommendations,
-        photoSwapRecommendations: result.feedback.photoSwapRecommendations,
-        photoOrderRecommendation: result.feedback.photoOrderRecommendation,
-        sampleProfile: result.feedback.sampleProfile,
-        matchPotential: result.feedback.matchPotential,
-        potentialMatches: result.feedback.potentialMatches,
-      };
-
-      const insertResult = await pool.query(
-        `INSERT INTO analyses (user_email, platform, overall_score, photo_quality, attraction_signals, personality_signals, match_targeting, first_impression, roast, mistakes, profile_type, profile_type_explanation, full_report_data)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
-        [
-          ownerEmail,
-          platform,
-          result.score.overall,
-          result.score.photoQuality,
-          result.score.attractionSignals,
-          result.score.personalitySignals,
-          result.score.matchTargeting,
-          result.score.firstImpression,
-          result.feedback.roast,
-          JSON.stringify(result.feedback.mistakes),
-          result.feedback.profileType,
-          result.feedback.profileTypeExplanation,
-          JSON.stringify(fullReportData),
-        ],
-      );
-      const analysisId = insertResult.rows[0]?.id;
-      res.json({ ...result, analysisId });
-    } catch (error: any) {
-      console.error("Analysis error — status:", error?.status, "message:", error?.message, "error body:", JSON.stringify(error?.error));
-      const msg =
-        error?.status === 413
-          ? "Your photos are too large. Please try with fewer or smaller images."
-          : error?.status === 404
-            ? "AI model unavailable. Please try again shortly."
-            : error?.status === 400 &&
-                error?.error?.message?.includes("internal error")
-              ? "The AI service is temporarily busy. Please wait a moment and try again."
-              : error?.status === 400 && error?.error?.message?.includes("image")
-                ? "One or more images couldn't be processed. Please use JPG, PNG, GIF, WebP, or HEIC format."
-                : error?.status === 429
-                  ? "Too many requests. Please wait a minute and try again."
-                  : "Failed to analyze profile. Please try again.";
-      res.status(500).json({ error: msg });
+    } catch (dbErr) {
+      console.error("DB audit check error:", dbErr);
+      res.status(500).json({ error: "Failed to validate request. Please try again." });
+      return;
     }
+
+    const jobId = newJobId();
+    analysisJobs.set(jobId, { status: "pending", createdAt: Date.now() });
+    console.log(`Job ${jobId} started for ${email}`);
+    res.json({ jobId });
+
+    (async () => {
+      try {
+        const result = await analyzeProfile(profileInput);
+        console.log(`Job ${jobId} analysis complete`);
+
+        if (!isAuthenticated) {
+          await pool.query(
+            "INSERT INTO free_audits (email, platform) VALUES ($1, $2) ON CONFLICT (email, platform) DO NOTHING",
+            [email, platform],
+          ).catch((e: any) => console.error("free_audits insert error:", e));
+        }
+
+        const fullReportData = {
+          categoryAnalysis: result.feedback.categoryAnalysis,
+          promptRecommendations: result.feedback.promptRecommendations,
+          photoSwapRecommendations: result.feedback.photoSwapRecommendations,
+          photoOrderRecommendation: result.feedback.photoOrderRecommendation,
+          sampleProfile: result.feedback.sampleProfile,
+          matchPotential: result.feedback.matchPotential,
+          potentialMatches: result.feedback.potentialMatches,
+        };
+
+        const insertResult = await pool.query(
+          `INSERT INTO analyses (user_email, platform, overall_score, photo_quality, attraction_signals, personality_signals, match_targeting, first_impression, roast, mistakes, profile_type, profile_type_explanation, full_report_data)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
+          [
+            ownerEmail, platform,
+            result.score.overall, result.score.photoQuality,
+            result.score.attractionSignals, result.score.personalitySignals,
+            result.score.matchTargeting, result.score.firstImpression,
+            result.feedback.roast, JSON.stringify(result.feedback.mistakes),
+            result.feedback.profileType, result.feedback.profileTypeExplanation,
+            JSON.stringify(fullReportData),
+          ],
+        );
+        const analysisId = insertResult.rows[0]?.id;
+        analysisJobs.set(jobId, {
+          status: "done",
+          result: { ...result, analysisId },
+          createdAt: Date.now(),
+        });
+      } catch (error: any) {
+        console.error("Analysis error — status:", error?.status, "message:", error?.message, "error body:", JSON.stringify(error?.error));
+        const msg =
+          error?.status === 413
+            ? "Your photos are too large. Please try with fewer or smaller images."
+            : error?.status === 404
+              ? "AI model unavailable. Please try again shortly."
+              : error?.status === 400 && error?.error?.message?.includes("internal error")
+                ? "The AI service is temporarily busy. Please wait a moment and try again."
+                : error?.status === 400 && error?.error?.message?.includes("image")
+                  ? "One or more images couldn't be processed. Please use JPG, PNG, GIF, WebP, or HEIC format."
+                  : error?.status === 429
+                    ? "Too many requests. Please wait a minute and try again."
+                    : "Failed to analyze profile. Please try again.";
+        analysisJobs.set(jobId, { status: "error", error: msg, createdAt: Date.now() });
+      }
+    })();
   },
 );
+
+app.get("/api/analyze/result/:jobId", (req: Request, res: Response) => {
+  const job = analysisJobs.get(req.params.jobId);
+  if (!job) {
+    res.status(404).json({ error: "Job not found or expired." });
+    return;
+  }
+  if (job.status === "pending") {
+    res.json({ status: "pending" });
+    return;
+  }
+  if (job.status === "error") {
+    res.status(500).json({ status: "error", error: job.error });
+    return;
+  }
+  res.json({ status: "done", result: job.result });
+});
 
 app.post("/api/progress", async (req: Request, res: Response) => {
   try {

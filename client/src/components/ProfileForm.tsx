@@ -391,12 +391,10 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
       const authToken = localStorage.getItem("magnet_token");
       const headers: Record<string, string> = {};
       if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000);
-      const res = await fetch("/api/analyze", { method: "POST", headers, body: formData, signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (!res.ok) {
-        const errData = await res.json().catch(() => null);
+
+      const submitRes = await fetch("/api/analyze", { method: "POST", headers, body: formData });
+      if (!submitRes.ok) {
+        const errData = await submitRes.json().catch(() => null);
         if (errData?.code === "AUDIT_LIMIT_REACHED") {
           setError(errData.error || "You've already used your free Magnet analysis.");
           setStep("photos");
@@ -404,23 +402,44 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
         }
         throw new Error(errData?.error || "Analysis failed");
       }
-      const data = await res.json();
-      const input: ProfileInput = {
-        platform, email: email.trim(), bio,
-        prompts: selectedPrompts.filter((sp) => sp.answer.trim()).map((sp) => `${sp.question}: ${sp.answer}`),
-        photoDescriptions: [],
-        screenshots: [], currentPhotos: [], additionalPhotos: [],
-        targetType: targetQualities.join(", "),
-        customTarget: customTarget || undefined,
-        gender: gender || undefined,
-      };
-      onResult(data, input);
+      const { jobId } = await submitRes.json();
+      if (!jobId) throw new Error("Failed to start analysis. Please try again.");
+
+      const deadline = Date.now() + 5 * 60 * 1000;
+      await new Promise<void>((resolve, reject) => {
+        const poll = async () => {
+          if (Date.now() > deadline) {
+            reject(new Error("Analysis timed out. Please try with fewer photos or a stronger connection."));
+            return;
+          }
+          try {
+            const pollRes = await fetch(`/api/analyze/result/${jobId}`);
+            const pollData = await pollRes.json();
+            if (pollData.status === "done") {
+              const input: ProfileInput = {
+                platform, email: email.trim(), bio,
+                prompts: selectedPrompts.filter((sp) => sp.answer.trim()).map((sp) => `${sp.question}: ${sp.answer}`),
+                photoDescriptions: [],
+                screenshots: [], currentPhotos: [], additionalPhotos: [],
+                targetType: targetQualities.join(", "),
+                customTarget: customTarget || undefined,
+                gender: gender || undefined,
+              };
+              onResult(pollData.result, input);
+              resolve();
+            } else if (pollData.status === "error") {
+              reject(new Error(pollData.error || "Analysis failed. Please try again."));
+            } else {
+              setTimeout(poll, 3000);
+            }
+          } catch {
+            setTimeout(poll, 3000);
+          }
+        };
+        poll();
+      });
     } catch (err: any) {
-      if (err?.name === "AbortError") {
-        setError("Analysis timed out. Please try with fewer photos or a stronger connection.");
-      } else {
-        setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
-      }
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
