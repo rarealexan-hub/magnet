@@ -651,7 +651,7 @@ Respond in this exact JSON format:
       "prompts": [
         {
           "question": "<their exact prompt question>",
-          "answer": "<sample answer that implements the coaching direction. Their voice, their personality, no clichés. 1-3 sentences. If their original prompt showed wit, sarcasm, or dry humor — match that energy and heighten it. Do NOT sanitize a funny person into a sincere one. This should make them think 'yes, that sounds like me but better' — not 'a robot rewrote me to be less interesting'.>"
+          "answer": "<sample answer that implements the coaching direction. Their voice, their personality, no clichés. Maximum 2 sentences. NEVER end in a question — not even a rhetorical one. Statements only. If their original prompt showed wit, sarcasm, or dry humor — match that energy and heighten it. Do NOT sanitize a funny person into a sincere one. This should make them think 'yes, that sounds like me but better' — not 'a robot rewrote me to be less interesting'.>"
         }
       ],
       "summary": "<1-2 sentences: what the optimized profile now signals vs. what the original signaled. Be specific about the transformation — not 'better' but 'this used to read as X, now it reads as Y, which attracts Z'>"
