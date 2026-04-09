@@ -394,8 +394,8 @@ export default function App() {
               result={result}
               profileInput={profileInput}
               onStartOver={handleStartOver}
-              onFullReport={() => { setFullReportViewed(true); setReportPurchased(bypassPayment); setView("full-report"); }}
-              onBundle={() => { setFullReportViewed(true); setReportPurchased(bypassPayment); setView("full-report"); }}
+              onFullReport={() => { setFullReportViewed(true); setReportPurchased(p => p || bypassPayment); setView("full-report"); }}
+              onBundle={() => { setFullReportViewed(true); setReportPurchased(p => p || bypassPayment); setView("full-report"); }}
               fullReportViewed={fullReportViewed}
               user={user}
               onSignIn={openAuthForResults}

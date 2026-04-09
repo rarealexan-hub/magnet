@@ -379,14 +379,14 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
           </div>
         )}
 
-        <div className="upgrade-section">
-          <h3 className="upgrade-title">Get the full fix, not just the diagnosis</h3>
-          <p className="upgrade-subtitle">
-            The Full Report tells you <em>exactly</em> what to change and how — per photo, per prompt, in order.
-          </p>
+        {!fullReportViewed && (
+          <div className="upgrade-section">
+            <h3 className="upgrade-title">Get the full fix, not just the diagnosis</h3>
+            <p className="upgrade-subtitle">
+              The Full Report tells you <em>exactly</em> what to change and how — per photo, per prompt, in order.
+            </p>
 
-          <div className="pricing-cards">
-            {!fullReportViewed && (
+            <div className="pricing-cards">
               <div className="pricing-card">
                 <div className="pricing-card-header">
                   <div className="pricing-icon">
@@ -416,39 +416,9 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
                   {checkoutLoading === 'full-report' ? 'Loading…' : <><span>{bypassPayment ? 'Preview Full Report' : 'Get Full Report'}</span> <ArrowRight size={16} /></>}
                 </button>
               </div>
-            )}
-
-            <div className="pricing-card">
-              <div className="pricing-card-header">
-                <div className="pricing-icon">
-                  <Smartphone size={22} />
-                </div>
-                <div>
-                  <h4>Analyze Another App</h4>
-                  <p className="pricing-tagline">Full report included</p>
-                </div>
-              </div>
-              <div className="pricing-price">
-                <span className="price-amount">$1.99</span>
-                <span className="price-period">one time</span>
-              </div>
-              <ul className="pricing-features">
-                <li><Zap size={14} /> Complete full report for a different dating app</li>
-                <li><Zap size={14} /> Per-photo breakdown with exact swap suggestions</li>
-                <li><Zap size={14} /> Prompt coaching & optimal photo order</li>
-                <li><Zap size={14} /> Works on Tinder, Bumble, Hinge & more</li>
-              </ul>
-              <button
-                className="pricing-btn"
-                onClick={() => handleCheckout('add-on-report')}
-                disabled={checkoutLoading === 'add-on-report'}
-              >
-                {checkoutLoading === 'add-on-report' ? 'Loading…' : <><span>Analyze Another App</span> <ArrowRight size={16} /></>}
-              </button>
             </div>
-
           </div>
-        </div>
+        )}
 
         {checkoutError && (
           <p style={{ color: '#ef4444', textAlign: 'center', marginTop: '0.75rem', fontSize: '0.875rem' }}>
@@ -463,6 +433,27 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
             </button>
           </div>
         )}
+
+        <div className="addon-section">
+          <div className="addon-strip">
+            <div className="addon-strip-left">
+              <div className="addon-strip-icon">
+                <Smartphone size={18} />
+              </div>
+              <div className="addon-strip-text">
+                <span className="addon-strip-title">Also on Tinder, Bumble, or another app?</span>
+                <span className="addon-strip-desc">Analyze another platform — full report included · $1.99</span>
+              </div>
+            </div>
+            <button
+              className="addon-strip-btn"
+              onClick={() => handleCheckout('add-on-report')}
+              disabled={checkoutLoading === 'add-on-report'}
+            >
+              {checkoutLoading === 'add-on-report' ? 'Loading…' : <><span>Analyze Another App</span> <ArrowRight size={14} /></>}
+            </button>
+          </div>
+        </div>
 
       </div>
     </div>
