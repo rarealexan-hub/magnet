@@ -739,7 +739,6 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 </button>
               )}
             </div>
-            <label className="form-sublabel" style={{ marginTop: 12 }}>Or type it out</label>
             <textarea
               className="form-textarea"
               rows={3}
