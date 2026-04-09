@@ -574,8 +574,8 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           {/* Specific additional photos */}
           <div className="photos-section photos-additional-section">
             <div className="form-label-row">
-              <label className="form-label">Photos not on your profile yet</label>
-              <span className="form-label-badge">optional · used in full report</span>
+              <label className="form-label">Extra photos to consider</label>
+              <span className="form-label-badge">Optional but suggested</span>
             </div>
             <p className="form-hint">Go through your favorites album and upload some that didn't make the cut the first time around.</p>
             <div className="category-photo-list">
