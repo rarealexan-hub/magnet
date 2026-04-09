@@ -496,7 +496,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
         <div className="form-container">
           <div className="form-header">
             <h2>Your photos are everything.</h2>
-            <p>The AI analyzes each photo — what it signals, what to fix, and what to swap in.</p>
+            <p>We analyze each photo — what it signals, what to fix, and what to swap in.</p>
           </div>
 
           <input id="lead-photo-input" ref={leadPhotoRef} type="file" accept="image/*,.heic,.heif" onChange={handleLeadPhotoSelect} style={{ display: "none" }} />
