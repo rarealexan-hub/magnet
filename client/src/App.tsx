@@ -21,6 +21,7 @@ export default function App() {
   const [preselectedPlatform, setPreselectedPlatform] = useState<string | undefined>();
   const [fullReportViewed, setFullReportViewed] = useState(false);
   const [reportPurchased, setReportPurchased] = useState(false);
+  const [reportPurchaseType, setReportPurchaseType] = useState<string | null>(null);
   const [authContext, setAuthContext] = useState<"default" | "save-results">("default");
   const [paymentVerifyError, setPaymentVerifyError] = useState<string | null>(null);
   const [bypassPayment, setBypassPayment] = useState(true);
@@ -209,6 +210,7 @@ export default function App() {
               setProfileInput(restoredInput);
               setFullReportViewed(true);
               setReportPurchased(true);
+              setReportPurchaseType(data.productType || null);
               setView('full-report');
             } else {
               setView('landing');
@@ -325,6 +327,7 @@ export default function App() {
     });
     setFullReportViewed(true);
     setReportPurchased(!!analysis.purchased);
+    setReportPurchaseType(analysis.purchaseType || null);
     setView("full-report");
   };
 
@@ -398,6 +401,8 @@ export default function App() {
               profileInput={profileInput}
               onBack={() => setView("results")}
               purchased={reportPurchased}
+              purchaseType={reportPurchaseType}
+              onAnalyzeAnother={() => setView("form")}
             />
           )}
           {view === "dashboard" && (

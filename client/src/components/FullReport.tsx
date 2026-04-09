@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight, ArrowLeftRight, PlusCircle, MinusCircle, MoveVertical, ListOrdered, MessageSquare, AlertCircle, Lightbulb, Sparkles, Quote, TrendingUp, Users, ChevronRight, Copy, Check, TrendingDown, Minus, Send } from "lucide-react";
+import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight, ArrowLeftRight, PlusCircle, MinusCircle, MoveVertical, ListOrdered, MessageSquare, AlertCircle, Lightbulb, Sparkles, Quote, TrendingUp, Users, ChevronRight, Copy, Check, TrendingDown, Minus, Send, Layers } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { PLATFORM_COLOR, PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
@@ -10,6 +10,8 @@ interface Props {
   profileInput: ProfileInput;
   onBack: () => void;
   purchased?: boolean;
+  purchaseType?: string | null;
+  onAnalyzeAnother?: () => void;
 }
 
 function parsePhotoData(raw: string): { data: string; mimeType: string } | null {
@@ -35,7 +37,7 @@ function PhotoThumb({ raw, label }: { raw: string; label: string }) {
   );
 }
 
-export function FullReport({ result, profileInput, onBack, purchased }: Props) {
+export function FullReport({ result, profileInput, onBack, purchased, purchaseType, onAnalyzeAnother }: Props) {
   const { score, feedback } = result;
   const platform = profileInput.platform || "other";
   const platformLabel = PLATFORM_LABEL[platform] ?? platform;
@@ -618,6 +620,25 @@ export function FullReport({ result, profileInput, onBack, purchased }: Props) {
             )}
           </div>
         </div>
+
+        {purchaseType === "profile-pack" && onAnalyzeAnother && (
+          <div className="report-section-card" style={{ textAlign: "center", padding: "32px 24px" }}>
+            <div style={{ marginBottom: "8px" }}>
+              <Layers size={28} style={{ color: "#0EA5E9", margin: "0 auto" }} />
+            </div>
+            <h3 style={{ marginBottom: "8px", fontSize: "18px" }}>You have reports left in your pack.</h3>
+            <p style={{ color: "#6b7280", marginBottom: "20px", fontSize: "14px" }}>
+              Use your next report to analyze a different app — or the same one after making changes.
+            </p>
+            <button
+              className="cta-button"
+              style={{ maxWidth: "260px", margin: "0 auto" }}
+              onClick={onAnalyzeAnother}
+            >
+              Analyze Another App <ArrowRight size={16} />
+            </button>
+          </div>
+        )}
 
         <div className="report-footer">
           <button className="results-start-over-btn" onClick={onBack}>
