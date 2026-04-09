@@ -152,12 +152,24 @@ export function FullReport({ result, profileInput, onBack, purchased }: Props) {
               </div>
               <div className="report-section-body">
                 <p className="report-section-analysis">{analysisText}</p>
-                {catScore < 70 && (
+                {cat.key === "personalitySignals" && feedback.personalitySignalsPromptRewrite ? (
+                  <div className="prompt-rec-item" style={{ marginTop: "16px" }}>
+                    <div className="prompt-rec-current">
+                      <span className="prompt-rec-label"><AlertCircle size={12} /> Weakest prompt</span>
+                      <p className="prompt-rec-text">"{feedback.personalitySignalsPromptRewrite.original}"</p>
+                    </div>
+                    <div className="prompt-rec-divider" />
+                    <div className="prompt-rec-suggestion">
+                      <span className="prompt-rec-label suggest-label"><Lightbulb size={12} /> Better direction</span>
+                      <p className="prompt-rec-suggest-text">{feedback.personalitySignalsPromptRewrite.suggestion}</p>
+                    </div>
+                  </div>
+                ) : catScore < 70 ? (
                   <div className="report-fix-box">
                     <p className="report-fix-title">How to improve</p>
                     <p className="report-fix-text">{FALLBACK_FIX[cat.key]}</p>
                   </div>
-                )}
+                ) : null}
               </div>
             </div>
           );

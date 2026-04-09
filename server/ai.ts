@@ -617,7 +617,7 @@ Respond in this exact JSON format:
     "categoryAnalysis": {
       "photoQuality": "<3 sentences: technical quality + strategic quality + what specifically should change. Reference actual photos if provided. Frame against what their audience responds to.>",
       "attractionSignals": "<3 sentences: what signals this profile is sending — attraction science lens. Body language, lifestyle cues, social proof, status vs. warmth balance. Specific to their content and audience.>",
-      "personalitySignals": "<3 sentences: how distinctively this person comes through vs. the generic profile. Reference actual prompts/bio text. Note where they're differentiating and where they're blending in.>",
+      "personalitySignals": "<3 sentences: how distinctively this person comes through vs. the generic profile. Reference actual prompts/bio text. Note where they're differentiating and where they're blending in. Do not include the prompt rewrite here — that goes in personalitySignalsPromptRewrite.>",
       "matchTargeting": "<3 sentences: how precisely calibrated this profile is to their stated target audience. Is there alignment? What's the gap? What one change would most improve targeting?>",
       "firstImpression": "<3 sentences: the 0–1 second scroll-stop evaluation of the lead photo. Expression quality, context signal, eye contact, energy. What does someone feel in the first second — and is that what this person wants them to feel?>"
     },
@@ -686,6 +686,7 @@ Respond in this exact JSON format:
         "whyTheySwipe": "<what specifically speaks to this person>"
       }
     ],
+    "personalitySignalsPromptRewrite": "<MUST be null if no prompts were provided. Otherwise: an object with two fields — 'original': the exact verbatim quote of the single weakest or most generic prompt the user has written (choose the one with the lowest hook/response potential), and 'suggestion': a specific, concrete rewrite direction or example replacement that would dramatically raise this prompt's response rate. The suggestion should model what great looks like — not just vague advice. Use the user's voice, platform, and target audience as anchors.>",
     "leadPhotoTeaser": "<MUST be null unless: (1) additional photos were provided AND (2) after visually comparing all of them against Photo #1, you have identified a specific extra photo that is genuinely, clearly superior as a lead. If the current lead is the strongest photo available, return null — do not generate a teaser just because extras exist. Only generate when you have real conviction a better lead is in the extras. When it does apply: one dry, witty, slightly stinging sentence hinting — without naming the specific photo — that a stronger lead exists. E.g. 'Somewhere in your extras, there's a photo that would stop a scroller cold — and it's not the one you've been trusting to do that job.'>",
     "betterLeadPhotoSuggestion": "<MUST be null unless: (1) additional photos were provided AND (2) you have identified a specific extra photo that clearly outperforms Photo #1 as a lead. If no extra photo is meaningfully stronger, return null. When it does apply: name the exact Extra Photo letter (e.g. Extra Photo B), explain precisely why it outperforms the current lead — expression quality, eye contact, context signal, energy, audience fit. Be concrete and visual.>"
   }
@@ -948,6 +949,34 @@ export async function analyzeProfile(input: ProfileInput): Promise<ProfileResult
             summary: parsed.feedback.sampleProfile.summary ?? "",
           }
         : undefined,
+      matchPotential: parsed.feedback?.matchPotential?.currentWeeklyEstimate != null
+        ? {
+            currentWeeklyEstimate: parsed.feedback.matchPotential.currentWeeklyEstimate ?? 0,
+            optimizedWeeklyEstimate: parsed.feedback.matchPotential.optimizedWeeklyEstimate ?? 0,
+            percentageIncrease: parsed.feedback.matchPotential.percentageIncrease ?? "",
+            topImprovements: Array.isArray(parsed.feedback.matchPotential.topImprovements)
+              ? parsed.feedback.matchPotential.topImprovements
+              : [],
+          }
+        : undefined,
+      potentialMatches: Array.isArray(parsed.feedback?.potentialMatches)
+        ? parsed.feedback.potentialMatches.map((m: any) => ({
+            name: m.name ?? "",
+            age: m.age ?? 0,
+            bio: m.bio ?? "",
+            whyTheySwipe: m.whyTheySwipe ?? "",
+          }))
+        : undefined,
+      leadPhotoTeaser: parsed.feedback?.leadPhotoTeaser ?? null,
+      betterLeadPhotoSuggestion: parsed.feedback?.betterLeadPhotoSuggestion ?? null,
+      personalitySignalsPromptRewrite:
+        parsed.feedback?.personalitySignalsPromptRewrite?.original &&
+        parsed.feedback?.personalitySignalsPromptRewrite?.suggestion
+          ? {
+              original: parsed.feedback.personalitySignalsPromptRewrite.original,
+              suggestion: parsed.feedback.personalitySignalsPromptRewrite.suggestion,
+            }
+          : null,
     },
   };
 }

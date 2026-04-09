@@ -574,6 +574,7 @@ app.get(
             matchPotential: fullReportData.matchPotential,
             potentialMatches: fullReportData.potentialMatches,
             betterLeadPhotoSuggestion: fullReportData.betterLeadPhotoSuggestion,
+            personalitySignalsPromptRewrite: fullReportData.personalitySignalsPromptRewrite,
           },
           created_at: r.created_at,
           purchased: !!r.purchase_id,
@@ -816,6 +817,7 @@ app.post(
           matchPotential: result.feedback.matchPotential,
           potentialMatches: result.feedback.potentialMatches,
           betterLeadPhotoSuggestion: result.feedback.betterLeadPhotoSuggestion,
+          personalitySignalsPromptRewrite: result.feedback.personalitySignalsPromptRewrite,
         };
 
         const insertResult = await pool.query(

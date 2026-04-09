@@ -157,6 +157,7 @@ export interface ProfileFeedback {
   matchPotential?: MatchPotential;
   leadPhotoTeaser?: string | null;
   betterLeadPhotoSuggestion?: string | null;
+  personalitySignalsPromptRewrite?: { original: string; suggestion: string } | null;
 }
 
 export interface ProfileResult {
