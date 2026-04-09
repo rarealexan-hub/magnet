@@ -7265,3 +7265,49 @@ button {
   line-height: 1;
   flex-shrink: 0;
 }
+
+/* ════════════════════════════════════════════
+   TARGETED MOBILE TAP TARGET & LAYOUT FIXES
+   ════════════════════════════════════════════ */
+
+/* Tap target: remove button on uploaded screenshots — was 20px, needs to be ≥24px */
+.bio-screenshot-remove {
+  width: 26px;
+  height: 26px;
+}
+
+/* Tap target: tag/quality pill buttons — ensure minimum 40px height on touch devices */
+@media (max-width: 640px) {
+  .tag-select-btn {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+  }
+
+  /* Allow screenshot upload button to wrap text on small phones */
+  .bio-screenshot-add {
+    white-space: normal;
+    height: auto;
+    min-height: 52px;
+    padding: 10px 14px;
+    text-align: left;
+    line-height: 1.4;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  /* Photo grid: 2 columns on narrow screens so thumbnails aren't microscopic */
+  .photo-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Prompt remove X button — bigger tap area */
+  .prompt-answer-remove {
+    min-width: 36px;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
