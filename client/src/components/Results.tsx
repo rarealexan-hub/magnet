@@ -432,13 +432,21 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
                 <span className="addon-strip-desc">Analyze another platform — full report included · $1.99</span>
               </div>
             </div>
-            <button
-              className="addon-strip-btn"
-              onClick={() => handleCheckout('add-on-report')}
-              disabled={checkoutLoading === 'add-on-report'}
+            <div
+              className="addon-buy-btn-wrapper"
+              onClick={() => {
+                sessionStorage.setItem('magnet_pending_purchase', JSON.stringify({
+                  result,
+                  profileInput,
+                  productType: 'add-on-report',
+                }));
+              }}
             >
-              {checkoutLoading === 'add-on-report' ? 'Loading…' : <><span>Analyze Another App</span> <ArrowRight size={14} /></>}
-            </button>
+              <stripe-buy-button
+                buy-button-id="buy_btn_1TKlOjB2VePKSunvYwqbZqHS"
+                publishable-key="pk_live_51RB0AKB2VePKSunvbIYbQQEP9Gfjy0f1b0VsM8HdiU1uS30D0IXAnycEGXj993B51cn13lMcSBU7SYPfvXIwUBRa004Bc2GvB7"
+              />
+            </div>
           </div>
         </div>
 

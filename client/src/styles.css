@@ -2256,6 +2256,14 @@ h2, h3, h4, h5, h6 {
   width: 100%;
 }
 
+.addon-buy-btn-wrapper {
+  flex-shrink: 0;
+}
+
+.addon-buy-btn-wrapper stripe-buy-button {
+  display: block;
+}
+
 .pricing-btn {
   display: flex;
   align-items: center;
