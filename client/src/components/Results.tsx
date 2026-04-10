@@ -172,11 +172,6 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
       onFullReport();
       return;
     }
-    const priceId = prices[type];
-    if (!priceId) {
-      setCheckoutError('Payment not available right now. Please try again.');
-      return;
-    }
     trackCheckoutInitiated(type, profileInput.platform);
     setCheckoutLoading(type);
     setCheckoutError(null);
@@ -186,6 +181,18 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
         profileInput,
         productType: type,
       }));
+
+      if (type === 'full-report') {
+        window.location.href = 'https://buy.stripe.com/28E7sKcmQ3qlilerxgA800';
+        return;
+      }
+
+      const priceId = prices[type];
+      if (!priceId) {
+        sessionStorage.removeItem('magnet_pending_purchase');
+        setCheckoutError('Payment not available right now. Please try again.');
+        return;
+      }
 
       const token = localStorage.getItem('magnet_token');
       const res = await fetch('/api/checkout', {
