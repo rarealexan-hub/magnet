@@ -168,7 +168,7 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
       }));
 
       if (type === 'full-report') {
-        window.location.href = 'https://buy.stripe.com/28E7sKcmQ3qlilerxgA800';
+        window.location.href = 'https://buy.stripe.com/28E7sKcmQ3qm3ilerxgA800';
         return;
       }
 
