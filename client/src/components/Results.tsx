@@ -149,23 +149,8 @@ function BasicSuggestions({ score, onFullReport }: { score: ProfileResult["score
 }
 
 export function Results({ result, profileInput, onStartOver, onFullReport, onBundle, fullReportViewed, user, onSignIn, bypassPayment }: Props) {
-  const [prices, setPrices] = useState<Record<string, string>>({});
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch('/api/stripe/prices')
-      .then(r => r.json())
-      .then(data => {
-        const map: Record<string, string> = {};
-        for (const price of data.data ?? []) {
-          const type = price.product?.metadata?.type;
-          if (type) map[type] = price.id;
-        }
-        setPrices(map);
-      })
-      .catch(() => {});
-  }, []);
 
   const handleCheckout = async (type: 'full-report' | 'add-on-report') => {
     if (bypassPayment) {
@@ -187,32 +172,9 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
         return;
       }
 
-      const priceId = prices[type];
-      if (!priceId) {
-        sessionStorage.removeItem('magnet_pending_purchase');
-        setCheckoutError('Payment not available right now. Please try again.');
+      if (type === 'add-on-report') {
+        window.location.href = 'https://buy.stripe.com/cNi00i1IcaSO6uxbflgA801';
         return;
-      }
-
-      const token = localStorage.getItem('magnet_token');
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          priceId,
-          analysisId: result.analysisId,
-          productType: type,
-        }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        sessionStorage.removeItem('magnet_pending_purchase');
-        setCheckoutError(data.error || 'Checkout failed. Please try again.');
       }
     } catch {
       sessionStorage.removeItem('magnet_pending_purchase');
