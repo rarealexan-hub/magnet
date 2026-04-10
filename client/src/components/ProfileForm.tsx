@@ -3,6 +3,7 @@ import { Plus, X, Loader2, Upload, GripVertical, ImagePlus, ChevronUp, ChevronDo
 import heic2any from "heic2any";
 import { TARGET_QUALITIES, GENDER_OPTIONS, PARTNER_PREFERENCES, PLATFORMS, PLATFORM_PROMPTS } from "@shared/types";
 import type { ProfileInput, ProfileResult, PlatformId } from "@shared/types";
+import { trackAnalysisStarted, trackAnalysisComplete } from "../lib/analytics";
 
 interface Props {
   onResult: (data: ProfileResult, input: ProfileInput) => void;
@@ -417,6 +418,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   };
 
   const runAnalysis = async () => {
+    trackAnalysisStarted(platform);
     setLoading(true);
     setError("");
     try {
@@ -458,6 +460,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 customTarget: customTarget || undefined,
                 gender: gender || undefined,
               };
+              trackAnalysisComplete(platform, pollData.result?.score?.overall ?? 0);
               onResult(pollData.result, input);
               resolve();
             } else if (pollData.status === "error") {

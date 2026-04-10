@@ -4,6 +4,7 @@ import type { ProfileResult, ProfileInput } from "@shared/types";
 import { PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 import type { AuthUser } from "../hooks/useAuth";
+import { trackCheckoutInitiated } from "../lib/analytics";
 
 function MatchVolumeBlock({ score, platform }: { score: number; platform: string }) {
   const label = PLATFORM_LABEL[platform] ?? platform;
@@ -176,6 +177,7 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
       setCheckoutError('Payment not available right now. Please try again.');
       return;
     }
+    trackCheckoutInitiated(type, profileInput.platform);
     setCheckoutLoading(type);
     setCheckoutError(null);
     try {

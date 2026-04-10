@@ -10,6 +10,7 @@ import { UserMenu } from "./components/UserMenu";
 import { PrivacyPolicy } from "./components/PrivacyPolicy";
 import { useAuth } from "./hooks/useAuth";
 import type { ProfileInput, ProfileResult, AnalysisRecord } from "@shared/types";
+import { trackPageView, trackSignIn, trackSignUp, trackPurchaseComplete, trackFullReportOpened, trackAnalyzeAnother } from "./lib/analytics";
 
 type View = "landing" | "form" | "results" | "full-report" | "dashboard" | "payment-verifying" | "privacy";
 
@@ -207,6 +208,7 @@ export default function App() {
         .then(data => {
           if (data.success) {
             sessionStorage.removeItem('magnet_pending_purchase');
+            trackPurchaseComplete(data.productType || 'full-report', restoredInput?.platform ?? 'unknown');
             if (data.productType === 'add-on-report') {
               setReportPurchased(true);
               setReportPurchaseType('add-on-report');
@@ -238,6 +240,19 @@ export default function App() {
     }
   }, []);
 
+  useEffect(() => {
+    const viewNames: Record<string, string> = {
+      landing: "Landing",
+      form: "Analysis Form",
+      results: "Results",
+      "full-report": "Full Report",
+      dashboard: "Dashboard",
+      "payment-verifying": "Payment Verifying",
+      privacy: "Privacy Policy",
+    };
+    trackPageView(viewNames[view] ?? view);
+  }, [view]);
+
   // When auth resolves and user is already logged in, send them straight to their dashboard.
   // Also fires when view changes to "landing" (e.g. Back on form, Start Over) so logged-in
   // users are never left stranded on the landing page.
@@ -268,18 +283,25 @@ export default function App() {
 
   const handleAuth = async (action: "login" | "register", email: string, password: string) => {
     const res = action === "login" ? await login(email, password) : await register(email, password);
-    if (res.success && authContext === "default") {
-      setShowAuth(false);
-      setView("dashboard");
+    if (res.success) {
+      if (action === "login") trackSignIn("email");
+      else trackSignUp("email");
+      if (authContext === "default") {
+        setShowAuth(false);
+        setView("dashboard");
+      }
     }
     return res;
   };
 
   const handleGoogleAuth = async (credential: string) => {
     const res = await loginWithGoogle(credential);
-    if (res.success && authContext === "default") {
-      setShowAuth(false);
-      setView("dashboard");
+    if (res.success) {
+      trackSignIn("google");
+      if (authContext === "default") {
+        setShowAuth(false);
+        setView("dashboard");
+      }
     }
     return res;
   };
@@ -400,8 +422,8 @@ export default function App() {
               result={result}
               profileInput={profileInput}
               onStartOver={handleStartOver}
-              onFullReport={() => { setFullReportViewed(true); setReportPurchased(p => p || bypassPayment); setView("full-report"); }}
-              onBundle={() => { setFullReportViewed(true); setReportPurchased(p => p || bypassPayment); setView("full-report"); }}
+              onFullReport={() => { trackFullReportOpened(profileInput.platform); setFullReportViewed(true); setReportPurchased(p => p || bypassPayment); setView("full-report"); }}
+              onBundle={() => { trackFullReportOpened(profileInput.platform); setFullReportViewed(true); setReportPurchased(p => p || bypassPayment); setView("full-report"); }}
               fullReportViewed={fullReportViewed}
               user={user}
               onSignIn={openAuthForResults}
@@ -415,7 +437,7 @@ export default function App() {
               onBack={() => setView("results")}
               purchased={reportPurchased}
               purchaseType={reportPurchaseType}
-              onAnalyzeAnother={() => { setReportPurchased(false); setFullReportViewed(false); setResult(null); setProfileInput(null); setView("form"); }}
+              onAnalyzeAnother={() => { trackAnalyzeAnother(); setReportPurchased(false); setFullReportViewed(false); setResult(null); setProfileInput(null); setView("form"); }}
             />
           )}
           {view === "dashboard" && (
