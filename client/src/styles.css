@@ -2247,6 +2247,15 @@ h2, h3, h4, h5, h6 {
   margin-top: 1px;
 }
 
+.stripe-buy-btn-wrapper {
+  margin-top: auto;
+  width: 100%;
+}
+
+.stripe-buy-btn-wrapper stripe-buy-button {
+  width: 100%;
+}
+
 .pricing-btn {
   display: flex;
   align-items: center;

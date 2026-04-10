@@ -152,6 +152,14 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
+  useEffect(() => {
+    sessionStorage.setItem('magnet_pending_purchase', JSON.stringify({
+      result,
+      profileInput,
+      productType: 'full-report',
+    }));
+  }, [result, profileInput]);
+
   const handleCheckout = async (type: 'full-report' | 'add-on-report') => {
     if (bypassPayment) {
       onFullReport();
@@ -379,13 +387,21 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
                   <li><Zap size={14} /> Optimal photo order — ranked 1–6 with reasoning</li>
                   <li><Zap size={14} /> Category-level AI analysis written about your profile</li>
                 </ul>
-                <button
-                  className="pricing-btn"
-                  onClick={() => handleCheckout('full-report')}
-                  disabled={checkoutLoading === 'full-report'}
-                >
-                  {checkoutLoading === 'full-report' ? 'Loading…' : <><span>{bypassPayment ? 'Preview Full Report' : 'Get Full Report'}</span> <ArrowRight size={16} /></>}
-                </button>
+                {bypassPayment ? (
+                  <button
+                    className="pricing-btn"
+                    onClick={() => handleCheckout('full-report')}
+                  >
+                    <span>Preview Full Report</span> <ArrowRight size={16} />
+                  </button>
+                ) : (
+                  <div className="stripe-buy-btn-wrapper">
+                    <stripe-buy-button
+                      buy-button-id="buy_btn_1TKkbQB2VePKSunvjuo8hT3E"
+                      publishable-key="pk_live_51RB0AKB2VePKSunvbIYbQQEP9Gfjy0f1b0VsM8HdiU1uS30D0IXAnycEGXj993B51cn13lMcSBU7SYPfvXIwUBRa004Bc2GvB7"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
