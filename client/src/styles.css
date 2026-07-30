@@ -13,24 +13,24 @@ body {
 }
 
 :root {
-  --bg: #FFFFFF;
+  --bg: #FAF9F7;
   --surface: #ffffff;
-  --surface-2: #F5F5F5;
-  --border: #E8E8E8;
-  --border-subtle: #F0F0F0;
-  --text: #0D0D0D;
-  --text-muted: #555555;
-  --text-dim: #888888;
-  --accent: #FF4438;
-  --accent-light: #FF6B63;
-  --accent-subtle: rgba(255, 68, 56, 0.08);
-  --green: #16a34a;
-  --green-subtle: rgba(22, 163, 74, 0.08);
-  --red: #dc2626;
-  --red-subtle: rgba(220, 38, 38, 0.08);
-  --yellow: #d97706;
+  --surface-2: #F3F1EE;
+  --border: #E5E1DA;
+  --border-subtle: #EDE9E4;
+  --text: #1A1816;
+  --text-muted: #6B6560;
+  --text-dim: #9C9690;
+  --accent: #1A1816;
+  --accent-light: #3D3A37;
+  --accent-subtle: rgba(26, 24, 22, 0.06);
+  --green: #2D6A4F;
+  --green-subtle: rgba(45, 106, 79, 0.08);
+  --red: #C0392B;
+  --red-subtle: rgba(192, 57, 43, 0.08);
+  --yellow: #A0522D;
   --card: #ffffff;
-  --muted: #888888;
+  --muted: #9C9690;
   --radius-sm: 6px;
   --radius: 10px;
   --radius-lg: 14px;
@@ -61,9 +61,9 @@ body {
 .upgrade-modal,
 .payment-verifying-card,
 .save-results-prompt {
-  --text: #0f172a;
-  --text-muted: #1e293b;
-  --text-dim: #334155;
+  --text: #1A1816;
+  --text-muted: #6B6560;
+  --text-dim: #9C9690;
 }
 
 body {
@@ -130,10 +130,7 @@ h2, h3, h4, h5, h6 {
 }
 
 .gradient-text {
-  background: #FF4438;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text);
 }
 
 .subtitle {
@@ -159,7 +156,7 @@ h2, h3, h4, h5, h6 {
   align-items: center;
   gap: 9px;
   padding: 14px 28px;
-  background: #FF4438;
+  background: #1A1816;
   color: #fff;
   font-size: 15px;
   font-weight: 700;
@@ -168,12 +165,12 @@ h2, h3, h4, h5, h6 {
   border-radius: var(--radius);
   cursor: pointer;
   transition: opacity 0.15s, box-shadow 0.15s;
-  box-shadow: 0 4px 18px rgba(255, 68, 56, 0.15);
+  box-shadow: 0 4px 18px rgba(26, 24, 22, 0.08);
 }
 
 .cta-button:hover {
   opacity: 0.92;
-  box-shadow: 0 6px 24px rgba(255, 68, 56, 0.25);
+  box-shadow: 0 6px 24px rgba(26, 24, 22, 0.12);
 }
 
 .cta-sub {
@@ -677,8 +674,8 @@ h2, h3, h4, h5, h6 {
   align-items: center;
   gap: 10px;
   padding: 13px 16px;
-  background: rgba(255, 68, 56, 0.06);
-  border: 1px solid rgba(255, 68, 56, 0.12);
+  background: rgba(26, 24, 22, 0.04);
+  border: 1px solid rgba(26, 24, 22, 0.08);
   border-radius: 10px;
   font-size: 13px;
   font-weight: 500;
@@ -1143,7 +1140,7 @@ h2, h3, h4, h5, h6 {
 .bio-screenshot-add:hover {
   border-color: var(--accent);
   color: var(--accent);
-  background: rgba(255, 68, 56, 0.04);
+  background: rgba(26, 24, 22, 0.03);
 }
 
 .custom-target-block {
@@ -1591,7 +1588,7 @@ h2, h3, h4, h5, h6 {
 .submit-btn {
   width: 100%;
   padding: 15px;
-  background: #FF4438;
+  background: #1A1816;
   color: #ffffff;
   font-size: 15px;
   font-weight: 700;
@@ -1647,8 +1644,8 @@ h2, h3, h4, h5, h6 {
   width: 72px;
   height: 72px;
   border-radius: 20px;
-  background: rgba(255, 68, 56, 0.08);
-  border: 1px solid rgba(255, 68, 56, 0.12);
+  background: rgba(26, 24, 22, 0.06);
+  border: 1px solid rgba(26, 24, 22, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1657,21 +1654,21 @@ h2, h3, h4, h5, h6 {
 }
 
 @keyframes analyzing-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 68, 56, 0.1); }
-  50% { box-shadow: 0 0 0 16px rgba(255, 68, 56, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(26, 24, 22, 0.07); }
+  50% { box-shadow: 0 0 0 16px rgba(26, 24, 22, 0); }
 }
 
 .analyzing-title {
   font-size: 22px;
   font-weight: 700;
-  color: #e2e8f0;
+  color: var(--text);
   margin-bottom: 12px;
   letter-spacing: -0.02em;
 }
 
 .analyzing-msg {
   font-size: 14px;
-  color: #b0c4d8;
+  color: var(--text-muted);
   margin-bottom: 32px;
   min-height: 22px;
   transition: opacity 0.3s;
@@ -1689,7 +1686,7 @@ h2, h3, h4, h5, h6 {
 .analyzing-bar-fill {
   height: 100%;
   width: 40%;
-  background: #FF4438;
+  background: #1A1816;
   border-radius: 99px;
   animation: analyzing-sweep 2.2s ease-in-out infinite;
 }
@@ -1867,8 +1864,8 @@ h2, h3, h4, h5, h6 {
   width: 100%;
   margin-top: 14px;
   padding: 10px 16px;
-  background: rgba(255, 68, 56, 0.05);
-  border: 1px dashed rgba(255, 68, 56, 0.2);
+  background: rgba(26, 24, 22, 0.04);
+  border: 1px dashed rgba(26, 24, 22, 0.1);
   border-radius: 10px;
   color: var(--accent-light);
   font-size: 12px;
@@ -1878,8 +1875,8 @@ h2, h3, h4, h5, h6 {
 }
 
 .breakdown-unlock-cta:hover {
-  background: rgba(255, 68, 56, 0.08);
-  border-color: rgba(255, 68, 56, 0.3);
+  background: rgba(26, 24, 22, 0.06);
+  border-color: rgba(26, 24, 22, 0.15);
 }
 
 .match-killer {
@@ -2066,8 +2063,8 @@ h2, h3, h4, h5, h6 {
 }
 
 .mistakes-list-item--locked {
-  background: rgba(255, 68, 56, 0.03) !important;
-  border-color: rgba(255, 68, 56, 0.08) !important;
+  background: rgba(26, 24, 22, 0.02) !important;
+  border-color: rgba(26, 24, 22, 0.06) !important;
   position: relative;
   flex-wrap: wrap;
   align-items: center !important;
@@ -2075,7 +2072,7 @@ h2, h3, h4, h5, h6 {
 }
 
 .fix-number--locked {
-  background: rgba(255, 68, 56, 0.12) !important;
+  background: rgba(26, 24, 22, 0.08) !important;
   color: var(--accent-light) !important;
   opacity: 0.6;
 }
@@ -2097,8 +2094,8 @@ h2, h3, h4, h5, h6 {
   font-size: 10px;
   font-weight: 700;
   color: var(--accent-light);
-  background: rgba(255, 68, 56, 0.08);
-  border: 1px solid rgba(255, 68, 56, 0.12);
+  background: rgba(26, 24, 22, 0.06);
+  border: 1px solid rgba(26, 24, 22, 0.08);
   border-radius: 20px;
   padding: 3px 9px;
   white-space: nowrap;
@@ -2146,8 +2143,8 @@ h2, h3, h4, h5, h6 {
 }
 
 .pricing-card.featured {
-  border-color: rgba(255, 68, 56, 0.22);
-  background: rgba(255, 68, 56, 0.03);
+  border-color: rgba(26, 24, 22, 0.12);
+  background: rgba(26, 24, 22, 0.02);
 }
 
 .pricing-badge {
@@ -2185,7 +2182,7 @@ h2, h3, h4, h5, h6 {
 
 .pricing-icon.featured-icon {
   background: var(--accent-subtle);
-  border-color: rgba(255, 68, 56, 0.12);
+  border-color: rgba(26, 24, 22, 0.08);
   color: var(--accent-light);
 }
 
@@ -2391,11 +2388,11 @@ h2, h3, h4, h5, h6 {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(255, 68, 56, 0.08);
+  background: rgba(26, 24, 22, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #FF4438;
+  color: #1A1816;
 }
 
 .addon-strip-text {
@@ -2428,7 +2425,7 @@ h2, h3, h4, h5, h6 {
   align-items: center;
   gap: 6px;
   padding: 10px 16px;
-  background: #FF4438;
+  background: #1A1816;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -2498,7 +2495,7 @@ h2, h3, h4, h5, h6 {
 .report-hero-badge {
   display: inline-block;
   padding: 6px 16px;
-  background: rgba(255, 68, 56, 0.08);
+  background: rgba(26, 24, 22, 0.06);
   color: var(--accent-light);
   font-size: 13px;
   font-weight: 700;
@@ -2556,7 +2553,7 @@ h2, h3, h4, h5, h6 {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: rgba(255, 68, 56, 0.08);
+  background: rgba(26, 24, 22, 0.06);
   color: var(--accent);
   display: flex;
   align-items: center;
@@ -2607,8 +2604,8 @@ h2, h3, h4, h5, h6 {
 
 .report-fix-box {
   padding: 16px 20px;
-  background: rgba(255, 68, 56, 0.04);
-  border: 1px solid rgba(255, 68, 56, 0.1);
+  background: rgba(26, 24, 22, 0.03);
+  border: 1px solid rgba(26, 24, 22, 0.07);
   border-radius: 12px;
 }
 
@@ -2671,7 +2668,7 @@ h2, h3, h4, h5, h6 {
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: rgba(255, 68, 56, 0.08);
+  background: rgba(26, 24, 22, 0.06);
   color: var(--accent);
   display: flex;
   align-items: center;
@@ -2688,7 +2685,7 @@ h2, h3, h4, h5, h6 {
 
 .placeholder-bar {
   flex: 1;
-  background: rgba(255, 68, 56, 0.1);
+  background: rgba(26, 24, 22, 0.07);
   border-radius: 4px 4px 0 0;
   transition: height 0.3s;
 }
@@ -2808,7 +2805,7 @@ h2, h3, h4, h5, h6 {
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  background: rgba(255, 68, 56, 0.08);
+  background: rgba(26, 24, 22, 0.06);
   color: var(--accent-light);
   border: 1px solid rgba(14, 165, 233, 0.25);
   border-radius: 8px;
@@ -2820,7 +2817,7 @@ h2, h3, h4, h5, h6 {
 }
 
 .dashboard-view-btn:hover {
-  background: rgba(255, 68, 56, 0.12);
+  background: rgba(26, 24, 22, 0.08);
 }
 
 .dashboard-chart {
@@ -2844,7 +2841,7 @@ h2, h3, h4, h5, h6 {
 .chart-bar {
   width: 100%;
   max-width: 40px;
-  background: rgba(255, 68, 56, 0.12);
+  background: rgba(26, 24, 22, 0.08);
   border-radius: 4px 4px 0 0;
   transition: height 0.4s ease;
   min-height: 4px;
@@ -2914,9 +2911,9 @@ h2, h3, h4, h5, h6 {
   align-items: center;
   gap: 4px;
   padding: 6px 12px;
-  background: rgba(255, 68, 56, 0.08);
+  background: rgba(26, 24, 22, 0.06);
   color: var(--accent-light);
-  border: 1px solid rgba(255, 68, 56, 0.12);
+  border: 1px solid rgba(26, 24, 22, 0.08);
   border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
@@ -2927,7 +2924,7 @@ h2, h3, h4, h5, h6 {
 
 .platform-reanalyze-btn:hover,
 .platform-analyze-btn:hover {
-  background: rgba(255, 68, 56, 0.12);
+  background: rgba(26, 24, 22, 0.08);
 }
 
 .dashboard-history {
@@ -2961,7 +2958,7 @@ h2, h3, h4, h5, h6 {
 
 .history-item:hover {
   border-color: var(--accent);
-  background: rgba(255, 68, 56, 0.03);
+  background: rgba(26, 24, 22, 0.02);
 }
 
 .history-item-score {
@@ -3021,7 +3018,7 @@ h2, h3, h4, h5, h6 {
   width: 80px;
   height: 80px;
   border-radius: 20px;
-  background: rgba(255, 68, 56, 0.08);
+  background: rgba(26, 24, 22, 0.06);
   color: var(--accent);
   display: flex;
   align-items: center;
@@ -3290,7 +3287,7 @@ h2, h3, h4, h5, h6 {
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: #FF4438;
+  background: #1A1816;
   border: none;
   border-radius: var(--radius-sm);
   color: #fff;
@@ -3300,12 +3297,12 @@ h2, h3, h4, h5, h6 {
   cursor: pointer;
   min-height: 36px;
   transition: opacity 0.15s, box-shadow 0.15s;
-  box-shadow: 0 2px 10px rgba(255, 68, 56, 0.22);
+  box-shadow: 0 2px 10px rgba(26, 24, 22, 0.12);
 }
 
 .header-signin:hover {
   opacity: 0.9;
-  box-shadow: 0 4px 16px rgba(255, 68, 56, 0.3);
+  box-shadow: 0 4px 16px rgba(26, 24, 22, 0.15);
 }
 
 .user-menu {
@@ -3752,8 +3749,8 @@ h2, h3, h4, h5, h6 {
   font-size: 12px;
   font-weight: 600;
   color: var(--accent-light);
-  background: rgba(255, 68, 56, 0.08);
-  border: 1px solid rgba(255, 68, 56, 0.12);
+  background: rgba(26, 24, 22, 0.06);
+  border: 1px solid rgba(26, 24, 22, 0.08);
   border-radius: 20px;
   padding: 3px 10px;
   white-space: nowrap;
@@ -5395,7 +5392,7 @@ button {
 }
 
 .prompt-rec-label.suggest-label {
-  color: #FF6B63;
+  color: #3D3A37;
 }
 
 .prompt-rec-text {
@@ -5444,7 +5441,7 @@ button {
 }
 
 .prompt-rewrite-variant {
-  background: rgba(255, 68, 56, 0.04);
+  background: rgba(26, 24, 22, 0.03);
   border: 1px solid rgba(14, 165, 233, 0.18);
   border-radius: 10px;
   padding: 12px 14px;
@@ -5460,7 +5457,7 @@ button {
 .prompt-rewrite-tag {
   font-size: 11px;
   font-weight: 700;
-  color: #FF4438;
+  color: #1A1816;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -5486,15 +5483,15 @@ button {
   font-weight: 600;
   padding: 5px 12px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 68, 56, 0.2);
+  border: 1px solid rgba(26, 24, 22, 0.1);
   background: transparent;
-  color: #FF4438;
+  color: #1A1816;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .prompt-copy-btn:hover {
-  background: rgba(255, 68, 56, 0.08);
+  background: rgba(26, 24, 22, 0.06);
 }
 
 .prompt-copy-btn.copied {
@@ -5505,7 +5502,7 @@ button {
 
 /* ── Report Back section ── */
 .report-back-card {
-  border-top: 2px solid rgba(255, 68, 56, 0.1);
+  border-top: 2px solid rgba(26, 24, 22, 0.07);
 }
 
 .report-back-prompt {
@@ -5570,7 +5567,7 @@ button {
   padding: 8px 20px;
   border-radius: 8px;
   border: none;
-  background: #FF4438;
+  background: #1A1816;
   color: #fff;
   cursor: pointer;
   transition: opacity 0.15s;
@@ -5663,7 +5660,7 @@ button {
   height: 26px;
   border-radius: 50%;
   background: rgba(14,165,233,0.15);
-  color: #FF6B63;
+  color: #3D3A37;
   font-size: 12px;
   font-weight: 800;
   display: flex;
@@ -5750,7 +5747,7 @@ button {
   background: rgba(14,165,233,0.1);
   border: 1px solid rgba(14,165,233,0.25);
   border-radius: 8px;
-  color: #FF6B63;
+  color: #3D3A37;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -5844,12 +5841,12 @@ button {
 
 .basic-suggestion-locked svg {
   flex-shrink: 0;
-  color: #FF6B63;
+  color: #3D3A37;
   opacity: 1;
 }
 
 .basic-suggestion-locked span {
-  color: #FF6B63;
+  color: #3D3A37;
   opacity: 0.8;
   font-weight: 500;
 }
@@ -5865,7 +5862,7 @@ button {
 
 .basic-suggestion-item--locked:hover {
   opacity: 1;
-  border-color: #FF4438;
+  border-color: #1A1816;
 }
 
 .basic-suggestion-score--locked {
@@ -5874,8 +5871,8 @@ button {
   gap: 4px;
   font-size: 11px;
   font-weight: 700;
-  color: #FF4438;
-  background: rgba(255, 68, 56, 0.08);
+  color: #1A1816;
+  background: rgba(26, 24, 22, 0.06);
   padding: 2px 7px;
   border-radius: 100px;
 }
@@ -5929,7 +5926,7 @@ button {
   height: 32px;
   border-radius: 8px;
   background: rgba(14,165,233,0.12);
-  color: #FF6B63;
+  color: #3D3A37;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5952,7 +5949,7 @@ button {
 .reanalyze-price-badge {
   font-size: 14px;
   font-weight: 800;
-  color: #FF6B63;
+  color: #3D3A37;
   background: rgba(14,165,233,0.12);
   border: 1px solid rgba(14,165,233,0.25);
   padding: 4px 10px;
@@ -6036,7 +6033,7 @@ button {
 }
 
 .orientation-btn.active {
-  border-color: #FF4438;
+  border-color: #1A1816;
   background: rgba(14,165,233,0.15);
   color: #7dd3fc;
   font-weight: 600;
@@ -6072,7 +6069,7 @@ button {
 }
 
 .pref-btn.active {
-  border-color: #FF4438;
+  border-color: #1A1816;
   background: rgba(14,165,233,0.15);
   color: #7dd3fc;
   font-weight: 600;
@@ -6081,7 +6078,7 @@ button {
 .pref-check {
   font-size: 11px;
   font-weight: 800;
-  color: #FF6B63;
+  color: #3D3A37;
 }
 
 @media (max-width: 640px) {
@@ -6120,7 +6117,7 @@ button {
 }
 
 .taste-card.selected {
-  border-color: #FF4438;
+  border-color: #1A1816;
   box-shadow: 0 0 0 3px rgba(14,165,233,0.2);
 }
 
@@ -6149,7 +6146,7 @@ button {
   right: 8px;
   width: 28px;
   height: 28px;
-  background: #FF4438;
+  background: #1A1816;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -6776,7 +6773,7 @@ button {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: #FF4438;
+  background: #1A1816;
   color: white;
   font-size: 18px;
   font-weight: 700;
@@ -6810,7 +6807,7 @@ button {
   align-items: flex-start;
   gap: 6px;
   padding: 8px 10px;
-  background: rgba(255, 68, 56, 0.06);
+  background: rgba(26, 24, 22, 0.04);
   border-radius: 8px;
   color: #7dd3fc;
   font-size: 12px;
@@ -6820,7 +6817,7 @@ button {
 .potential-match-why svg {
   flex-shrink: 0;
   margin-top: 2px;
-  color: #FF4438;
+  color: #1A1816;
 }
 
 @media (max-width: 480px) {
@@ -6897,8 +6894,8 @@ button {
 }
 
 .dash-unlock-btn:hover {
-  background: rgba(255, 68, 56, 0.04);
-  border-color: rgba(255, 68, 56, 0.12);
+  background: rgba(26, 24, 22, 0.03);
+  border-color: rgba(26, 24, 22, 0.08);
   color: var(--accent-light);
 }
 
@@ -7252,20 +7249,20 @@ button {
   border-radius: var(--radius-lg);
   padding: 40px;
   --text: #0f172a;
-  --text-muted: #1e293b;
+  --text-muted: #6B6560;
   --text-dim: #475569;
 }
 
 .privacy-header {
   margin-bottom: 28px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .privacy-title {
   font-size: 26px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text);
   margin-bottom: 6px;
   letter-spacing: -0.02em;
 }
@@ -7289,7 +7286,7 @@ button {
 .privacy-section h2 {
   font-size: 15px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
   margin-bottom: 10px;
   letter-spacing: -0.01em;
 }
@@ -7316,12 +7313,12 @@ button {
 }
 
 .privacy-section strong {
-  color: #0f172a;
+  color: var(--text);
   font-weight: 600;
 }
 
 .privacy-link {
-  color: #FF4438;
+  color: #1A1816;
   text-decoration: none;
 }
 
@@ -7343,7 +7340,7 @@ button {
   border: none;
   padding: 0;
   font-size: inherit;
-  color: #FF4438;
+  color: #1A1816;
   cursor: pointer;
   text-decoration: underline;
   font-family: inherit;

@@ -121,21 +121,21 @@ export function Landing({ onStart, onPrivacy }: Props) {
 
       <div className="features-grid">
         <div className="feature-card">
-          <div className="feature-icon" style={{ background: "rgba(14,165,233,0.13)", color: "#0EA5E9" }}>
+          <div className="feature-icon" style={{ background: "rgba(26,24,22,0.06)", color: "#1A1816" }}>
             <Target size={20} />
           </div>
           <h3>Match Targeting</h3>
           <p>Tell Magnet who you want to attract. It shows you the exact signals your profile is sending — and whether they're reaching the right people.</p>
         </div>
         <div className="feature-card">
-          <div className="feature-icon" style={{ background: "rgba(0,201,167,0.13)", color: "#00C9A7" }}>
+          <div className="feature-icon" style={{ background: "rgba(26,24,22,0.06)", color: "#1A1816" }}>
             <Sparkles size={20} />
           </div>
           <h3>Magnet Score</h3>
           <p>Scored across five dimensions: photo quality, attraction signals, personality, match targeting, and first impression. You see exactly where you fall short.</p>
         </div>
         <div className="feature-card">
-          <div className="feature-icon" style={{ background: "rgba(245,158,11,0.13)", color: "#f59e0b" }}>
+          <div className="feature-icon" style={{ background: "rgba(26,24,22,0.06)", color: "#1A1816" }}>
             <TrendingUp size={20} />
           </div>
           <h3>Guided Optimization</h3>
