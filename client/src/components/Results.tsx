@@ -205,11 +205,11 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
   };
 
   const scoreCategories = [
-    { key: "photoQuality" as const, label: "Photo Quality", locked: false },
-    { key: "attractionSignals" as const, label: "Attraction Signals", locked: false },
-    { key: "personalitySignals" as const, label: "Personality Signals", locked: false },
-    { key: "matchTargeting" as const, label: "Match Targeting", locked: true },
-    { key: "firstImpression" as const, label: "First Impression", locked: true },
+    { key: "photoQuality" as const, label: "Photo Quality" },
+    { key: "attractionSignals" as const, label: "Attraction Signals" },
+    { key: "personalitySignals" as const, label: "Personality Signals" },
+    { key: "matchTargeting" as const, label: "Match Targeting" },
+    { key: "firstImpression" as const, label: "First Impression" },
   ];
 
   const lowestCategory = scoreCategories.reduce(
@@ -247,33 +247,16 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
               {scoreCategories.map((cat) => (
                 <div
                   key={cat.key}
-                  className={`breakdown-row ${!cat.locked && cat.key === lowestCategory.key ? "weakest" : ""} ${cat.locked ? "breakdown-row--locked" : ""}`}
+                  className={`breakdown-row ${cat.key === lowestCategory.key ? "weakest" : ""}`}
                 >
                   <span className="breakdown-label">{cat.label}</span>
-                  {cat.locked ? (
-                    <>
-                      <div className="breakdown-bar-wrap breakdown-bar-wrap--blurred">
-                        <div className="breakdown-bar" style={{ width: "65%" }} />
-                      </div>
-                      <span className="breakdown-value breakdown-value--locked">
-                        <Lock size={11} />
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <div className="breakdown-bar-wrap">
-                        <div className="breakdown-bar" style={{ width: `${score[cat.key]}%` }} />
-                      </div>
-                      <span className="breakdown-value">{score[cat.key]}</span>
-                    </>
-                  )}
+                  <div className="breakdown-bar-wrap">
+                    <div className="breakdown-bar" style={{ width: `${score[cat.key]}%` }} />
+                  </div>
+                  <span className="breakdown-value">{score[cat.key]}</span>
                 </div>
               ))}
             </div>
-            <button className="breakdown-unlock-cta" onClick={onFullReport}>
-              <Lock size={12} />
-              Unlock Match Targeting &amp; First Impression with Full Report
-            </button>
           </div>
 
           <div className="match-killer">
