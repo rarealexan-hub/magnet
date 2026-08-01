@@ -685,7 +685,7 @@ h2, h3, h4, h5, h6 {
   justify-content: space-between;
   align-items: center;
 }
-.badge {
+.landing-hero-topline .badge {
   margin: 0;
   padding: 8px 16px 8px 11px;
   border-radius: 5px;
@@ -731,11 +731,13 @@ h2, h3, h4, h5, h6 {
 .cta-button:hover { opacity: 1; transform: translate(-2px,-2px); box-shadow: 8px 8px 0 rgba(26,24,22,.14); }
 .landing-hero-mark {
   position: absolute;
-  right: 9%;
-  bottom: -7%;
-  color: rgba(26,24,22,.06);
-  font: 400 clamp(260px, 40vw, 550px)/.7 'Instrument Serif', serif;
+  right: 6%;
+  bottom: 0%;
+  color: rgba(26,24,22,.05);
+  font: 400 clamp(200px, 32vw, 420px)/.7 'Instrument Serif', serif;
   pointer-events: none;
+  user-select: none;
+  overflow: hidden;
 }
 
 .stats-strip {

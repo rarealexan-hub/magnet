@@ -17,7 +17,7 @@ export function Landing({ onStart, onPrivacy }: Props) {
             <MagnetIcon size={20} strokeWidth={2.2} />
             <span>Magnet</span>
           </div>
-          <span className="landing-hero-note">A little honesty goes a long way.</span>
+          <span className="landing-hero-note">Find out what's costing you matches.</span>
         </div>
         <div className="landing-hero-copy">
           <p className="landing-kicker">The dating profile reality check</p>
@@ -29,7 +29,7 @@ export function Landing({ onStart, onPrivacy }: Props) {
             <p className="subtitle">
               Somewhere, someone is swiping left on you right now — for entirely fixable reasons. Magnet finds all of them: photos, prompts, first impression, and exactly who you're accidentally calling in.
             </p>
-            <p className="subtitle-small">The analysis your best friend wishes they could give you.</p>
+            <p className="subtitle-small">The honest breakdown no one else will give you.</p>
             <button className="cta-button" onClick={onStart}>
               Analyze My Profile
               <ArrowRight size={17} />
