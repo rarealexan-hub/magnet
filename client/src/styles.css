@@ -782,7 +782,7 @@ h2, h3, h4, h5, h6 {
   overflow: visible;
 }
 .feature-card { position: relative; min-height: 280px; padding: 30px; border: 1px solid var(--border); border-radius: 3px; }
-.feature-card-large { grid-row: span 2; min-height: 575px; display: flex; flex-direction: column; justify-content: flex-end; background: var(--surface); }
+.feature-card-large { grid-row: span 2; min-height: 575px; display: flex; flex-direction: column; justify-content: flex-start; background: var(--surface); }
 .feature-card-dark { background: var(--text); color: var(--bg); border-color: var(--text); }
 .feature-card-dark h3, .feature-card-dark p:not(.feature-index) { color: var(--bg); }
 .feature-card-wide { min-height: 280px; }
