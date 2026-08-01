@@ -385,7 +385,7 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
                   <li><Zap size={14} /> Prompt coaching — what's wrong with each one & how to fix it</li>
                   <li><Zap size={14} /> Photo swap picks — your uploaded extras compared to your current lineup, with exact swap suggestions and side-by-side previews</li>
                   <li><Zap size={14} /> Optimal photo order — ranked 1–6 with reasoning</li>
-                  <li><Zap size={14} /> Category-level AI analysis written about your profile</li>
+                  <li><Zap size={14} /> Category-level analysis written about your profile</li>
                 </ul>
                 {bypassPayment ? (
                   <button

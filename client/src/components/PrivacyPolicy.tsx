@@ -26,7 +26,7 @@ export function PrivacyPolicy({ onBack }: Props) {
             <h2>What we collect</h2>
             <ul>
               <li><strong>Email address</strong> — when you create an account or sign in. Used for account management only.</li>
-              <li><strong>Photos you upload</strong> — processed by our AI to generate your analysis. Photos are not stored on our servers after your analysis is complete.</li>
+              <li><strong>Photos you upload</strong> — processed to generate your analysis. Photos are not stored on our servers after your analysis is complete.</li>
               <li><strong>Profile text</strong> — bios, prompts, and answers you enter into the form. Used solely to generate your analysis.</li>
               <li><strong>Analysis results</strong> — your Magnet Score and report, saved to your account so you can access them from your dashboard.</li>
               <li><strong>Payment information</strong> — handled entirely by Stripe. We never see or store your card details.</li>

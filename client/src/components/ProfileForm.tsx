@@ -698,7 +698,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
         <div className="form-container">
           <div className="form-header">
             <h2>Quick profile details</h2>
-            <p>A few things to help the AI give you accurate, targeted feedback.</p>
+            <p>A few things to help us give you accurate, targeted feedback.</p>
           </div>
 
           <div className="form-section">
@@ -860,7 +860,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               <span className="form-label-badge">optional</span>
               {bioOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
-            <p className="form-hint" style={{ marginTop: 6 }}>Paste in your full bio or about me text — helps the AI give more targeted feedback.</p>
+            <p className="form-hint" style={{ marginTop: 6 }}>Paste in your full bio or about me text — helps us give more targeted feedback.</p>
             {bioOpen && (
               <div className="context-toggle-body">
                 <textarea

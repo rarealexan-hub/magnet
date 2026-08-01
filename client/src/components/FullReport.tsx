@@ -554,7 +554,7 @@ export function FullReport({ result, profileInput, onBack, purchased, purchaseTy
                 ))}
               </div>
               <p className="sample-profile-disclaimer" style={{ marginTop: 16 }}>
-                AI-generated examples based on your target audience and optimized profile — for illustration only.
+                Generated examples based on your target audience and optimized profile — for illustration only.
               </p>
             </div>
           </div>
