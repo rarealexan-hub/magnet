@@ -2265,6 +2265,20 @@ h2, h3, h4, h5, h6 {
   flex-shrink: 0;
 }
 
+.mistakes-more-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
 .mistakes-list-item--locked {
   background: rgba(26, 24, 22, 0.02) !important;
   border-color: rgba(26, 24, 22, 0.06) !important;

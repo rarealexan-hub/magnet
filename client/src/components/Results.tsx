@@ -98,8 +98,7 @@ function BasicSuggestions({ score, onFullReport }: { score: ProfileResult["score
   ];
 
   const weakFree = freeCategories.filter((c) => score[c.key] < 70);
-  const weakLocked = lockedCategories.filter((c) => score[c.key] < 70);
-  if (weakFree.length === 0 && weakLocked.length === 0) return null;
+  if (weakFree.length === 0) return null;
 
   return (
     <div className="basic-suggestions-section">
@@ -119,30 +118,9 @@ function BasicSuggestions({ score, onFullReport }: { score: ProfileResult["score
                 <span className="basic-suggestion-score">{score[cat.key]}/100</span>
               </div>
               <p className="basic-suggestion-tip">{s.tip}</p>
-              <div className="basic-suggestion-locked">
-                <Lock size={11} />
-                <span>Full Report: {s.locked}</span>
-              </div>
             </div>
           );
         })}
-        {weakLocked.map((cat) => (
-          <div key={cat.key} className="basic-suggestion-item basic-suggestion-item--locked" onClick={onFullReport}>
-            <div className="basic-suggestion-header">
-              <span className="basic-suggestion-label">{cat.label}</span>
-              <span className="basic-suggestion-score basic-suggestion-score--locked">
-                <Lock size={11} /> Full Report
-              </span>
-            </div>
-            <div className="basic-suggestion-tip basic-suggestion-tip--blurred">
-              Your profile is sending mixed signals to the people you most want to attract.
-            </div>
-            <div className="basic-suggestion-locked">
-              <Lock size={11} />
-              <span>{BASIC_SUGGESTIONS[cat.key].locked}</span>
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -283,22 +261,13 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
                 {mistake}
               </li>
             ))}
-            {[...Array(2)].map((_, i) => (
-              <li key={`locked-${i}`} className="mistakes-list-item--locked">
-                <span className="fix-number fix-number--locked">{feedback.mistakes.slice(0, 3).length + i + 1}</span>
-                <span className="mistakes-item-blurred">
-                  {i === 0
-                    ? "Your match targeting signals are sending the wrong message to your ideal type"
-                    : "First impression context is misaligned — here's how to reframe it"}
-                </span>
-                <span className="mistakes-lock-badge"><Lock size={11} /> Full Report</span>
-              </li>
-            ))}
           </ul>
-          <button className="breakdown-unlock-cta" onClick={onFullReport} style={{ marginTop: 12 }}>
-            <Lock size={12} />
-            See all fixes in the Full Report
-          </button>
+          {feedback.mistakes.length > 3 && (
+            <p className="mistakes-more-count">
+              <Lock size={11} />
+              +{feedback.mistakes.length - 3} more issues detected — full breakdown and fixes in the Full Report
+            </p>
+          )}
         </div>
 
         <BasicSuggestions score={score} onFullReport={onFullReport} />
@@ -314,7 +283,7 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
                 <Lock size={11} /> Full Report
               </span>
             </div>
-            <p className="basic-suggestion-tip basic-suggestion-tip--blurred" style={{ fontStyle: "italic" }}>
+            <p className="basic-suggestion-tip" style={{ fontStyle: "italic" }}>
               {feedback.leadPhotoTeaser}
             </p>
             <div className="basic-suggestion-locked">
