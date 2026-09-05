@@ -27,25 +27,6 @@ export function trackAnalysisComplete(platform: string, score: number) {
   trackEvent("analysis_complete", { platform, score });
 }
 
-export function trackCheckoutInitiated(productType: "full-report" | "add-on-report", platform: string) {
-  trackEvent("checkout_initiated", {
-    product_type: productType,
-    platform,
-    value: productType === "full-report" ? 2.99 : 1.99,
-    currency: "USD",
-  });
-}
-
-export function trackPurchaseComplete(productType: string, platform: string) {
-  trackEvent("purchase", {
-    transaction_id: Date.now().toString(),
-    product_type: productType,
-    platform,
-    value: productType === "full-report" ? 2.99 : 1.99,
-    currency: "USD",
-  });
-}
-
 export function trackSignIn(method: "email" | "google") {
   trackEvent("login", { method });
 }

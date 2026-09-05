@@ -9,8 +9,6 @@ interface Props {
   result: ProfileResult;
   profileInput: ProfileInput;
   onBack: () => void;
-  purchased?: boolean;
-  purchaseType?: string | null;
   onAnalyzeAnother?: () => void;
 }
 
@@ -37,7 +35,7 @@ function PhotoThumb({ raw, label }: { raw: string; label: string }) {
   );
 }
 
-export function FullReport({ result, profileInput, onBack, purchased, purchaseType, onAnalyzeAnother }: Props) {
+export function FullReport({ result, profileInput, onBack, onAnalyzeAnother }: Props) {
   const { score, feedback } = result;
   const platform = profileInput.platform || "other";
   const platformLabel = PLATFORM_LABEL[platform] ?? platform;
@@ -112,13 +110,6 @@ export function FullReport({ result, profileInput, onBack, purchased, purchaseTy
             <ArrowLeft size={16} /> Back to Results
           </button>
         </div>
-
-        {purchased && (
-          <div className="report-unlocked-banner">
-            <Sparkles size={15} />
-            <span>Full Report Unlocked</span>
-          </div>
-        )}
 
         <div className="report-hero">
           <div className="report-hero-badge">Full Report</div>

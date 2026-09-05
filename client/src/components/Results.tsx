@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
-import { AlertTriangle, Crosshair, ArrowRight, FileText, Zap, Lightbulb, Lock, TrendingUp, BookMarked, X, Smartphone } from "lucide-react";
+import { useEffect } from "react";
+import { AlertTriangle, Crosshair, ArrowRight, FileText, Zap, Lightbulb, TrendingUp, BookMarked, X, Smartphone } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 import type { AuthUser } from "../hooks/useAuth";
-import { trackCheckoutInitiated } from "../lib/analytics";
 
 function MatchVolumeBlock({ score, platform }: { score: number; platform: string }) {
   const label = PLATFORM_LABEL[platform] ?? platform;
@@ -60,29 +59,23 @@ interface Props {
   fullReportViewed?: boolean;
   user?: AuthUser | null;
   onSignIn?: () => void;
-  bypassPayment?: boolean;
 }
 
-const BASIC_SUGGESTIONS: Record<string, { tip: string; locked: string }> = {
+const BASIC_SUGGESTIONS: Record<string, { tip: string }> = {
   photoQuality: {
     tip: "Replace group shots, blurry photos, or bathroom selfies with clear solo photos taken in natural light. Every photo should pass a quick test: does this make someone want to know more about me?",
-    locked: "Which specific photos to swap and exactly what order they should appear in",
   },
   attractionSignals: {
     tip: "Your lead photo should show your face clearly — no sunglasses, no hats, no group shots. A genuine smile and natural eye contact are the two highest-converting signals on any app.",
-    locked: "A photo-by-photo breakdown of what each shot is signaling and how to fix it",
   },
   personalitySignals: {
     tip: "Replace at least one generic prompt with a specific story, strong opinion, or niche interest. 'I love hiking and trying new restaurants' doesn't tell anyone anything. Find the detail only you would say.",
-    locked: "Specific coaching on each of your prompts with direction on exactly what to change",
   },
   matchTargeting: {
     tip: "Include at least one specific, slightly polarizing detail — a niche hobby, a strong opinion, or an unusual trait. Generic profiles attract no one. Specific profiles attract the right people.",
-    locked: "Platform-specific targeting analysis based on your actual content",
   },
   firstImpression: {
     tip: "In under 2 seconds a swiper sees your lead photo and maybe your first line. Make sure both stop the scroll: your best photo first, your sharpest prompt line up front.",
-    locked: "Your optimal photo order and which prompt to lead with for maximum first-impression impact",
   },
 };
 
@@ -92,11 +85,6 @@ function BasicSuggestions({ score, onFullReport }: { score: ProfileResult["score
     { key: "attractionSignals" as const, label: "Attraction Signals" },
     { key: "personalitySignals" as const, label: "Personality Signals" },
   ];
-  const lockedCategories = [
-    { key: "matchTargeting" as const, label: "Match Targeting" },
-    { key: "firstImpression" as const, label: "First Impression" },
-  ];
-
   const weakFree = freeCategories.filter((c) => score[c.key] < 70);
   if (weakFree.length === 0) return null;
 
@@ -126,50 +114,7 @@ function BasicSuggestions({ score, onFullReport }: { score: ProfileResult["score
   );
 }
 
-export function Results({ result, profileInput, onStartOver, onFullReport, onBundle, fullReportViewed, user, onSignIn, bypassPayment }: Props) {
-  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
-  const [checkoutError, setCheckoutError] = useState<string | null>(null);
-
-  useEffect(() => {
-    sessionStorage.setItem('magnet_pending_purchase', JSON.stringify({
-      result,
-      profileInput,
-      productType: 'full-report',
-    }));
-  }, [result, profileInput]);
-
-  const handleCheckout = async (type: 'full-report' | 'add-on-report') => {
-    if (bypassPayment) {
-      onFullReport();
-      return;
-    }
-    trackCheckoutInitiated(type, profileInput.platform);
-    setCheckoutLoading(type);
-    setCheckoutError(null);
-    try {
-      sessionStorage.setItem('magnet_pending_purchase', JSON.stringify({
-        result,
-        profileInput,
-        productType: type,
-      }));
-
-      if (type === 'full-report') {
-        window.location.href = 'https://buy.stripe.com/28E7sKcmQ3qm3ilerxgA800';
-        return;
-      }
-
-      if (type === 'add-on-report') {
-        window.location.href = 'https://buy.stripe.com/cNi00i1IcaSO6uxbflgA801';
-        return;
-      }
-    } catch {
-      sessionStorage.removeItem('magnet_pending_purchase');
-      setCheckoutError('Checkout failed. Please try again.');
-    } finally {
-      setCheckoutLoading(null);
-    }
-  };
-
+export function Results({ result, profileInput, onStartOver, onFullReport, onBundle, fullReportViewed, user, onSignIn }: Props) {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
@@ -264,7 +209,6 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
           </ul>
           {feedback.mistakes.length > 3 && (
             <p className="mistakes-more-count">
-              <Lock size={11} />
               +{feedback.mistakes.length - 3} more issues detected — full breakdown and fixes in the Full Report
             </p>
           )}
@@ -279,16 +223,15 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
                 <span style={{ fontSize: 15 }}>📸</span>
                 <span className="basic-suggestion-label">Lead Photo Intel</span>
               </div>
-              <span className="basic-suggestion-score basic-suggestion-score--locked">
-                <Lock size={11} /> Full Report
+              <span className="basic-suggestion-score">
+                Full Report
               </span>
             </div>
             <p className="basic-suggestion-tip" style={{ fontStyle: "italic" }}>
               {feedback.leadPhotoTeaser}
             </p>
             <div className="basic-suggestion-locked">
-              <Lock size={11} />
-              <span>Unlock to see the exact photo that should be your lead — and why</span>
+              <span>Open the Full Report to see the exact photo that should be your lead, and why</span>
             </div>
           </div>
         )}
@@ -329,8 +272,8 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
                   </div>
                 </div>
                 <div className="pricing-price">
-                  <span className="price-amount">$2.99</span>
-                  <span className="price-period">one time</span>
+                  <span className="price-amount">Free</span>
+                  <span className="price-period">during beta</span>
                 </div>
                 <ul className="pricing-features">
                   <li><Zap size={14} /> Per-photo breakdown — exactly what each photo signals</li>
@@ -339,30 +282,12 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
                   <li><Zap size={14} /> Optimal photo order — ranked 1–6 with reasoning</li>
                   <li><Zap size={14} /> Category-level analysis written about your profile</li>
                 </ul>
-                {bypassPayment ? (
-                  <button
-                    className="pricing-btn"
-                    onClick={() => handleCheckout('full-report')}
-                  >
-                    <span>Preview Full Report</span> <ArrowRight size={16} />
-                  </button>
-                ) : (
-                  <div className="stripe-buy-btn-wrapper">
-                    <stripe-buy-button
-                      buy-button-id="buy_btn_1TKkbQB2VePKSunvjuo8hT3E"
-                      publishable-key="pk_live_51RB0AKB2VePKSunvbIYbQQEP9Gfjy0f1b0VsM8HdiU1uS30D0IXAnycEGXj993B51cn13lMcSBU7SYPfvXIwUBRa004Bc2GvB7"
-                    />
-                  </div>
-                )}
+                <button className="pricing-btn" onClick={onFullReport}>
+                  <span>Open Full Report</span> <ArrowRight size={16} />
+                </button>
               </div>
             </div>
           </div>
-        )}
-
-        {checkoutError && (
-          <p style={{ color: '#ef4444', textAlign: 'center', marginTop: '0.75rem', fontSize: '0.875rem' }}>
-            {checkoutError}
-          </p>
         )}
 
         {fullReportViewed && (
@@ -381,24 +306,12 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
               </div>
               <div className="addon-strip-text">
                 <span className="addon-strip-title">Also on Tinder, Bumble, or another app?</span>
-                <span className="addon-strip-desc">Analyze another platform — full report included · $1.99</span>
+                <span className="addon-strip-desc">Analyze another platform, full report included</span>
               </div>
             </div>
-            <div
-              className="addon-buy-btn-wrapper"
-              onClick={() => {
-                sessionStorage.setItem('magnet_pending_purchase', JSON.stringify({
-                  result,
-                  profileInput,
-                  productType: 'add-on-report',
-                }));
-              }}
-            >
-              <stripe-buy-button
-                buy-button-id="buy_btn_1TKlOjB2VePKSunvYwqbZqHS"
-                publishable-key="pk_live_51RB0AKB2VePKSunvbIYbQQEP9Gfjy0f1b0VsM8HdiU1uS30D0IXAnycEGXj993B51cn13lMcSBU7SYPfvXIwUBRa004Bc2GvB7"
-              />
-            </div>
+            <button className="pricing-btn" onClick={onStartOver}>
+              Analyze another app
+            </button>
           </div>
         </div>
 

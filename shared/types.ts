@@ -173,8 +173,6 @@ export interface AnalysisRecord {
   score: ProfileScore;
   feedback: ProfileFeedback;
   created_at: string;
-  purchased?: boolean;
-  purchaseType?: string | null;
 }
 
 export interface DashboardData {

@@ -10,9 +10,9 @@ import { UserMenu } from "./components/UserMenu";
 import { PrivacyPolicy } from "./components/PrivacyPolicy";
 import { useAuth } from "./hooks/useAuth";
 import type { ProfileInput, ProfileResult, AnalysisRecord } from "@shared/types";
-import { trackPageView, trackSignIn, trackSignUp, trackPurchaseComplete, trackFullReportOpened, trackAnalyzeAnother } from "./lib/analytics";
+import { trackPageView, trackSignIn, trackSignUp, trackFullReportOpened, trackAnalyzeAnother } from "./lib/analytics";
 
-type View = "landing" | "form" | "results" | "full-report" | "dashboard" | "payment-verifying" | "privacy";
+type View = "landing" | "form" | "results" | "full-report" | "dashboard" | "privacy";
 
 export default function App() {
   const [view, setView] = useState<View>("landing");
@@ -21,24 +21,12 @@ export default function App() {
   const [showAuth, setShowAuth] = useState(false);
   const [preselectedPlatform, setPreselectedPlatform] = useState<string | undefined>();
   const [fullReportViewed, setFullReportViewed] = useState(false);
-  const [reportPurchased, setReportPurchased] = useState(false);
-  const [reportPurchaseType, setReportPurchaseType] = useState<string | null>(null);
   const [authContext, setAuthContext] = useState<"default" | "save-results">("default");
-  const [paymentVerifyError, setPaymentVerifyError] = useState<string | null>(null);
-  const [bypassPayment, setBypassPayment] = useState(false);
-  const [pendingProductType, setPendingProductType] = useState<string | null>(null);
   const { user, loading, token, login, loginWithGoogle, register, logout } = useAuth();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const paymentStatus = params.get('payment');
-    const sessionId = params.get('session_id');
     const preview = params.get('preview');
-
-    if (params.has('bypass')) {
-      setBypassPayment(true);
-      window.history.replaceState({}, '', window.location.pathname);
-    }
 
     if (preview === 'full-report') {
       window.history.replaceState({}, '', '/');
@@ -126,7 +114,6 @@ export default function App() {
       setResult(mockResult);
       setProfileInput(mockInput);
       setFullReportViewed(true);
-      setReportPurchased(true);
       setView("full-report");
       return;
     }
@@ -177,67 +164,6 @@ export default function App() {
       return;
     }
 
-    if (paymentStatus === 'success' && sessionId) {
-      window.history.replaceState({}, '', '/');
-      setView('payment-verifying');
-
-      const pending = sessionStorage.getItem('magnet_pending_purchase');
-      let restoredResult: ProfileResult | null = null;
-      let restoredInput: ProfileInput | null = null;
-
-      if (pending) {
-        try {
-          const parsed = JSON.parse(pending);
-          restoredResult = parsed.result;
-          restoredInput = parsed.profileInput;
-          setPendingProductType(parsed.productType || null);
-        } catch {}
-      }
-
-      const token = localStorage.getItem('magnet_token');
-
-      fetch('/api/checkout/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ sessionId, userEmail: '' }),
-      })
-        .then(r => r.json())
-        .then(data => {
-          if (data.success) {
-            sessionStorage.removeItem('magnet_pending_purchase');
-            trackPurchaseComplete(data.productType || 'full-report', restoredInput?.platform ?? 'unknown');
-            if (data.productType === 'add-on-report') {
-              setReportPurchased(true);
-              setReportPurchaseType('add-on-report');
-              setResult(null);
-              setProfileInput(null);
-              setFullReportViewed(false);
-              setView('form');
-            } else if (restoredResult && restoredInput) {
-              setResult(restoredResult);
-              setProfileInput(restoredInput);
-              setFullReportViewed(true);
-              setReportPurchased(true);
-              setReportPurchaseType(data.productType || null);
-              setView('full-report');
-            } else {
-              setView('landing');
-            }
-          } else {
-            setPaymentVerifyError('Payment could not be verified. Please contact support.');
-            setView('landing');
-          }
-        })
-        .catch(() => {
-          setPaymentVerifyError('Payment verification failed. Please contact support.');
-          setView('landing');
-        });
-    } else if (paymentStatus === 'cancelled') {
-      window.history.replaceState({}, '', '/');
-    }
   }, []);
 
   useEffect(() => {
@@ -247,7 +173,6 @@ export default function App() {
       results: "Results",
       "full-report": "Full Report",
       dashboard: "Dashboard",
-      "payment-verifying": "Payment Verifying",
       privacy: "Privacy Policy",
     };
     trackPageView(viewNames[view] ?? view);
@@ -276,8 +201,6 @@ export default function App() {
     setProfileInput(null);
     setPreselectedPlatform(undefined);
     setFullReportViewed(false);
-    setReportPurchased(false);
-    setReportPurchaseType(null);
     window.history.pushState({}, "", "/");
   };
 
@@ -361,32 +284,11 @@ export default function App() {
       targetType: "",
     });
     setFullReportViewed(true);
-    setReportPurchased(!!analysis.purchased);
-    setReportPurchaseType(analysis.purchaseType || null);
     setView("full-report");
   };
 
   return (
     <div className="app">
-      {paymentVerifyError && (
-        <div className="payment-error-banner">
-          {paymentVerifyError}
-          <button onClick={() => setPaymentVerifyError(null)}>✕</button>
-        </div>
-      )}
-
-      {view === "payment-verifying" && (
-        <div className="payment-verifying-screen">
-          <div className="payment-verifying-card">
-            <div className="payment-verifying-spinner" />
-            <h2>{pendingProductType === 'add-on-report' ? 'Getting ready for your next analysis…' : 'Unlocking your Full Report…'}</h2>
-            <p>Verifying your payment, just a moment.</p>
-          </div>
-        </div>
-      )}
-
-      {view !== "payment-verifying" && (
-        <>
           {!loading && (
             <div className="app-header">
               {user ? (
@@ -422,12 +324,11 @@ export default function App() {
               result={result}
               profileInput={profileInput}
               onStartOver={handleStartOver}
-              onFullReport={() => { trackFullReportOpened(profileInput.platform); setFullReportViewed(true); setReportPurchased(p => p || bypassPayment); setView("full-report"); }}
-              onBundle={() => { trackFullReportOpened(profileInput.platform); setFullReportViewed(true); setReportPurchased(p => p || bypassPayment); setView("full-report"); }}
+              onFullReport={() => { trackFullReportOpened(profileInput.platform); setFullReportViewed(true); setView("full-report"); }}
+              onBundle={() => { trackFullReportOpened(profileInput.platform); setFullReportViewed(true); setView("full-report"); }}
               fullReportViewed={fullReportViewed}
               user={user}
               onSignIn={openAuthForResults}
-              bypassPayment={bypassPayment}
             />
           )}
           {view === "full-report" && result && profileInput && (
@@ -435,9 +336,7 @@ export default function App() {
               result={result}
               profileInput={profileInput}
               onBack={() => setView("results")}
-              purchased={reportPurchased}
-              purchaseType={reportPurchaseType}
-              onAnalyzeAnother={() => { trackAnalyzeAnother(); setReportPurchased(false); setFullReportViewed(false); setResult(null); setProfileInput(null); setView("form"); }}
+              onAnalyzeAnother={() => { trackAnalyzeAnother(); setFullReportViewed(false); setResult(null); setProfileInput(null); setView("form"); }}
             />
           )}
           {view === "dashboard" && (
@@ -461,8 +360,6 @@ export default function App() {
               onPrivacy={() => { setShowAuth(false); setView("privacy"); }}
             />
           )}
-        </>
-      )}
     </div>
   );
 }

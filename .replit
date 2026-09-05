@@ -5,7 +5,7 @@ packages = ["unzip"]
 
 [agent]
 expertMode = true
-integrations = ["google-sheet:1.0.0", "javascript_anthropic_ai_integrations:2.0.0", "stripe:1.0.0"]
+integrations = ["google-sheet:1.0.0", "javascript_anthropic_ai_integrations:2.0.0"]
 
 [[ports]]
 localPort = 3001

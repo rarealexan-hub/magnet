@@ -13,9 +13,6 @@ import {
   verifyToken,
 } from "./auth.js";
 import { getUncachableGoogleSheetClient } from "./googleSheets.js";
-import { getUncachableStripeClient, getStripePublishableKey, getStripeSync } from "./stripeClient.js";
-import { WebhookHandlers } from "./webhookHandlers.js";
-import { runMigrations } from "stripe-replit-sync";
 import type { Request, Response, NextFunction } from "express";
 import type {
   ProfileInput,
@@ -45,26 +42,6 @@ setInterval(() => {
 
 const app = express();
 app.use(cors());
-
-app.post(
-  '/api/stripe/webhook',
-  express.raw({ type: 'application/json' }),
-  async (req: Request, res: Response) => {
-    const signature = req.headers['stripe-signature'];
-    if (!signature) {
-      res.status(400).json({ error: 'Missing stripe-signature' });
-      return;
-    }
-    const sig = Array.isArray(signature) ? signature[0] : signature;
-    try {
-      await WebhookHandlers.processWebhook(req.body as Buffer, sig);
-      res.status(200).json({ received: true });
-    } catch (error: any) {
-      console.error('Webhook error:', error.message);
-      res.status(400).json({ error: 'Webhook processing error' });
-    }
-  }
-);
 
 async function initAuditTracking() {
   try {
@@ -98,7 +75,6 @@ async function initAuditTracking() {
       )
     `);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT`);
-    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT`);
     await pool.query(`
       DO $$ BEGIN
         IF EXISTS (
@@ -135,20 +111,6 @@ async function initAuditTracking() {
       ALTER TABLE analyses ADD COLUMN IF NOT EXISTS full_report_data JSONB
     `);
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS purchases (
-        id SERIAL PRIMARY KEY,
-        user_email TEXT NOT NULL,
-        stripe_session_id TEXT UNIQUE NOT NULL,
-        product_type TEXT NOT NULL,
-        analysis_id INTEGER,
-        credits_remaining INTEGER NOT NULL DEFAULT 0,
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `);
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_purchases_email ON purchases (user_email)
-    `);
-    await pool.query(`
       CREATE TABLE IF NOT EXISTS feedback_submissions (
         id SERIAL PRIMARY KEY,
         email TEXT,
@@ -178,32 +140,6 @@ async function initAuditTracking() {
 }
 
 await initAuditTracking();
-
-async function initStripe() {
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) {
-    console.warn('DATABASE_URL not set — skipping Stripe init');
-    return;
-  }
-  try {
-    console.log('Initializing Stripe schema...');
-    await runMigrations({ databaseUrl });
-    console.log('Stripe schema ready');
-
-    const stripeSync = await getStripeSync();
-    const webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
-    await stripeSync.findOrCreateManagedWebhook(`${webhookBaseUrl}/api/stripe/webhook`);
-    console.log('Stripe webhook configured');
-
-    stripeSync.syncBackfill()
-      .then(() => console.log('Stripe data synced'))
-      .catch((err: any) => console.error('Stripe backfill error:', err));
-  } catch (error) {
-    console.error('Failed to initialize Stripe:', error);
-  }
-}
-
-await initStripe();
 
 app.use(express.json({ limit: "50mb" }));
 
@@ -253,139 +189,6 @@ function authenticateOptional(
   }
   next();
 }
-
-app.get('/api/stripe/publishable-key', async (_req, res) => {
-  try {
-    const key = await getStripePublishableKey();
-    res.json({ publishableKey: key });
-  } catch (error) {
-    console.error('Error fetching publishable key:', error);
-    res.status(500).json({ error: 'Failed to load payment config' });
-  }
-});
-
-app.get('/api/stripe/prices', async (_req, res) => {
-  try {
-    const stripe = await getUncachableStripeClient();
-    const prices = await stripe.prices.list({ active: true, expand: ['data.product'] });
-    res.json({ data: prices.data });
-  } catch (error) {
-    console.error('Error fetching prices:', error);
-    res.status(500).json({ error: 'Failed to load pricing' });
-  }
-});
-
-app.post('/api/checkout', authenticateOptional, async (req: AuthRequest, res: Response) => {
-  try {
-    const { priceId, analysisId, productType } = req.body;
-    if (!priceId) {
-      res.status(400).json({ error: 'priceId required' });
-      return;
-    }
-
-    const stripe = await getUncachableStripeClient();
-    const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
-
-    const sessionParams: any = {
-      payment_method_types: ['card'],
-      line_items: [{ price: priceId, quantity: 1 }],
-      mode: 'payment',
-      success_url: `${baseUrl}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/?payment=cancelled`,
-      metadata: {
-        analysisId: analysisId ? String(analysisId) : '',
-        productType: productType || '',
-        userEmail: req.user?.email || '',
-      },
-    };
-
-    if (req.user?.email) {
-      const userRow = await pool.query(
-        'SELECT stripe_customer_id FROM users WHERE id = $1',
-        [req.user.userId]
-      );
-      let customerId = userRow.rows[0]?.stripe_customer_id;
-      if (!customerId) {
-        const customer = await stripe.customers.create({
-          email: req.user.email,
-          metadata: { userId: String(req.user.userId) },
-        });
-        customerId = customer.id;
-        await pool.query(
-          'UPDATE users SET stripe_customer_id = $1 WHERE id = $2',
-          [customerId, req.user.userId]
-        );
-      }
-      sessionParams.customer = customerId;
-    }
-
-    const session = await stripe.checkout.sessions.create(sessionParams);
-    res.json({ url: session.url });
-  } catch (error: any) {
-    console.error('Checkout error:', error);
-    res.status(500).json({ error: 'Failed to create checkout session' });
-  }
-});
-
-app.post('/api/checkout/verify', async (req: Request, res: Response) => {
-  try {
-    const { sessionId, userEmail } = req.body;
-    if (!sessionId) {
-      res.status(400).json({ error: 'sessionId required' });
-      return;
-    }
-
-    const stripe = await getUncachableStripeClient();
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-
-    if (session.payment_status !== 'paid') {
-      res.status(402).json({ error: 'Payment not completed' });
-      return;
-    }
-
-    const analysisId = session.metadata?.analysisId ? parseInt(session.metadata.analysisId) : null;
-    const productType = session.metadata?.productType || 'full-report';
-    const email = userEmail || session.metadata?.userEmail || session.customer_details?.email || '';
-    const creditsRemaining = 0;
-
-    const existing = await pool.query(
-      'SELECT id FROM purchases WHERE stripe_session_id = $1',
-      [sessionId]
-    );
-
-    if (existing.rows.length === 0) {
-      await pool.query(
-        `INSERT INTO purchases (user_email, stripe_session_id, product_type, analysis_id, credits_remaining)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [email.toLowerCase().trim(), sessionId, productType, analysisId, creditsRemaining]
-      );
-    }
-
-    res.json({ success: true, productType, analysisId });
-  } catch (error: any) {
-    console.error('Verify checkout error:', error);
-    res.status(500).json({ error: 'Failed to verify payment' });
-  }
-});
-
-app.get('/api/purchases', authenticateRequired, async (req: AuthRequest, res: Response) => {
-  try {
-    const email = req.user!.email;
-    const result = await pool.query(
-      `SELECT p.id, p.product_type, p.analysis_id, p.credits_remaining, p.created_at,
-              a.platform, a.overall_score, a.full_report_data
-       FROM purchases p
-       LEFT JOIN analyses a ON a.id = p.analysis_id
-       WHERE p.user_email = $1
-       ORDER BY p.created_at DESC`,
-      [email]
-    );
-    res.json({ purchases: result.rows });
-  } catch (error) {
-    console.error('Purchases error:', error);
-    res.status(500).json({ error: 'Failed to load purchases' });
-  }
-});
 
 app.post("/api/auth/register", async (req, res) => {
   try {
@@ -538,10 +341,8 @@ app.get(
       const result = await pool.query(
         `SELECT a.id, a.user_email, a.platform, a.overall_score, a.photo_quality, a.attraction_signals,
               a.personality_signals, a.match_targeting, a.first_impression, a.roast, a.mistakes,
-              a.profile_type, a.profile_type_explanation, a.full_report_data, a.created_at,
-              p.id as purchase_id, p.product_type as purchase_type, p.credits_remaining
+              a.profile_type, a.profile_type_explanation, a.full_report_data, a.created_at
          FROM analyses a
-         LEFT JOIN purchases p ON p.analysis_id = a.id AND p.user_email = a.user_email
          WHERE a.user_email = $1
          ORDER BY a.created_at DESC`,
         [email],
@@ -577,8 +378,6 @@ app.get(
             personalitySignalsPromptRewrite: fullReportData.personalitySignalsPromptRewrite,
           },
           created_at: r.created_at,
-          purchased: !!r.purchase_id,
-          purchaseType: r.purchase_type || null,
         };
       });
 

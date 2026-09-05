@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import {
   ArrowLeft, ArrowRight, TrendingUp, TrendingDown,
   Activity, RefreshCw, BarChart3, Plus, Loader2, LogIn,
-  Camera, Crosshair, Zap, Star, ChevronRight, Minus, FileText, Lock
+  Camera, Crosshair, Zap, Star, ChevronRight, Minus, FileText
 } from "lucide-react";
 import type { DashboardData, AnalysisRecord } from "@shared/types";
 import { PLATFORM_COLOR, PLATFORM_LABEL } from "@shared/types";
@@ -275,15 +275,9 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
                   <button className="dash-view-btn" onClick={() => onViewResult(latest)}>
                     View Results <ChevronRight size={14} />
                   </button>
-                  {latest.purchased ? (
-                    <button className="dash-view-full-btn" onClick={(e) => { e.stopPropagation(); onViewFullReport(latest); }}>
-                      <FileText size={13} /> Full Report
-                    </button>
-                  ) : (
-                    <button className="dash-unlock-btn" onClick={(e) => { e.stopPropagation(); onViewResult(latest); }}>
-                      <Lock size={12} /> Unlock Full Report
-                    </button>
-                  )}
+                  <button className="dash-view-full-btn" onClick={(e) => { e.stopPropagation(); onViewFullReport(latest); }}>
+                    <FileText size={13} /> Full Report
+                  </button>
                 </div>
               </div>
 
@@ -335,7 +329,7 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
               <div className="dash-section-header">
                 <h3>Platform Health</h3>
                 <button className="dash-new-btn" onClick={() => onAnalyze()}>
-                  <Plus size={12} /> New Analysis <span className="dash-price-pill">$2.99</span>
+                  <Plus size={12} /> New Analysis
                 </button>
               </div>
               <div className="dash-platform-grid">
@@ -361,14 +355,14 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
                           </div>
                         </div>
                         <button className="dash-platform-action-btn" onClick={() => onAnalyze()}>
-                          Re-analyze <span className="dash-price-pill">$2.99</span>
+                          Re-analyze
                         </button>
                       </>
                     ) : (
                       <div className="dash-platform-empty">
                         <p>Not analyzed yet</p>
                         <button className="dash-platform-action-btn" onClick={() => onAnalyze()}>
-                          Analyze <span className="dash-price-pill">$2.99</span>
+                          Analyze
                         </button>
                       </div>
                     )}
@@ -388,7 +382,7 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
                   const prevScore = analyses[i + 1]?.score.overall;
                   const delta = prevScore !== undefined ? a.score.overall - prevScore : null;
                   return (
-                    <div key={a.id} className={`dash-history-item ${a.purchased ? "dash-history-item--purchased" : ""}`} onClick={() => onViewResult(a)}>
+                    <div key={a.id} className="dash-history-item dash-history-item--purchased" onClick={() => onViewResult(a)}>
                       <ScoreRing score={a.score.overall} size={44} />
                       <div className="dash-history-main">
                         <div className="dash-history-top">
@@ -398,11 +392,9 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
                           >
                             {PLATFORM_LABEL[a.platform] || a.platform}
                           </span>
-                          {a.purchased && (
-                            <span className="dash-history-report-badge">
-                              <FileText size={10} /> Full Report
-                            </span>
-                          )}
+                          <span className="dash-history-report-badge">
+                            <FileText size={10} /> Full Report
+                          </span>
                           <span className="dash-history-date">{timeAgo(a.created_at)}</span>
                         </div>
                         <p className="dash-history-roast">
@@ -423,16 +415,12 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
                             {delta > 0 ? `+${delta}` : delta}
                           </span>
                         )}
-                        {a.purchased ? (
-                          <button
-                            className="dash-history-report-btn"
-                            onClick={(e) => { e.stopPropagation(); onViewFullReport(a); }}
-                          >
-                            <FileText size={12} />
-                          </button>
-                        ) : (
-                          <ChevronRight size={15} className="dash-history-arrow" />
-                        )}
+                        <button
+                          className="dash-history-report-btn"
+                          onClick={(e) => { e.stopPropagation(); onViewFullReport(a); }}
+                        >
+                          <FileText size={12} />
+                        </button>
                       </div>
                     </div>
                   );
