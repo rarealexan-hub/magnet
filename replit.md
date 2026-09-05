@@ -40,7 +40,7 @@ shared/
 6. **Email Collection**: Required email field on form
 7. **Shareable Results**: Copy Magnet Score roast for social sharing (viral loop)
 8. **Before/After Examples**: Landing page shows transformation case study
-9. **Pricing**: No payment flow. The Full Report is free during beta. A paywall will be rebuilt later, separately from Stripe.
+9. **Pricing**: No payment flow. The Full Report is free during beta. A paywall will be rebuilt later.
 10. **Full Report Page**: Detailed per-category analysis with improvement suggestions and photo swap recommendations
 11. **Dashboard Page**: Functional Magnet Pro dashboard — fetches real analysis history from DB, shows score trend chart, per-platform health status with re-analyze buttons, analysis history list with clickthrough to results. Accessible from user menu for logged-in users. Requires authentication.
 
