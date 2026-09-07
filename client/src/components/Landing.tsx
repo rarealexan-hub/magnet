@@ -114,7 +114,7 @@ export function Landing({ onStart, onPrivacy }: Props) {
       <section className="landing-audit-preview">
         <div className="landing-section-copy">
           <p className="landing-kicker-redesign">Inside the read</p>
-          <h2>The feedback is direct, not decorative.</h2>
+          <h2>Feedback that turns scattered profile signals into attraction clarity.</h2>
           <p>
             Magnet looks at what your profile communicates before someone knows you: confidence, specificity, warmth, effort, and who the profile seems built for.
           </p>
