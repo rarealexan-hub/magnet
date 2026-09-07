@@ -185,7 +185,7 @@ export function Landing({ onStart, onPrivacy }: Props) {
           <p className="landing-kicker-redesign">What you get</p>
           <h2>A practical edit plan, not a confidence pep talk.</h2>
           <p>
-            The report is built to answer one question: what should change before your profile goes back live?
+            You leave with a prioritized fix list: what to keep, what to rewrite, what to replace, and what to test next.
           </p>
         </div>
         <div className="landing-report-list">
