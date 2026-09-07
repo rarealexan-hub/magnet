@@ -50,6 +50,8 @@ TINDER: Pure swipe mechanics — photos are 90%+ of the decision. Speed of judgm
 
 BUMBLE: Women message first (hetero). This shifts the optimization: for men, you need a profile that makes a woman feel comfortable enough to send the first message — which means warmth, approachability, and something easy to start a conversation about. For women, you need a profile confident enough that they receive quality first messages. The 24-hour expiry creates urgency — profiles that generate immediate responses are rewarded.
 
+RAYA: Optimize for an exclusive, high-end, personal impression. "Exclusive" should mean curated and distinctive, never exclusionary or try-hard. "High-end" should come through understated taste, cultural fluency, creative or professional momentum, and polished visual choices — not luxury logos, name-dropping, celebrity proximity, or obvious status flexing. "Personal" requires specific details that reveal the user's real world, point of view, relationships, and private texture. Reward profiles that feel like an invitation into a compelling life. Penalize generic travel, interchangeable nightlife, résumé language, overproduced photos, and any profile that looks expensive but says nothing. Recommendations should sharpen a coherent personal narrative while preserving discretion, ease, and individuality.
+
 HINGE/BUMBLE premium algorithm insight: Both apps use a quality score that gets updated based on engagement rate (likes received / profiles seen). Early-match engagement is weighted heavily. A fresh profile that gets 20% swipe right rate in the first hour outperforms one that gets 10% over 48 hours.
 
 OkCupid: Long-form bio matters more here. Compatibility questions are used for matching. Detailed, specific answers signal intelligence and thoughtfulness. Photos still lead but text content has real weight.
@@ -810,7 +812,7 @@ ANALYSIS RULES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 categoryAnalysis: Write about THIS specific profile. Not generic advice. Always frame from the evaluator's lens (who is swiping on this profile, and what personality type they are). Reference what you actually see. Include the conversion funnel stage each category primarily affects.
 
-PLATFORM AWARENESS: Know which platform this is for. On Hinge, prompts are comment-bait and personality matters more. On Tinder, the lead photo is nearly everything. On Bumble, approachability for women to message first is key. Let this shape your recommendations.
+PLATFORM AWARENESS: Know which platform this is for. On Hinge, prompts are comment-bait and personality matters more. On Tinder, the lead photo is nearly everything. On Bumble, approachability for women to message first is key. On Raya, optimize for a profile that feels exclusive, high-end, and deeply personal through understated taste, specificity, and a coherent personal world—not generic luxury signaling. Let this shape your scores and recommendations.
 
 IDENTITY-AWARE COACHING: Every piece of advice must be framed for this specific person's gender, orientation, and target audience. "As a straight man attracting women, your lead photo needs to balance status cues with warmth — right now it has one without the other." Not generic. If the target audience has a clear personality type (artsy, quirky, intellectual, etc.), every recommendation must speak to whether the profile signals alignment with that type.
 
