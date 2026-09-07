@@ -90,7 +90,7 @@ export function Landing({ onStart, onPrivacy }: Props) {
           <p className="landing-kicker-redesign">Dating profile audit</p>
           <h1>See what your dating profile is really saying.</h1>
           <p className="landing-subtitle-redesign">
-            Upload screenshots. Magnet reads the photos, prompts, order, and subtext, then gives you the edits that make your profile feel clearer, more specific, and more like you.
+            Upload your profile screenshots. Magnet reads what your photos, prompts, and order are giving off, then gives you clear edits to make the whole profile feel more specific, intentional, and like you.
           </p>
           <div className="landing-hero-actions">
             <button className="landing-primary-button" onClick={onStart}>
