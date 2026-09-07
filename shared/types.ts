@@ -313,12 +313,10 @@ export const PLATFORM_PROMPTS: Record<string, string[]> = {
     "My comfort food is", "My go-to karaoke song", "One thing I'm grateful for",
   ],
   raya: [
-    "The world I feel most at home in", "A side of me most people don't see",
-    "What I'm known for among friends", "Something I'm building or creating",
-    "My taste in one sentence", "An invitation I'd always say yes to",
-    "The best room I've ever been in", "What makes a night memorable",
-    "Outside of work, you'll find me", "The kind of person I want to meet",
-    "A personal detail that says more than a résumé", "My current chapter",
+    "Bio", "Job title", "Instagram handle", "Location",
+    "My cities — lives in", "My cities — from",
+    "Saved places — restaurants, bars, and clubs",
+    "Interests", "Profile song",
   ],
   okcupid: [
     "My self-summary", "What I'm doing with my life", "I'm really good at",
