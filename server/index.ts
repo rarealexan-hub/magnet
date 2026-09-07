@@ -3,6 +3,7 @@ import cors from "cors";
 import path from "path";
 import crypto from "crypto";
 import multer from "multer";
+import convertHeic from "heic-convert";
 import { fileURLToPath } from "url";
 import { Pool } from "pg";
 import { OAuth2Client } from "google-auth-library";
@@ -496,12 +497,15 @@ app.get(
   },
 );
 
-function filesToBase64Strings(files: Express.Multer.File[]): string[] {
-  return files.map((f) => {
-    const data = f.buffer.toString("base64");
-    const mimeType = f.mimetype || "image/jpeg";
-    return JSON.stringify({ data, mimeType });
-  });
+async function fileToBase64String(file: Express.Multer.File, label?: string): Promise<string> {
+  const isHeic = /image\/hei[cf]/i.test(file.mimetype || "") || /\.hei[cf]$/i.test(file.originalname || "");
+  let buffer = file.buffer;
+  let mimeType = file.mimetype || "image/jpeg";
+  if (isHeic) {
+    buffer = Buffer.from(await convertHeic({ buffer: file.buffer, format: "JPEG", quality: 0.9 }));
+    mimeType = "image/jpeg";
+  }
+  return JSON.stringify({ data: buffer.toString("base64"), mimeType, ...(label ? { label } : {}) });
 }
 
 app.post(
@@ -603,12 +607,20 @@ app.post(
     const datingStruggle = body.datingStruggle || "";
     const additionalContext = body.additionalContext || "";
 
-    const screenshotStrings = screenshotFiles.map((f: Express.Multer.File, i: number) => {
-      const data = f.buffer.toString("base64");
-      const mimeType = f.mimetype || "image/jpeg";
-      const label = screenshotLabels[i] || "";
-      return JSON.stringify({ data, mimeType, label });
-    });
+    let screenshotStrings: string[];
+    let currentPhotoStrings: string[];
+    let additionalPhotoStrings: string[];
+    try {
+      [screenshotStrings, currentPhotoStrings, additionalPhotoStrings] = await Promise.all([
+        Promise.all(screenshotFiles.map((file, index) => fileToBase64String(file, screenshotLabels[index] || undefined))),
+        Promise.all(currentPhotoFiles.map((file) => fileToBase64String(file))),
+        Promise.all(additionalPhotoFiles.map((file, index) => fileToBase64String(file, additionalPhotoLabels[index] || undefined))),
+      ]);
+    } catch (conversionError) {
+      console.error("HEIC conversion error:", conversionError);
+      res.status(400).json({ error: "One of the HEIC photos could not be decoded. Please export that image as JPG and try again." });
+      return;
+    }
 
     const profileInput: ProfileInput = {
       platform: platform as ProfileInput["platform"],
@@ -617,13 +629,8 @@ app.post(
       prompts: prompts.filter((p: string) => typeof p === "string"),
       photoDescriptions: photoDescriptions.filter((p: string) => typeof p === "string"),
       screenshots: screenshotStrings,
-      currentPhotos: filesToBase64Strings(currentPhotoFiles),
-      additionalPhotos: additionalPhotoFiles.map((f: Express.Multer.File, i: number) => {
-        const data = f.buffer.toString("base64");
-        const mimeType = f.mimetype || "image/jpeg";
-        const label = additionalPhotoLabels[i] || "";
-        return JSON.stringify({ data, mimeType, label });
-      }),
+      currentPhotos: currentPhotoStrings,
+      additionalPhotos: additionalPhotoStrings,
       targetType,
       customTarget,
       gender: gender || undefined,
@@ -760,7 +767,14 @@ app.post(
         }
         analysisJobs.set(jobId, {
           status: "done",
-          result: { ...result, analysisId },
+          result: {
+            ...result,
+            analysisId,
+            reportPhotos: {
+              currentPhotos: currentPhotoStrings,
+              additionalPhotos: additionalPhotoStrings,
+            },
+          },
           createdAt: Date.now(),
         });
       } catch (error: any) {

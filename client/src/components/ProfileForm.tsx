@@ -90,6 +90,17 @@ function isSupportedImage(file: File): boolean {
   return /\.(jpe?g|png|gif|webp|avif|bmp|heic|heif)$/i.test(file.name);
 }
 
+function normalizeHeicFile(file: File): File {
+  if (file.type) return file;
+  return new File([file], file.name, { type: file.name.toLowerCase().endsWith(".heif") ? "image/heif" : "image/heic" });
+}
+
+function heicPreview(fileName: string): string {
+  const safeName = fileName.replace(/[<>&"']/g, "");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="600"><rect width="100%" height="100%" fill="#f3efe8"/><text x="50%" y="46%" text-anchor="middle" font-family="Arial" font-size="30" fill="#1a1816">HEIC photo</text><text x="50%" y="53%" text-anchor="middle" font-family="Arial" font-size="18" fill="#6f6a63">${safeName}</text><text x="50%" y="60%" text-anchor="middle" font-family="Arial" font-size="16" fill="#6f6a63">Will be converted securely</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
 async function convertHeicToJpeg(file: File): Promise<File> {
   const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 }) as Blob;
   const name = file.name.replace(/\.heic$/i, ".jpg").replace(/\.heif$/i, ".jpg");
@@ -302,12 +313,13 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
       const filesToProcess = files.slice(0, remaining);
       for (const file of filesToProcess) {
         let processed: File;
+        let preview: string | undefined;
         if (isHeic(file)) {
           try {
             processed = await convertHeicToJpeg(file);
           } catch {
-            skipped.push(`${file.name} (failed to convert HEIC)`);
-            continue;
+            processed = normalizeHeicFile(file);
+            preview = heicPreview(file.name);
           }
         } else if (!isSupportedImage(file)) {
           skipped.push(`${file.name} (unsupported file type)`);
@@ -319,8 +331,8 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           skipped.push(`${file.name} (over 20MB)`);
           continue;
         }
-        processed = await compressImage(processed);
-        newPhotos.push({ file: processed, preview: URL.createObjectURL(processed) });
+        if (!isHeic(processed)) processed = await compressImage(processed);
+        newPhotos.push({ file: processed, preview: preview || URL.createObjectURL(processed) });
       }
       if (skipped.length > 0) setError(`Skipped: ${skipped.join(", ")}`);
       setter((prev) => [...prev, ...newPhotos]);
@@ -355,7 +367,16 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
     let processed: File;
     if (isHeic(file)) {
       try { processed = await convertHeicToJpeg(file); }
-      catch { setError("Couldn't convert this HEIC file."); return; }
+      catch {
+        processed = normalizeHeicFile(file);
+        setCurrentPhotos((prev) => {
+          const newPhoto = { file: processed, preview: heicPreview(file.name) };
+          if (prev[0]) URL.revokeObjectURL(prev[0].preview);
+          return [newPhoto, ...prev.slice(1)];
+        });
+        setError("");
+        return;
+      }
     } else if (!isSupportedImage(file)) {
       setError("Please upload an image file."); return;
     } else {
@@ -601,7 +622,8 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
             const pollRes = await fetch(`/api/analyze/result/${jobId}`);
             const pollData = await pollRes.json();
             if (pollData.status === "done") {
-              const serializedCurrentPhotos = await Promise.all(
+              const serverReportPhotos = pollData.result?.reportPhotos;
+              const serializedCurrentPhotos = serverReportPhotos?.currentPhotos || await Promise.all(
                 currentPhotos.map((photo) => serializeProfilePhoto(photo.file))
               );
               const additionalGroups = [
@@ -610,7 +632,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 { photos: familyPhotos, label: "Travel & adventure" },
                 { photos: activitiesPhotos, label: "With friends" },
               ];
-              const serializedAdditionalPhotos = await Promise.all(
+              const serializedAdditionalPhotos = serverReportPhotos?.additionalPhotos || await Promise.all(
                 additionalGroups.flatMap(({ photos, label }) =>
                   photos.map((photo) => serializeProfilePhoto(photo.file, label))
                 )
