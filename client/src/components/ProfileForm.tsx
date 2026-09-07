@@ -85,6 +85,11 @@ function isHeic(file: File): boolean {
   return ext.endsWith(".heic") || ext.endsWith(".heif");
 }
 
+function isSupportedImage(file: File): boolean {
+  if (file.type.startsWith("image/")) return true;
+  return /\.(jpe?g|png|gif|webp|avif|bmp|heic|heif)$/i.test(file.name);
+}
+
 async function convertHeicToJpeg(file: File): Promise<File> {
   const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 }) as Blob;
   const name = file.name.replace(/\.heic$/i, ".jpg").replace(/\.heif$/i, ".jpg");
@@ -304,7 +309,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
             skipped.push(`${file.name} (failed to convert HEIC)`);
             continue;
           }
-        } else if (!file.type.startsWith("image/")) {
+        } else if (!isSupportedImage(file)) {
           skipped.push(`${file.name} (unsupported file type)`);
           continue;
         } else {
@@ -351,7 +356,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
     if (isHeic(file)) {
       try { processed = await convertHeicToJpeg(file); }
       catch { setError("Couldn't convert this HEIC file."); return; }
-    } else if (!file.type.startsWith("image/")) {
+    } else if (!isSupportedImage(file)) {
       setError("Please upload an image file."); return;
     } else {
       processed = file;
@@ -488,7 +493,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           skipped.push(`${file.name} (couldn't process this image)`);
           continue;
         }
-      } else if (!file.type.startsWith("image/")) {
+    } else if (!isSupportedImage(file)) {
         skipped.push(`${file.name} (unsupported file type)`);
         continue;
       } else {
@@ -856,6 +861,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               <input id="other-photos-mobile-camera" className="mobile-photo-input" type="file" accept="image/*" capture="environment" onChange={handleCurrentPhotos} />
               {processingOtherPhotos && <p className="mobile-photo-processing">Processing your photos…</p>}
             </div>
+            {error && <div className="upload-inline-error" role="alert">{error}</div>}
           </div>
 
           {/* Specific additional photos */}

@@ -1633,6 +1633,17 @@ h2, h3, h4, h5, h6 {
   display: none;
 }
 
+.upload-inline-error {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(220, 38, 38, .22);
+  border-radius: 9px;
+  background: rgba(220, 38, 38, .06);
+  color: #b42318;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 @media (max-width: 720px) {
   .desktop-photo-upload {
     display: none;
