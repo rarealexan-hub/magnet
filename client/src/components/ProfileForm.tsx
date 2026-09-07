@@ -281,7 +281,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
 
   const processFiles = useCallback(
     async (
-      files: FileList,
+      files: File[],
       setter: React.Dispatch<React.SetStateAction<UploadedPhoto[]>>,
       current: UploadedPhoto[],
       max: number
@@ -293,7 +293,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
       }
       const newPhotos: UploadedPhoto[] = [];
       const skipped: string[] = [];
-      const filesToProcess = Array.from(files).slice(0, remaining);
+      const filesToProcess = files.slice(0, remaining);
       for (const file of filesToProcess) {
         let processed: File;
         if (isHeic(file)) {
@@ -323,7 +323,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   );
 
   const handleCurrentPhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) processFiles(e.target.files, setCurrentPhotos, currentPhotos, MAX_CURRENT_PHOTOS);
+    if (e.target.files) void processFiles(Array.from(e.target.files), setCurrentPhotos, currentPhotos, MAX_CURRENT_PHOTOS);
     if (currentPhotosRef.current) currentPhotosRef.current.value = "";
   };
 
@@ -382,7 +382,16 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
     e.preventDefault();
     e.stopPropagation();
     setDragUploadTarget(null);
-    if (e.dataTransfer.files?.length) processFiles(e.dataTransfer.files, setter, current, max);
+    const itemFiles = Array.from(e.dataTransfer.items || [])
+      .filter((item) => item.kind === "file")
+      .map((item) => item.getAsFile())
+      .filter((file): file is File => file !== null);
+    const droppedFiles = itemFiles.length > 0 ? itemFiles : Array.from(e.dataTransfer.files || []);
+    if (droppedFiles.length > 0) {
+      void processFiles(droppedFiles, setter, current, max);
+    } else {
+      setError("No image files were found in that drop. Try dragging files directly from your computer.");
+    }
   };
 
   const makeCategoryHandler = (
@@ -390,7 +399,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
     current: UploadedPhoto[],
     ref: React.RefObject<HTMLInputElement | null>
   ) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) processFiles(e.target.files, setter, current, 5);
+    if (e.target.files) void processFiles(Array.from(e.target.files), setter, current, 5);
     if (ref.current) ref.current.value = "";
   };
 
