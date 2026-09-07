@@ -826,6 +826,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 </button>
               ))}
             </div>
+          </div>
 
           <div className="form-section">
             <label className="form-label">Your orientation <span className="form-label-optional">optional</span></label>
@@ -839,7 +840,6 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 </button>
               ))}
             </div>
-          </div>
           </div>
 
           <div className="form-section">
