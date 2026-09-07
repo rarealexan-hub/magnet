@@ -104,7 +104,7 @@ function heicPreview(fileName: string): string {
 async function convertHeicToJpeg(file: File): Promise<File> {
   const name = file.name.replace(/\.heic$/i, ".jpg").replace(/\.heif$/i, ".jpg");
   try {
-    const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 }) as Blob;
+    const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 1 }) as Blob;
     return new File([blob], name, { type: "image/jpeg" });
   } catch {
     const body = new FormData();
@@ -115,7 +115,7 @@ async function convertHeicToJpeg(file: File): Promise<File> {
   }
 }
 
-function compressImage(file: File, maxDim = 1600, quality = 0.75): Promise<File> {
+function compressImage(file: File, maxDim = 2048, quality = 0.92): Promise<File> {
   return new Promise((resolve) => {
     if (file.size < 500 * 1024) {
       resolve(file);
@@ -340,7 +340,12 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           continue;
         }
         if (!isHeic(processed)) processed = await compressImage(processed);
-        newPhotos.push({ file: processed, preview: preview || URL.createObjectURL(processed) });
+        newPhotos.push({
+          file: processed,
+          // Preserve the original browser-rendered color profile for previews.
+          // HEIC must use the converted JPEG because browsers cannot display it reliably.
+          preview: preview || URL.createObjectURL(isHeic(file) ? processed : file),
+        });
       }
       if (skipped.length > 0) setError(`Skipped: ${skipped.join(", ")}`);
       setter((prev) => [...prev, ...newPhotos]);
@@ -392,7 +397,10 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
     }
     if (processed.size > MAX_FILE_SIZE) { setError("File is over 20MB."); return; }
     processed = await compressImage(processed);
-    const newPhoto = { file: processed, preview: URL.createObjectURL(processed) };
+    const newPhoto = {
+      file: processed,
+      preview: URL.createObjectURL(isHeic(file) ? processed : file),
+    };
     setCurrentPhotos((prev) => {
       if (prev[0]) URL.revokeObjectURL(prev[0].preview);
       return [newPhoto, ...prev.slice(1)];
