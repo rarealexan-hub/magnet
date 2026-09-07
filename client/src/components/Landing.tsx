@@ -78,7 +78,7 @@ export function Landing({ onStart, onPrivacy }: Props) {
       <section className="landing-hero-redesign">
         <img
           className="landing-hero-image"
-          src="/magnet-profile-audit-desk-hero.png"
+          src="/magnet-field-profile-fragments-hero.png"
           alt="Profile photos and phone arranged for a profile audit"
         />
         <div className="landing-hero-wash" aria-hidden="true" />
