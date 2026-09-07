@@ -3,7 +3,7 @@ import cors from "cors";
 import path from "path";
 import crypto from "crypto";
 import multer from "multer";
-import convertHeic from "heic-convert";
+import { spawn } from "child_process";
 import { fileURLToPath } from "url";
 import { Pool } from "pg";
 import { OAuth2Client } from "google-auth-library";
@@ -176,6 +176,31 @@ const analyzeUpload = upload.fields([
   { name: "additionalPhotos", maxCount: 10 },
 ]);
 
+function convertHeicBuffer(buffer: Buffer): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const process = spawn("magick", [
+      "heic:-",
+      "-auto-orient",
+      "-colorspace", "sRGB",
+      "-quality", "95",
+      "jpeg:-",
+    ]);
+    const output: Buffer[] = [];
+    const errors: Buffer[] = [];
+    process.stdout.on("data", (chunk: Buffer) => output.push(chunk));
+    process.stderr.on("data", (chunk: Buffer) => errors.push(chunk));
+    process.on("error", reject);
+    process.on("close", (code) => {
+      if (code === 0 && output.length > 0) {
+        resolve(Buffer.concat(output));
+      } else {
+        reject(new Error(Buffer.concat(errors).toString("utf8") || `Image conversion exited with code ${code}`));
+      }
+    });
+    process.stdin.end(buffer);
+  });
+}
+
 app.post("/api/convert-image", upload.single("image"), async (req: Request, res: Response) => {
   if (!req.file) {
     res.status(400).json({ error: "No image was uploaded." });
@@ -184,7 +209,7 @@ app.post("/api/convert-image", upload.single("image"), async (req: Request, res:
   try {
     const isHeic = /image\/hei[cf]/i.test(req.file.mimetype || "") || /\.hei[cf]$/i.test(req.file.originalname || "");
     const output = isHeic
-      ? Buffer.from(await convertHeic({ buffer: req.file.buffer, format: "JPEG", quality: 1 }))
+      ? await convertHeicBuffer(req.file.buffer)
       : req.file.buffer;
     res.type(isHeic ? "image/jpeg" : req.file.mimetype || "image/jpeg").send(output);
   } catch (error) {
@@ -519,7 +544,7 @@ async function fileToBase64String(file: Express.Multer.File, label?: string): Pr
   let buffer = file.buffer;
   let mimeType = file.mimetype || "image/jpeg";
   if (isHeic) {
-    buffer = Buffer.from(await convertHeic({ buffer: file.buffer, format: "JPEG", quality: 1 }));
+    buffer = await convertHeicBuffer(file.buffer);
     mimeType = "image/jpeg";
   }
   return JSON.stringify({ data: buffer.toString("base64"), mimeType, ...(label ? { label } : {}) });

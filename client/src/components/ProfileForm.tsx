@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Plus, X, Loader2, Upload, GripVertical, ImagePlus, ChevronUp, ChevronDown, Camera } from "lucide-react";
-import heic2any from "heic2any";
 import { TARGET_QUALITIES, GENDER_OPTIONS, PARTNER_PREFERENCES, PLATFORMS, PLATFORM_PROMPTS } from "@shared/types";
 import type { ProfileInput, ProfileResult, PlatformId } from "@shared/types";
 import { trackAnalysisStarted, trackAnalysisComplete } from "../lib/analytics";
@@ -103,16 +102,11 @@ function heicPreview(fileName: string): string {
 
 async function convertHeicToJpeg(file: File): Promise<File> {
   const name = file.name.replace(/\.heic$/i, ".jpg").replace(/\.heif$/i, ".jpg");
-  try {
-    const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 1 }) as Blob;
-    return new File([blob], name, { type: "image/jpeg" });
-  } catch {
-    const body = new FormData();
-    body.append("image", normalizeHeicFile(file));
-    const response = await fetch("/api/convert-image", { method: "POST", body });
-    if (!response.ok) throw new Error("HEIC conversion failed");
-    return new File([await response.blob()], name, { type: "image/jpeg" });
-  }
+  const body = new FormData();
+  body.append("image", normalizeHeicFile(file));
+  const response = await fetch("/api/convert-image", { method: "POST", body });
+  if (!response.ok) throw new Error("HEIC conversion failed");
+  return new File([await response.blob()], name, { type: "image/jpeg" });
 }
 
 function compressImage(file: File, maxDim = 2048, quality = 0.92): Promise<File> {
