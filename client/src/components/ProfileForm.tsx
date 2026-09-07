@@ -102,9 +102,17 @@ function heicPreview(fileName: string): string {
 }
 
 async function convertHeicToJpeg(file: File): Promise<File> {
-  const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 }) as Blob;
   const name = file.name.replace(/\.heic$/i, ".jpg").replace(/\.heif$/i, ".jpg");
-  return new File([blob], name, { type: "image/jpeg" });
+  try {
+    const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 }) as Blob;
+    return new File([blob], name, { type: "image/jpeg" });
+  } catch {
+    const body = new FormData();
+    body.append("image", normalizeHeicFile(file));
+    const response = await fetch("/api/convert-image", { method: "POST", body });
+    if (!response.ok) throw new Error("HEIC conversion failed");
+    return new File([await response.blob()], name, { type: "image/jpeg" });
+  }
 }
 
 function compressImage(file: File, maxDim = 1600, quality = 0.75): Promise<File> {

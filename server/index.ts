@@ -176,6 +176,23 @@ const analyzeUpload = upload.fields([
   { name: "additionalPhotos", maxCount: 10 },
 ]);
 
+app.post("/api/convert-image", upload.single("image"), async (req: Request, res: Response) => {
+  if (!req.file) {
+    res.status(400).json({ error: "No image was uploaded." });
+    return;
+  }
+  try {
+    const isHeic = /image\/hei[cf]/i.test(req.file.mimetype || "") || /\.hei[cf]$/i.test(req.file.originalname || "");
+    const output = isHeic
+      ? Buffer.from(await convertHeic({ buffer: req.file.buffer, format: "JPEG", quality: 0.9 }))
+      : req.file.buffer;
+    res.type(isHeic ? "image/jpeg" : req.file.mimetype || "image/jpeg").send(output);
+  } catch (error) {
+    console.error("Preview image conversion error:", error);
+    res.status(422).json({ error: "This HEIC photo could not be decoded." });
+  }
+});
+
 interface AuthRequest extends Request {
   user?: { userId: number; email: string };
 }
