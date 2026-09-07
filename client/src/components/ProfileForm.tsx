@@ -207,6 +207,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   const [contextOpen, setContextOpen] = useState(false);
   const [bioOpen, setBioOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const analysisInFlightRef = useRef(false);
   const [processingOtherPhotos, setProcessingOtherPhotos] = useState(false);
   const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
   const [error, setError] = useState("");
@@ -630,6 +631,8 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   };
 
   const runAnalysis = async () => {
+    if (analysisInFlightRef.current) return;
+    analysisInFlightRef.current = true;
     trackAnalysisStarted(platform);
     setLoading(true);
     setError("");
@@ -662,6 +665,9 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           try {
             const pollRes = await fetch(`/api/analyze/result/${jobId}`);
             const pollData = await pollRes.json();
+            if (!pollRes.ok) {
+              throw new Error(pollData.error || "Analysis failed. Please try again.");
+            }
             if (pollData.status === "done") {
               const serverReportPhotos = pollData.result?.reportPhotos;
               const serializedCurrentPhotos = serverReportPhotos?.currentPhotos || await Promise.all(
@@ -704,8 +710,8 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
             } else {
               setTimeout(poll, 3000);
             }
-          } catch {
-            setTimeout(poll, 3000);
+          } catch (pollError) {
+            reject(pollError instanceof Error ? pollError : new Error("Analysis failed. Please try again."));
           }
         };
         poll();
@@ -714,6 +720,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
+      analysisInFlightRef.current = false;
     }
   };
 

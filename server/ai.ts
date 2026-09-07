@@ -6,6 +6,8 @@ import type { ProfileInput, ProfileResult } from "../shared/types.js";
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  timeout: 90_000,
+  maxRetries: 0,
 });
 
 const MAX_IMAGE_DIM = 1024;
