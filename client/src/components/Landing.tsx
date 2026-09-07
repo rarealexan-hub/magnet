@@ -1,134 +1,216 @@
 import { useState } from "react";
-import { ArrowRight, Magnet as MagnetIcon, Target, Sparkles, TrendingUp, Zap, X } from "lucide-react";
+import {
+  ArrowRight,
+  Camera,
+  CheckCircle2,
+  ClipboardList,
+  Magnet as MagnetIcon,
+  MessageSquareText,
+  Sparkles,
+  Target,
+  Zap,
+} from "lucide-react";
 
 interface Props {
   onStart: () => void;
   onPrivacy: () => void;
 }
 
+type ReadKey = "photos" | "prompts" | "signal";
+
+const readPanels: Record<
+  ReadKey,
+  {
+    tab: string;
+    eyebrow: string;
+    headline: string;
+    body: string;
+    current: string[];
+    fixes: string[];
+  }
+> = {
+  photos: {
+    tab: "Photos",
+    eyebrow: "Lead photo read",
+    headline: "Good photo. Weak first impression.",
+    body: "The issue is not how you look. It is what the first few seconds make someone assume.",
+    current: ["Face is too small at swipe speed", "Best expression is buried later", "Two photos repeat the same signal"],
+    fixes: ["Move the outdoor candid first", "Crop tighter from chest up", "Replace one duplicate solo shot"],
+  },
+  prompts: {
+    tab: "Prompts",
+    eyebrow: "Bio and prompt read",
+    headline: "Specific beats polished.",
+    body: "A profile works when it gives someone an easy reason to start a real conversation.",
+    current: ["Generic travel and food language", "No opinion, taste, or scene", "Answers do not invite a reply"],
+    fixes: ["Add one sharp personal detail", "Rewrite the opener as a hook", "Give matches something easy to ask about"],
+  },
+  signal: {
+    tab: "Signal",
+    eyebrow: "Whole profile read",
+    headline: "The vibe is clear in pieces, not as a whole.",
+    body: "Magnet checks whether your photos, prompts, and goal are pulling in the same direction.",
+    current: ["Profile reads more casual than intended", "Attraction cues are uneven", "Target match is not obvious"],
+    fixes: ["Clarify the dating intention", "Balance warmth with confidence", "Remove signals that attract the wrong fit"],
+  },
+};
+
+const auditPieces = [
+  { icon: Camera, label: "Photo order", text: "Which image should lead, which should move, and which one is costing attention." },
+  { icon: MessageSquareText, label: "Prompt rewrites", text: "Sharper answers that sound like you and give people a place to start." },
+  { icon: Target, label: "Target fit", text: "Whether your profile is attracting the kind of person you actually want." },
+  { icon: ClipboardList, label: "Action plan", text: "A short list of changes ranked by what to fix first." },
+];
+
+const reportRows = [
+  "First impression and accidental signals",
+  "Photo-by-photo notes with order changes",
+  "Bio and prompt edits in your preferred tone",
+  "Clear fixes for the next version of your profile",
+];
+
 export function Landing({ onStart, onPrivacy }: Props) {
-  const [baView, setBaView] = useState<"before" | "after">("before");
+  const [activeRead, setActiveRead] = useState<ReadKey>("photos");
+  const panel = readPanels[activeRead];
 
   return (
-    <main className="landing">
-      <section className="landing-hero">
-        <div className="landing-hero-topline">
-          <div className="badge">
-            <MagnetIcon size={20} strokeWidth={2.2} />
+    <main className="landing landing-redesign">
+      <section className="landing-hero-redesign">
+        <img
+          className="landing-hero-image"
+          src="/magnet-profile-audit-hero.png"
+          alt="Profile photos and phone arranged for a profile audit"
+        />
+        <div className="landing-hero-wash" aria-hidden="true" />
+        <div className="landing-hero-content">
+          <div className="landing-brand-lockup">
+            <MagnetIcon size={23} strokeWidth={2.1} />
             <span>Magnet</span>
           </div>
-          <span className="landing-hero-note">AI-assisted, framework-led profile feedback.</span>
-        </div>
-        <div className="landing-hero-copy">
-          <p className="landing-kicker">Magnet Profile Audit</p>
-          <h1>
-              See exactly what your profile is
-              <span className="gradient-text"> really saying.</span>
-          </h1>
-          <div className="landing-hero-detail">
-            <p className="subtitle">
-              Upload your profile and get one complete audit: photos, prompts, first impression, accidental signals, rewrites, and the changes most likely to improve your results.
-            </p>
-            <p className="subtitle-small">The honest breakdown no one else will give you.</p>
-            <button className="cta-button" onClick={onStart}>
-              Start your Profile Audit
-              <ArrowRight size={17} />
+          <p className="landing-kicker-redesign">Dating profile audit</p>
+          <h1>Make your profile easier to choose.</h1>
+          <p className="landing-subtitle-redesign">
+            Upload screenshots. Magnet reads the photos, prompts, order, and subtext, then gives you the edits that make your profile feel clearer, more specific, and more like you.
+          </p>
+          <div className="landing-hero-actions">
+            <button className="landing-primary-button" onClick={onStart}>
+              Start the audit
+              <ArrowRight size={18} />
             </button>
+            <span>Private review. One complete audit with clear next steps.</span>
           </div>
         </div>
-        <div className="landing-hero-mark" aria-hidden="true">M</div>
       </section>
 
-      <section className="stats-strip" aria-label="Profile performance benchmarks">
-        <p className="stats-strip-label">Small changes. Noticeable difference.</p>
-        <div className="stat-pill">
-          <span className="stat-number">+14%</span>
-          <span className="stat-desc">more likes with a smiling lead photo</span>
-        </div>
-        <div className="stats-strip-divider" />
-        <div className="stat-pill">
-          <span className="stat-number">3×</span>
-          <span className="stat-desc">more comments with activity photos</span>
-        </div>
-        <div className="stats-strip-divider" />
-        <div className="stat-pill">
-          <span className="stat-number">+49%</span>
-          <span className="stat-desc">more matches with an optimized profile</span>
-        </div>
+      <section className="landing-signal-strip" aria-label="Audit coverage">
+        <span className="landing-strip-label">Reviews the parts friends skip</span>
+        <span>Lead photo</span>
+        <span>Photo order</span>
+        <span>Bio and prompts</span>
+        <span>First impression</span>
+        <span>Match fit</span>
       </section>
 
-      <section className="before-after-section">
-        <div className="landing-section-intro">
-          <p className="section-title">A profile, with the subtext included</p>
-          <h2>See what people see.</h2>
-          <p>Magnet doesn't polish your profile into someone else. It explains the signal you're already sending, then gives you a clearer way forward.</p>
+      <section className="landing-audit-preview">
+        <div className="landing-section-copy">
+          <p className="landing-kicker-redesign">Inside the read</p>
+          <h2>The feedback is direct, not decorative.</h2>
+          <p>
+            Magnet looks at what your profile communicates before someone knows you: confidence, specificity, warmth, effort, and who the profile seems built for.
+          </p>
         </div>
-        <div className="ba-toggle-row" role="tablist" aria-label="Highlight an analysis">
-          <button className={`ba-toggle-btn ${baView === "before" ? "active before" : ""}`} onClick={() => setBaView("before")} role="tab" aria-selected={baView === "before"}>
-            <X size={12} /> Before
-          </button>
-          <button className={`ba-toggle-btn ${baView === "after" ? "active after" : ""}`} onClick={() => setBaView("after")} role="tab" aria-selected={baView === "after"}>
-            <Sparkles size={12} /> After Magnet
-          </button>
-        </div>
-        <div className="before-after-grid">
-          <div className={`ba-card ${baView === "before" ? "is-focused" : ""}`}>
-            <div className="ba-header before"><Zap size={12} /> Unanalyzed</div>
-            <div className="ba-content">
-              <div className="ba-score-row"><span className="ba-score bad">34 / 100</span><span className="ba-type-tag generic">Generic</span></div>
-              <p className="ba-bio">"Love traveling, good food, and adventures. Looking for my partner in crime. Dog dad. 6'1 if that matters."</p>
-              <div className="ba-issues"><p className="ba-issue-title">Detected issues</p><ul>
-                <li className="ba-x">Bio indistinguishable from 4.7 million other profiles</li>
-                <li className="ba-x">Lead photo signals "friend zone" not attraction</li>
-                <li className="ba-x">Zero conversation hooks across all prompts</li>
-              </ul></div>
+
+        <div className="landing-preview-panel">
+          <div className="landing-preview-tabs" role="tablist" aria-label="Sample audit sections">
+            {(Object.keys(readPanels) as ReadKey[]).map((key) => (
+              <button
+                key={key}
+                className={activeRead === key ? "active" : ""}
+                onClick={() => setActiveRead(key)}
+                role="tab"
+                aria-selected={activeRead === key}
+              >
+                {readPanels[key].tab}
+              </button>
+            ))}
+          </div>
+
+          <div className="landing-preview-body" key={activeRead}>
+            <div className="landing-preview-heading">
+              <span>{panel.eyebrow}</span>
+              <h3>{panel.headline}</h3>
+              <p>{panel.body}</p>
+            </div>
+
+            <div className="landing-preview-columns">
+              <div>
+                <div className="landing-column-label problem">
+                  <Zap size={14} />
+                  Current read
+                </div>
+                <ul>
+                  {panel.current.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <div className="landing-column-label fix">
+                  <CheckCircle2 size={14} />
+                  Fix direction
+                </div>
+                <ul>
+                  {panel.fixes.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
-          <div className={`ba-card ${baView === "after" ? "is-focused" : ""}`}>
-            <div className="ba-header after"><Sparkles size={12} /> After Magnet</div>
-            <div className="ba-content">
-              <div className="ba-score-row"><span className="ba-score good">82 / 100</span><span className="ba-type-tag high-signal">High-Signal</span></div>
-              <p className="ba-bio">"I make unnecessarily complex playlists for ordinary activities and have argued about fonts at least once this week. Currently attempting sourdough for the third time like it'll be different."</p>
-              <div className="ba-fixes"><p className="ba-issue-title">What changed</p><ul>
-                <li className="ba-check">Generic interests replaced with specific personality signals</li>
-                <li className="ba-check">Lead photo swapped to candid with natural expression</li>
-                <li className="ba-check">Every prompt now opens a conversation thread</li>
-              </ul></div>
+        </div>
+      </section>
+
+      <section className="landing-audit-pieces">
+        {auditPieces.map(({ icon: Icon, label, text }) => (
+          <article key={label} className="landing-piece">
+            <Icon size={20} />
+            <h3>{label}</h3>
+            <p>{text}</p>
+          </article>
+        ))}
+      </section>
+
+      <section className="landing-report-section">
+        <div className="landing-report-copy">
+          <p className="landing-kicker-redesign">What you get</p>
+          <h2>A practical edit plan, not a confidence pep talk.</h2>
+          <p>
+            The report is built to answer one question: what should change before your profile goes back live?
+          </p>
+        </div>
+        <div className="landing-report-list">
+          {reportRows.map((row, index) => (
+            <div className="landing-report-row" key={row}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <p>{row}</p>
             </div>
-          </div>
+          ))}
         </div>
       </section>
 
-      <section className="features-grid">
-        <div className="feature-card feature-card-large">
-          <div className="feature-icon" style={{ background: "rgba(26,24,22,0.06)", color: "#1A1816" }}><Target size={20} /></div>
-          <p className="feature-index">01 / WHO YOU'RE CALLING IN</p>
-          <h3>Match Targeting</h3>
-          <p>Tell Magnet who you want to attract. It shows you the exact signals your profile is sending — and whether they're reaching the right people.</p>
+      <section className="landing-final-cta">
+        <div>
+          <Sparkles size={22} />
+          <h2>Ready for the honest read?</h2>
+          <p>Start with your current profile. Leave with the edits that make the next version easier to say yes to.</p>
         </div>
-        <div className="feature-card feature-card-dark">
-          <div className="feature-icon" style={{ background: "rgba(250,249,247,0.12)", color: "#FAF9F7" }}><Sparkles size={20} /></div>
-          <p className="feature-index">02 / THE NUMBER, EXPLAINED</p>
-          <h3>Magnet Score</h3>
-          <p>Scored across five dimensions: photo quality, attraction signals, personality, match targeting, and first impression. You see exactly where you fall short.</p>
-        </div>
-        <div className="feature-card feature-card-wide">
-          <div className="feature-icon" style={{ background: "rgba(26,24,22,0.06)", color: "#1A1816" }}><TrendingUp size={20} /></div>
-          <p className="feature-index">03 / WHAT TO DO NEXT</p>
-          <h3>Guided Optimization</h3>
-          <p>One complete report tells you what to change, how to change it, and why it will perform better on your app.</p>
-          <span className="feature-arrow"><ArrowRight size={18} /></span>
-        </div>
+        <button className="landing-primary-button light" onClick={onStart}>
+          Start the audit
+          <ArrowRight size={18} />
+        </button>
       </section>
 
-      <section className="social-proof">
-        <p className="proof-eyebrow">The numbers behind the awkward truth</p>
-        <div className="proof-item"><span className="proof-stat">4.7M</span><span className="proof-label">people on dating apps have the same bio as you</span></div>
-        <div className="proof-item"><span className="proof-stat">73%</span><span className="proof-label">of profiles use generic prompts that kill conversations</span></div>
-        <div className="proof-item"><span className="proof-stat">3×</span><span className="proof-label">more matches with a high-signal profile</span></div>
-      </section>
-
-      <footer className="landing-footer">
+      <footer className="landing-footer landing-footer-redesign">
         <span className="landing-footer-copy">© {new Date().getFullYear()} Magnet</span>
         <span className="landing-footer-dot">·</span>
         <button className="landing-footer-link" onClick={onPrivacy}>Privacy Policy</button>

@@ -292,7 +292,7 @@ export default function App() {
   };
 
   return (
-    <div className="app">
+    <div className={`app app-view-${view}`}>
           {!loading && (
             <div className="app-header">
               {user ? (
