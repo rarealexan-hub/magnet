@@ -713,7 +713,6 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           </div>
 
           <input id="lead-photo-input" ref={leadPhotoRef} type="file" accept="image/*,.heic,.heif" onChange={handleLeadPhotoSelect} style={{ display: "none" }} />
-          <input id="other-photos-input" ref={currentPhotosRef} type="file" accept="image/*,.heic,.heif" multiple onChange={handleCurrentPhotos} style={{ display: "none" }} />
           <input ref={friendsRef} type="file" accept="image/*,.heic,.heif" multiple onChange={makeCategoryHandler(setFriendsPhotos, friendsPhotos, friendsRef)} style={{ display: "none" }} />
           <input ref={selfiesRef} type="file" accept="image/*,.heic,.heif" multiple onChange={makeCategoryHandler(setSelfiePhotos, selfiePhotos, selfiesRef)} style={{ display: "none" }} />
           <input ref={familyRef} type="file" accept="image/*,.heic,.heif" multiple onChange={makeCategoryHandler(setFamilyPhotos, familyPhotos, familyRef)} style={{ display: "none" }} />
@@ -783,22 +782,18 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               </div>
             )}
             <div
-              role="button"
-              tabIndex={0}
-              aria-label="Add other profile photos"
-              className={`upload-btn ${dragUploadTarget === "other" ? "is-dragging-files" : ""}`}
-              onClick={() => currentPhotosRef.current?.click()}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  currentPhotosRef.current?.click();
-                }
-              }}
-              onDragEnter={(e) => handleUploadDragOver(e, "other")}
-              onDragOver={(e) => handleUploadDragOver(e, "other")}
-              onDragLeave={handleUploadDragLeave}
-              onDrop={(e) => handlePhotoDrop(e, setCurrentPhotos, currentPhotos, MAX_CURRENT_PHOTOS)}
+              className="upload-btn"
             >
+              <input
+                id="other-photos-input"
+                ref={currentPhotosRef}
+                className="upload-native-input"
+                type="file"
+                accept="image/*,.heic,.heif"
+                multiple
+                onChange={handleCurrentPhotos}
+                aria-label="Add other profile photos"
+              />
               <Plus size={16} />
               <div className="upload-btn-text">
                 <span className="upload-btn-title">{otherPhotos.length === 0 ? "Add other profile photos" : "Add more photos"}</span>
