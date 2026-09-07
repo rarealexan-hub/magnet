@@ -7658,6 +7658,16 @@ button {
   gap: 18px;
 }
 
+.audit-context-grid > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.audit-context-grid > div > .form-input {
+  margin-top: auto;
+}
+
 .audit-eyebrow {
   margin: 0 0 8px;
   color: var(--text-muted);
