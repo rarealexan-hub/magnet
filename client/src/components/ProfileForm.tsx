@@ -100,6 +100,28 @@ function heicPreview(fileName: string): string {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
+function nativeImagePreview(file: File): Promise<string | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    const timeout = window.setTimeout(() => {
+      image.src = "";
+      URL.revokeObjectURL(url);
+      resolve(null);
+    }, 5000);
+    image.onload = () => {
+      window.clearTimeout(timeout);
+      resolve(url);
+    };
+    image.onerror = () => {
+      window.clearTimeout(timeout);
+      URL.revokeObjectURL(url);
+      resolve(null);
+    };
+    image.src = url;
+  });
+}
+
 async function convertHeicToJpeg(file: File): Promise<File> {
   const name = file.name.replace(/\.heic$/i, ".jpg").replace(/\.heif$/i, ".jpg");
   const body = new FormData();
@@ -317,11 +339,12 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
         let processed: File;
         let preview: string | undefined;
         if (isHeic(file)) {
+          preview = (await nativeImagePreview(file)) || undefined;
           try {
             processed = await convertHeicToJpeg(file);
           } catch {
             processed = normalizeHeicFile(file);
-            preview = heicPreview(file.name);
+            preview ||= heicPreview(file.name);
           }
         } else if (!isSupportedImage(file)) {
           skipped.push(`${file.name} (unsupported file type)`);
@@ -373,17 +396,25 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   const processLeadPhoto = useCallback(async (file: File) => {
     let processed: File;
     if (isHeic(file)) {
+      const nativePreview = await nativeImagePreview(file);
       try { processed = await convertHeicToJpeg(file); }
       catch {
         processed = normalizeHeicFile(file);
         setCurrentPhotos((prev) => {
-          const newPhoto = { file: processed, preview: heicPreview(file.name) };
+          const newPhoto = { file: processed, preview: nativePreview || heicPreview(file.name) };
           if (prev[0]) URL.revokeObjectURL(prev[0].preview);
           return [newPhoto, ...prev.slice(1)];
         });
         setError("");
         return;
       }
+      const newPhoto = { file: processed, preview: nativePreview || URL.createObjectURL(processed) };
+      setCurrentPhotos((prev) => {
+        if (prev[0]) URL.revokeObjectURL(prev[0].preview);
+        return [newPhoto, ...prev.slice(1)];
+      });
+      setError("");
+      return;
     } else if (!isSupportedImage(file)) {
       setError("Please upload an image file."); return;
     } else {
