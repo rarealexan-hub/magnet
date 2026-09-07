@@ -510,10 +510,6 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   };
 
   const handlePhotosNext = () => {
-    if (!userEmail && (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))) {
-      setError("Please enter a valid email address to continue.");
-      return;
-    }
     setError("");
     setStep("details");
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -531,6 +527,18 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
     setError("");
     setStep("calibration");
     window.scrollTo({ top: 0, behavior: "instant" });
+  };
+
+  const handleCalibrationSubmit = () => {
+    if (!userEmail && (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))) {
+      setError("Please enter a valid email address to continue.");
+      return;
+    }
+    if (photoTasteSelections.length !== 3) {
+      setError("Choose exactly three examples to continue.");
+      return;
+    }
+    runAnalysis();
   };
 
   const platformInfo = PLATFORMS.find((p) => p.id === platform);
@@ -688,20 +696,6 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               ))}
             </div>
           </div>
-
-          {!userEmail && (
-            <div className="form-section" style={{ marginTop: 24 }}>
-              <label className="form-label">Your email</label>
-              <p className="form-hint">We'll send your results here so you don't lose them.</p>
-              <input
-                type="email"
-                className="form-input"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-          )}
 
           {error && <div className="form-error">{error}</div>}
 
@@ -1034,15 +1028,25 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               );
             })}
           </div>
+          {!userEmail && (
+            <div className="form-section calibration-email-section">
+              <label className="form-label">Your email</label>
+              <p className="form-hint">We'll send your results here so you don't lose them.</p>
+              <input
+                type="email"
+                className="form-input"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+          )}
           {error && <div className="form-error">{error}</div>}
           <div className="calibration-footer">
             <span>{photoTasteSelections.length} of 3 selected</span>
             <div className="step-nav">
               <button type="button" className="step-back-btn" onClick={() => { setStep("details"); window.scrollTo({ top: 0, behavior: "instant" }); }}>Back</button>
-              <button type="button" className="submit-btn step-continue-btn" onClick={() => {
-                if (photoTasteSelections.length !== 3) { setError("Choose exactly three examples to continue."); return; }
-                runAnalysis();
-              }} disabled={loading || photoTasteSelections.length !== 3}>
+              <button type="button" className="submit-btn step-continue-btn" onClick={handleCalibrationSubmit} disabled={loading || photoTasteSelections.length !== 3}>
                 {loading ? <><Loader2 size={18} className="spin" /> Building your audit…</> : "Generate my Magnet Profile Audit"}
               </button>
             </div>
