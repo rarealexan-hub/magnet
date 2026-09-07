@@ -167,6 +167,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   const [contextOpen, setContextOpen] = useState(false);
   const [bioOpen, setBioOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [processingOtherPhotos, setProcessingOtherPhotos] = useState(false);
   const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
   const [error, setError] = useState("");
 
@@ -323,8 +324,26 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   );
 
   const handleCurrentPhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) void processFiles(Array.from(e.target.files), setCurrentPhotos, currentPhotos, MAX_CURRENT_PHOTOS);
+    if (e.target.files?.length) {
+      setProcessingOtherPhotos(true);
+      void processFiles(Array.from(e.target.files), setCurrentPhotos, currentPhotos, MAX_CURRENT_PHOTOS)
+        .finally(() => setProcessingOtherPhotos(false));
+    }
     if (currentPhotosRef.current) currentPhotosRef.current.value = "";
+  };
+
+  const handleOtherPhotosInputDrop = (e: React.DragEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = Array.from(e.dataTransfer.files || []);
+    if (files.length === 0) {
+      setError("The preview did not pass an image file into the app. Use tap to browse here, or open the app preview in a separate tab before dragging.");
+      return;
+    }
+    setError("");
+    setProcessingOtherPhotos(true);
+    void processFiles(files, setCurrentPhotos, currentPhotos, MAX_CURRENT_PHOTOS)
+      .finally(() => setProcessingOtherPhotos(false));
   };
 
   const processLeadPhoto = useCallback(async (file: File) => {
@@ -792,12 +811,22 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 accept="image/*,.heic,.heif"
                 multiple
                 onChange={handleCurrentPhotos}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.dataTransfer.dropEffect = "copy";
+                }}
+                onDrop={handleOtherPhotosInputDrop}
                 aria-label="Add other profile photos"
               />
               <Plus size={16} />
               <div className="upload-btn-text">
-                <span className="upload-btn-title">{otherPhotos.length === 0 ? "Add other profile photos" : "Add more photos"}</span>
-                <span className="upload-btn-hint">Drop photos here or tap to browse · JPG, PNG, HEIC, WebP, AVIF & more</span>
+                <span className="upload-btn-title">
+                  {processingOtherPhotos ? "Processing photos…" : otherPhotos.length === 0 ? "Add other profile photos" : "Add more photos"}
+                </span>
+                <span className="upload-btn-hint">
+                  {processingOtherPhotos ? "Your previews will appear as soon as the images are ready." : "Drop photos here or tap to browse · JPG, PNG, HEIC, WebP, AVIF & more"}
+                </span>
               </div>
             </div>
           </div>
