@@ -46,6 +46,18 @@ const CALIBRATION_EXAMPLES = [
   { id: "quiet-candid", label: "Quiet candid", detail: "Natural expression, no heavy posing", tone: "rose" },
 ] as const;
 
+type CalibrationAudience = "men" | "women" | "diverse";
+
+function calibrationAudiences(preferences: string[]): CalibrationAudience[] {
+  if (preferences.includes("any-gender")) return ["men", "women", "diverse"];
+
+  const audiences: CalibrationAudience[] = [];
+  if (preferences.some((value) => value === "men" || value === "trans-men")) audiences.push("men");
+  if (preferences.some((value) => value === "women" || value === "trans-women")) audiences.push("women");
+  if (preferences.some((value) => value === "non-binary" || value === "genderfluid")) audiences.push("diverse");
+  return audiences.length > 0 ? audiences : ["diverse"];
+}
+
 function isHeic(file: File): boolean {
   if (HEIC_TYPES.includes(file.type)) return true;
   const ext = file.name.toLowerCase();
@@ -1002,6 +1014,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   }
 
   if (step === "calibration") {
+    const audiencePools = calibrationAudiences(attractedTo);
     const toggleCalibration = (id: string) => {
       setPhotoTasteSelections((current) => current.includes(id)
         ? current.filter((item) => item !== id)
@@ -1017,11 +1030,17 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
             <p>These are artificial examples, not real people. Pick the three profile-photo directions you instinctively respond to most. Your choices help calibrate the audit to your taste.</p>
           </div>
           <div className="calibration-grid">
-            {CALIBRATION_EXAMPLES.map((example) => {
+            {CALIBRATION_EXAMPLES.map((example, exampleIndex) => {
               const selectedIndex = photoTasteSelections.indexOf(example.id);
+              const audience = audiencePools[exampleIndex % audiencePools.length];
               return (
                 <button key={example.id} type="button" className={`calibration-card ${selectedIndex >= 0 ? "selected" : ""}`} onClick={() => toggleCalibration(example.id)}>
-                  <span className={`calibration-image calibration-image-${example.tone}`}><span className="calibration-silhouette" /></span>
+                  <span className="calibration-image">
+                    <img
+                      src={`/calibration/${audience}/${example.id}.jpg`}
+                      alt={`${example.label} example`}
+                    />
+                  </span>
                   <span className="calibration-card-copy"><strong>{example.label}</strong><small>{example.detail}</small></span>
                   <span className="calibration-check">{selectedIndex >= 0 ? selectedIndex + 1 : ""}</span>
                 </button>
