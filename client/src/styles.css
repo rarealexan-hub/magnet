@@ -1614,6 +1614,15 @@ h2, h3, h4, h5, h6 {
   color: var(--accent-light);
 }
 
+.upload-btn.is-dragging-files,
+.lead-photo-dropzone.is-dragging-files {
+  border-color: var(--accent);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--text);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  transform: translateY(-2px);
+}
+
 .upload-btn-text {
   display: flex;
   flex-direction: column;
@@ -6672,6 +6681,12 @@ button {
 .category-photo-row {
   padding: 14px 16px;
   border-bottom: 1px solid var(--border);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.category-photo-row.is-dragging-files {
+  background: rgba(59, 130, 246, 0.08);
+  box-shadow: inset 0 0 0 2px var(--accent);
 }
 
 .category-photo-row:last-child {

@@ -170,6 +170,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [dragUploadTarget, setDragUploadTarget] = useState<string | null>(null);
   const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
   useEffect(() => {
@@ -279,10 +280,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
     if (currentPhotosRef.current) currentPhotosRef.current.value = "";
   };
 
-  const handleLeadPhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (leadPhotoRef.current) leadPhotoRef.current.value = "";
-    if (!file) return;
+  const processLeadPhoto = useCallback(async (file: File) => {
     let processed: File;
     if (isHeic(file)) {
       try { processed = await convertHeicToJpeg(file); }
@@ -299,6 +297,45 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
       if (prev[0]) URL.revokeObjectURL(prev[0].preview);
       return [newPhoto, ...prev.slice(1)];
     });
+  }, []);
+
+  const handleLeadPhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (leadPhotoRef.current) leadPhotoRef.current.value = "";
+    if (file) await processLeadPhoto(file);
+  };
+
+  const handleUploadDragOver = (e: React.DragEvent<HTMLElement>, target: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "copy";
+    setDragUploadTarget(target);
+  };
+
+  const handleUploadDragLeave = (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragUploadTarget(null);
+  };
+
+  const handleLeadPhotoDrop = async (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragUploadTarget(null);
+    const file = e.dataTransfer.files?.[0];
+    if (file) await processLeadPhoto(file);
+  };
+
+  const handlePhotoDrop = (
+    e: React.DragEvent<HTMLElement>,
+    setter: React.Dispatch<React.SetStateAction<UploadedPhoto[]>>,
+    current: UploadedPhoto[],
+    max: number
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragUploadTarget(null);
+    if (e.dataTransfer.files?.length) processFiles(e.dataTransfer.files, setter, current, max);
   };
 
   const makeCategoryHandler = (
@@ -625,10 +662,17 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 <label htmlFor="lead-photo-input" className="change-lead-btn">Change</label>
               </div>
             ) : (
-              <label htmlFor="lead-photo-input" className="lead-photo-dropzone">
+              <label
+                htmlFor="lead-photo-input"
+                className={`lead-photo-dropzone ${dragUploadTarget === "lead" ? "is-dragging-files" : ""}`}
+                onDragEnter={(e) => handleUploadDragOver(e, "lead")}
+                onDragOver={(e) => handleUploadDragOver(e, "lead")}
+                onDragLeave={handleUploadDragLeave}
+                onDrop={handleLeadPhotoDrop}
+              >
                 <ImagePlus size={32} strokeWidth={1.5} />
                 <span className="photos-hero-title">Upload lead photo</span>
-                <span className="photos-hero-hint">Screenshots work too · JPG, PNG, HEIC, WebP, AVIF & more</span>
+                <span className="photos-hero-hint">Drop a photo here or tap to browse · JPG, PNG, HEIC, WebP, AVIF & more</span>
               </label>
             )}
           </div>
@@ -666,11 +710,18 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 ))}
               </div>
             )}
-            <label htmlFor="other-photos-input" className="upload-btn">
+            <label
+              htmlFor="other-photos-input"
+              className={`upload-btn ${dragUploadTarget === "other" ? "is-dragging-files" : ""}`}
+              onDragEnter={(e) => handleUploadDragOver(e, "other")}
+              onDragOver={(e) => handleUploadDragOver(e, "other")}
+              onDragLeave={handleUploadDragLeave}
+              onDrop={(e) => handlePhotoDrop(e, setCurrentPhotos, currentPhotos, MAX_CURRENT_PHOTOS)}
+            >
               <Plus size={16} />
               <div className="upload-btn-text">
                 <span className="upload-btn-title">{otherPhotos.length === 0 ? "Add other profile photos" : "Add more photos"}</span>
-                <span className="upload-btn-hint">Screenshots work great · JPG, PNG, HEIC, WebP, AVIF & more</span>
+                <span className="upload-btn-hint">Drop photos here or tap to browse · JPG, PNG, HEIC, WebP, AVIF & more</span>
               </div>
             </label>
           </div>
@@ -684,7 +735,14 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
             <p className="form-hint">Go through your favorites album and upload some that didn't make the cut the first time around.</p>
             <div className="category-photo-list">
               {CATEGORIES.map(({ key, label, hint, ref, photos, setter }) => (
-                <div key={key} className="category-photo-row">
+                <div
+                  key={key}
+                  className={`category-photo-row ${dragUploadTarget === key ? "is-dragging-files" : ""}`}
+                  onDragEnter={(e) => handleUploadDragOver(e, key)}
+                  onDragOver={(e) => handleUploadDragOver(e, key)}
+                  onDragLeave={handleUploadDragLeave}
+                  onDrop={(e) => handlePhotoDrop(e, setter, photos, 5)}
+                >
                   <div className="category-photo-header">
                     <div>
                       <span className="category-photo-label">{label}</span>
