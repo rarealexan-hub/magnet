@@ -773,9 +773,18 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 ))}
               </div>
             )}
-            <label
-              htmlFor="other-photos-input"
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="Add other profile photos"
               className={`upload-btn ${dragUploadTarget === "other" ? "is-dragging-files" : ""}`}
+              onClick={() => currentPhotosRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  currentPhotosRef.current?.click();
+                }
+              }}
               onDragEnter={(e) => handleUploadDragOver(e, "other")}
               onDragOver={(e) => handleUploadDragOver(e, "other")}
               onDragLeave={handleUploadDragLeave}
@@ -786,7 +795,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 <span className="upload-btn-title">{otherPhotos.length === 0 ? "Add other profile photos" : "Add more photos"}</span>
                 <span className="upload-btn-hint">Drop photos here or tap to browse · JPG, PNG, HEIC, WebP, AVIF & more</span>
               </div>
-            </label>
+            </div>
           </div>
 
           {/* Specific additional photos */}
