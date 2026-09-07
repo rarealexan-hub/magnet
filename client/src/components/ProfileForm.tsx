@@ -36,6 +36,14 @@ const MAX_ADDITIONAL_PHOTOS = 10;
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif", "image/bmp", "image/tiff", "image/svg+xml"];
 const HEIC_TYPES = ["image/heic", "image/heif"];
+const HIDDEN_PLATFORM_OPTIONS = new Set([
+  "okcupid",
+  "coffee-meets-bagel",
+  "plenty-of-fish",
+  "zoosk",
+  "badoo",
+]);
+const SELECTABLE_PLATFORMS = PLATFORMS.filter((platform) => !HIDDEN_PLATFORM_OPTIONS.has(platform.id));
 
 const CALIBRATION_EXAMPLES = [
   { id: "clear-solo", label: "Clear solo portrait", detail: "Face-forward, relaxed, easy to read", tone: "sand" },
@@ -800,7 +808,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               <span className="platform-limit-note">Pick one</span>
             </div>
             <div className="platform-select">
-              {PLATFORMS.map((p) => (
+              {SELECTABLE_PLATFORMS.map((p) => (
                 <button key={p.id} type="button" className={`platform-btn ${platform === p.id ? "active" : ""}`} onClick={() => setPlatform(p.id as PlatformId)}>
                   <span className="platform-btn-dot" style={{ background: p.color }} />
                   {p.label}
