@@ -2,6 +2,7 @@ export const PLATFORMS = [
   { id: "hinge",              label: "Hinge",             color: "#e8472f" },
   { id: "tinder",             label: "Tinder",            color: "#fd5564" },
   { id: "bumble",             label: "Bumble",            color: "#f8b916" },
+  { id: "raya",                label: "Raya",              color: "#151515" },
   { id: "okcupid",            label: "OkCupid",           color: "#4a90d9" },
   { id: "coffee-meets-bagel", label: "Coffee Meets Bagel",color: "#c8563a" },
   { id: "match",              label: "Match",             color: "#e8212f" },

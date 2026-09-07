@@ -476,7 +476,7 @@ app.get(
         }
       }
 
-      const allPlatforms = ["hinge", "tinder", "bumble"];
+      const allPlatforms = ["hinge", "tinder", "bumble", "raya"];
       const platforms = allPlatforms.map((p) => {
         const data = platformMap.get(p);
         return {
@@ -577,7 +577,7 @@ app.post(
       ? Array.isArray(body.additionalPhotoLabels) ? body.additionalPhotoLabels : [body.additionalPhotoLabels]
       : [];
 
-    const validPlatforms = ["hinge","tinder","bumble","okcupid","coffee-meets-bagel","match","happn","the-league","feeld","hily","plenty-of-fish","zoosk","grindr","badoo","blk","her","other"];
+    const validPlatforms = ["hinge","tinder","bumble","raya","okcupid","coffee-meets-bagel","match","happn","the-league","feeld","hily","plenty-of-fish","zoosk","grindr","badoo","blk","her","other"];
     if (!platform || !validPlatforms.includes(platform)) {
       res.status(400).json({ error: "Invalid platform" });
       return;
