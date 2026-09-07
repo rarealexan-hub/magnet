@@ -54,6 +54,19 @@ const CALIBRATION_EXAMPLES = [
   { id: "quiet-candid", label: "Quiet candid", detail: "Natural expression, no heavy posing", tone: "rose" },
 ] as const;
 
+function serializeProfilePhoto(file: File, label?: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || "");
+      const data = result.includes(",") ? result.split(",", 2)[1] : result;
+      resolve(JSON.stringify({ data, mimeType: file.type || "image/jpeg", ...(label ? { label } : {}) }));
+    };
+    reader.onerror = () => reject(new Error("One of your photos could not be prepared for the report."));
+    reader.readAsDataURL(file);
+  });
+}
+
 type CalibrationAudience = "men" | "women" | "diverse";
 
 function calibrationAudiences(preferences: string[]): CalibrationAudience[] {
@@ -222,14 +235,40 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   const handleAdditionalPromptScreenshot = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     const idx = additionalPromptEditIndex.current;
-    if (!file || idx < 0) return;
-    const preview = URL.createObjectURL(file);
+    if (file && idx >= 0) void setAdditionalPromptScreenshot(idx, file);
+    e.target.value = "";
+  };
+
+  const setAdditionalPromptScreenshot = async (idx: number, file: File) => {
+    let processed = file;
+    if (isHeic(file)) {
+      try { processed = await convertHeicToJpeg(file); }
+      catch { setError("Couldn't process that prompt screenshot."); return; }
+    } else if (!file.type.startsWith("image/")) {
+      setError("Please upload an image file.");
+      return;
+    }
+    if (processed.size > MAX_FILE_SIZE) {
+      setError("That screenshot is over 20MB.");
+      return;
+    }
+    processed = await compressImage(processed);
+    const preview = URL.createObjectURL(processed);
     setAdditionalPromptEntries((prev) => {
       const updated = [...prev];
-      updated[idx] = { ...updated[idx], screenshot: { file, preview } };
+      if (!updated[idx]) return prev;
+      if (updated[idx].screenshot) URL.revokeObjectURL(updated[idx].screenshot!.preview);
+      updated[idx] = { ...updated[idx], screenshot: { file: processed, preview } };
       return updated;
     });
-    e.target.value = "";
+    setDragUploadTarget(null);
+  };
+
+  const handleAdditionalPromptDrop = (e: React.DragEvent<HTMLElement>, idx: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files?.[0];
+    if (file) void setAdditionalPromptScreenshot(idx, file);
   };
 
   const addAdditionalPrompt = () => {
@@ -529,11 +568,27 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
             const pollRes = await fetch(`/api/analyze/result/${jobId}`);
             const pollData = await pollRes.json();
             if (pollData.status === "done") {
+              const serializedCurrentPhotos = await Promise.all(
+                currentPhotos.map((photo) => serializeProfilePhoto(photo.file))
+              );
+              const additionalGroups = [
+                { photos: friendsPhotos, label: "Full-body shot" },
+                { photos: selfiePhotos, label: "Candid face shot" },
+                { photos: familyPhotos, label: "Travel & adventure" },
+                { photos: activitiesPhotos, label: "With friends" },
+              ];
+              const serializedAdditionalPhotos = await Promise.all(
+                additionalGroups.flatMap(({ photos, label }) =>
+                  photos.map((photo) => serializeProfilePhoto(photo.file, label))
+                )
+              );
               const input: ProfileInput = {
                 platform, email: email.trim(), bio,
                 prompts: selectedPrompts.filter((sp) => sp.answer.trim()).map((sp) => `${sp.question}: ${sp.answer}`),
                 photoDescriptions: [],
-                screenshots: [], currentPhotos: [], additionalPhotos: [],
+                screenshots: [],
+                currentPhotos: serializedCurrentPhotos,
+                additionalPhotos: serializedAdditionalPhotos,
                  targetType: targetQualities.join(", "),
                 customTarget: customTarget || undefined,
                 gender: gender || undefined,
@@ -624,7 +679,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           <div className="analyzing-bar-track">
             <div className="analyzing-bar-fill" />
           </div>
-          <p className="analyzing-note">This usually takes 20–40 seconds</p>
+          <p className="analyzing-note">We’re evaluating every photo, prompt, signal, and sequence as one complete profile.</p>
         </div>
       </div>
     );
@@ -886,49 +941,15 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           </div>
 
           <div className="form-section">
-            <div className="form-label-row">
-              <label className="form-label">What's the first thing written on your profile?</label>
-              <span className="form-label-badge">optional</span>
-            </div>
-            <p className="form-hint">Could be your age, job, a prompt answer — whatever shows up first.</p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,.heic,.heif"
-              multiple
-              style={{ display: "none" }}
-              onChange={handleScreenshotSelect}
-            />
-            <div className="bio-screenshot-row">
-              {screenshots.map((s, i) => (
-                <div key={i} className="bio-screenshot-thumb">
-                  <img src={s.preview} alt={`screenshot ${i + 1}`} />
-                  <button type="button" className="bio-screenshot-remove" onClick={() => removeScreenshot(i)}>
-                    <X size={12} />
-                  </button>
-                </div>
-              ))}
-              {screenshots.length < MAX_SCREENSHOTS && (
-                <button type="button" className="bio-screenshot-add" onClick={() => fileInputRef.current?.click()}>
-                  <Camera size={15} />
-                  Upload screenshot of first prompt
-                </button>
-              )}
-            </div>
-            <textarea
-              className="form-textarea"
-              rows={3}
-              placeholder="e.g. '28 · Designer · Boston' or paste your first prompt answer..."
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-            />
-          </div>
-
-          <div className="form-section">
             <label className="form-label">What tone should your profile have?</label>
             <p className="form-hint">Pick the direction that feels most like you at your best.</p>
             <div className="tag-select-grid">
-              {["Warm & approachable", "Funny & playful", "Confident & direct", "Thoughtful & intentional", "Dry & understated", "Adventurous & spontaneous"].map((tone) => (
+              {[
+                "Warm & approachable", "Funny & playful", "Confident & direct",
+                "Thoughtful & intentional", "Dry & understated", "Adventurous & spontaneous",
+                "Flirty & magnetic", "Romantic & sincere", "Bold & provocative",
+                "Intellectual & curious", "Polished & ambitious", "Relaxed & low-key",
+              ].map((tone) => (
                 <button key={tone} type="button" className={`tag-select-btn ${preferredTone === tone ? "active" : ""}`} onClick={() => setPreferredTone(preferredTone === tone ? "" : tone)}>
                   {tone}
                 </button>
@@ -957,7 +978,14 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                     <X size={14} />
                   </button>
                 </div>
-                <div className="bio-screenshot-row" style={{ marginBottom: 8 }}>
+                <div
+                  className={`bio-screenshot-row prompt-dropzone ${dragUploadTarget === `prompt-${i}` ? "is-dragging-files" : ""}`}
+                  style={{ marginBottom: 8 }}
+                  onDragEnter={(e) => handleUploadDragOver(e, `prompt-${i}`)}
+                  onDragOver={(e) => handleUploadDragOver(e, `prompt-${i}`)}
+                  onDragLeave={handleUploadDragLeave}
+                  onDrop={(e) => handleAdditionalPromptDrop(e, i)}
+                >
                   {entry.screenshot && (
                     <div className="bio-screenshot-thumb">
                       <img src={entry.screenshot.preview} alt={`prompt ${i + 1} screenshot`} />
@@ -978,7 +1006,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                       additionalPromptFileRef.current?.click();
                     }}>
                       <Camera size={15} />
-                      Upload screenshot
+                      Drop a prompt screenshot here or tap to browse
                     </button>
                   )}
                 </div>
@@ -1093,8 +1121,8 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
         <div className="form-container calibration-container">
           <div className="form-header">
             <p className="audit-eyebrow">Final step · 03 / 03</p>
-            <h2>What makes a profile catch your eye?</h2>
-            <p>These are artificial examples, not real people. Pick the three profile-photo directions you instinctively respond to most. Your choices help calibrate the audit to your taste.</p>
+            <h2>Which photos grab your attention first?</h2>
+            <p>When a dating profile first appears, which type of photo is most likely to catch your attention? These are artificial examples, not real people. Choose exactly three so we can calibrate the audit to your instincts.</p>
           </div>
           <div className="calibration-grid">
             {CALIBRATION_EXAMPLES.map((example, exampleIndex) => {

@@ -10,6 +10,8 @@ interface Props {
   profileInput: ProfileInput;
   onBack: () => void;
   onAnalyzeAnother?: () => void;
+  isAuthenticated?: boolean;
+  onSignIn?: () => void;
 }
 
 function parsePhotoData(raw: string): { data: string; mimeType: string } | null {
@@ -35,7 +37,7 @@ function PhotoThumb({ raw, label }: { raw: string; label: string }) {
   );
 }
 
-export function FullReport({ result, profileInput, onBack, onAnalyzeAnother }: Props) {
+export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isAuthenticated, onSignIn }: Props) {
   const { score, feedback } = result;
   const platform = profileInput.platform || "other";
   const platformLabel = PLATFORM_LABEL[platform] ?? platform;
@@ -107,7 +109,7 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother }: P
       <div className="results-container">
         <div className="results-header">
           <button className="back-link" onClick={onBack}>
-            <ArrowLeft size={16} /> Back to Results
+            <ArrowLeft size={16} /> Back to score
           </button>
         </div>
 
@@ -399,12 +401,26 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother }: P
             </div>
             <div className="report-section-body">
               <div className="photo-signal-list">
-                {feedback.photoRanking.map((photo, index) => (
+                {feedback.photoRanking.map((photo, index) => {
+                  const isExtra = photo.photo.toLowerCase().includes("extra");
+                  const currentIndex = !isExtra ? parseInt(photo.photo.replace(/\D/g, "")) - 1 : -1;
+                  const extraLetter = isExtra ? photo.photo.match(/extra photo ([A-Z])/i)?.[1] : null;
+                  const extraIndex = extraLetter ? extraLetter.toUpperCase().charCodeAt(0) - 65 : -1;
+                  const rawPhoto = isExtra
+                    ? profileInput.additionalPhotos?.[extraIndex]
+                    : profileInput.currentPhotos?.[currentIndex];
+                  const parsedPhoto = rawPhoto ? parsePhotoData(rawPhoto) : null;
+                  return (
                   <div className="photo-signal-item" key={`${photo.photo}-${index}`}>
                     <span className="photo-signal-rank">{photo.rank || index + 1}</span>
-                    <div><strong>{photo.photo}</strong><p>{photo.signal}</p><small>{photo.recommendation}</small></div>
+                    {parsedPhoto && <img className="photo-signal-thumb" src={`data:${parsedPhoto.mimeType};base64,${parsedPhoto.data}`} alt={photo.photo} />}
+                    <div>
+                      <strong>{parsedPhoto ? (isExtra ? "Extra photo option" : currentIndex === 0 ? "Lead photo" : "Profile photo") : photo.photo}</strong>
+                      <p>{photo.signal}</p><small>{photo.recommendation}</small>
+                    </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -540,20 +556,43 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother }: P
           </div>
         )}
 
+        {profileInput.additionalPhotos.length === 0 && (
+          <div className="report-section-card">
+            <div className="report-section-header">
+              <div className="report-section-icon"><Camera size={18} /></div>
+              <h3>Give Magnet more options</h3>
+            </div>
+            <div className="report-section-body">
+              <p className="report-section-analysis">You did not upload any extra photo options. Add a few full-body, candid, social, travel, or activity photos next time so we can compare alternatives and provide a fuller photo strategy.</p>
+            </div>
+          </div>
+        )}
+
         {feedback.platformRecommendations && (
           <div className="report-section-card">
             <div className="report-section-header">
               <div className="report-section-icon"><Layout size={18} /></div>
               <div>
                 <h3>App-Specific Direction</h3>
-                <p className="report-section-subhead">How to apply this audit on each major platform</p>
+                <p className="report-section-subhead">Your selected app is unlocked. Run another audit to unlock a different platform.</p>
               </div>
             </div>
             <div className="report-section-body platform-recommendations">
-              {(["hinge", "bumble", "tinder"] as const).map((app) => feedback.platformRecommendations?.[app] && (
-                <div key={app}><strong>{app}</strong><p>{feedback.platformRecommendations[app]}</p></div>
-              ))}
+              {Array.from(new Set([platform, "hinge", "bumble", "tinder", "raya"])).map((app) => {
+                const selected = app === platform;
+                const recommendation = selected
+                  ? feedback.platformRecommendations?.[platform as keyof typeof feedback.platformRecommendations]
+                    || feedback.platformRecommendations?.selectedPlatform
+                    || `This report is calibrated specifically for ${platformLabel}. Apply the photo order, prompt strategy, and profile positioning above within this app’s format.`
+                  : "Run a new Magnet audit to reveal this app-specific direction.";
+                return (
+                  <div key={app} className={selected ? "platform-direction-active" : "platform-direction-locked"}>
+                    <strong>{PLATFORM_LABEL[app] || app}</strong><p>{recommendation}</p>
+                  </div>
+                );
+              })}
             </div>
+            {onAnalyzeAnother && <button className="cta-button platform-rerun-btn" onClick={onAnalyzeAnother}>Run another report <ArrowRight size={16} /></button>}
           </div>
         )}
 
@@ -570,6 +609,13 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother }: P
               </div>
             </div>
             <div className="report-section-body">
+              {!isAuthenticated && onSignIn && (
+                <div className="report-account-prompt">
+                  <strong>Track your progress and get one additional audit free.</strong>
+                  <p>Create an account to save this score, compare future results, and unlock one more profile audit.</p>
+                  <button className="save-results-btn" onClick={onSignIn}>Create free account</button>
+                </div>
+              )}
               <div className="match-potential-compare">
                 <div className="match-potential-box current">
                   <p className="match-potential-box-label">Current profile</p>
@@ -722,7 +768,7 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother }: P
 
         <div className="report-footer">
           <button className="results-start-over-btn" onClick={onBack}>
-            Back to Results <ArrowRight size={16} />
+            <ArrowLeft size={16} /> Back to score
           </button>
         </div>
       </div>

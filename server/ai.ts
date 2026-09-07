@@ -100,7 +100,7 @@ CONTEXT SIGNALS by photo type:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PHOTO EVALUATION CRITERIA
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. LEAD PHOTO: Is it magnetic for THIS person's audience? For a man attracting women: does it combine status cues with warmth? For a woman attracting men: does it feel authentic and vital? Expression + eye contact + context are the three lead photo levers.
+1. LEAD PHOTO: Always treat Photo #1—the first uploaded profile photo—as the first thing a potential match sees. Do not ask for or infer a separate "first written thing." Is Photo #1 magnetic for THIS person's audience? For a man attracting women: does it combine status cues with warmth? For a woman attracting men: does it feel authentic and vital? Expression + eye contact + context are the three lead photo levers.
 2. PHOTO ORDER NARRATIVE: Does the sequence build a picture of a life worth being part of? Does interest increase as you scroll, or does the profile peak at photo 1 and then flatline?
 3. VARIETY: Different settings, moods, social contexts, solo moments. Same location/same pose/same outfit in multiple photos = red flag.
 4. SIGNAL COHERENCE: Do the photos tell a consistent story about who this person is? Conflicting signals (LinkedIn headshot + blurry nightclub photo) create cognitive dissonance and reduce trust.
@@ -149,7 +149,7 @@ INDOOR / HOME PHOTOS: What does the environment reveal? A well-curated bookshelf
 
 PET PHOTOS: This is warmth and responsibility in one shot — if it's their actual pet. Flag if: the pet is clearly not theirs (borrowed pet energy reads as inauthentic), or the user is hidden behind the animal. The best pet photo shows both the user and the pet clearly, with genuine affection.
 
-SELFIES: A maximum of 1–2 is acceptable. Phone-in-mirror gym selfies are the lowest-performing photo type on every platform. A well-framed selfie with good light and genuine expression can work as a supporting photo but never as a lead. More than 2 selfies = flag for diversity.
+SELFIES: Selfies are inherently less effective than photos taken by another person because they usually communicate lower effort, less social context, and limited lifestyle evidence. Mirror selfies are especially weak; the visible phone, mirror setting, and self-conscious framing reduce polish and attraction. A maximum of one exceptional, well-lit selfie may work as a supporting photo, but never recommend a selfie as the lead when a viable non-selfie exists. Phone-in-mirror gym selfies are the lowest-performing photo type on every platform. More than one selfie should trigger a recommendation to replace them with candid, social, or activity-based photos.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 EMOTIONAL RESONANCE — what does this profile make you FEEL?
@@ -680,7 +680,9 @@ Respond in this exact JSON format:
     "platformRecommendations": {
       "hinge": "<specific recommendation for this profile on Hinge>",
       "bumble": "<specific recommendation for this profile on Bumble>",
-      "tinder": "<specific recommendation for this profile on Tinder>"
+      "tinder": "<specific recommendation for this profile on Tinder>",
+      "raya": "<specific recommendation for this profile on Raya>",
+      "selectedPlatform": "<the most specific direction for the platform the user selected>"
     },
     "sampleProfile": {
       "headline": "<1 punchy line: who does the OPTIMIZED profile present as? Specific to their personality — e.g. 'Quietly competitive, weirdly well-read, makes great pasta'>",
@@ -997,6 +999,8 @@ export async function analyzeProfile(input: ProfileInput): Promise<ProfileResult
             hinge: parsed.feedback.platformRecommendations.hinge ?? "",
             bumble: parsed.feedback.platformRecommendations.bumble ?? "",
             tinder: parsed.feedback.platformRecommendations.tinder ?? "",
+            raya: parsed.feedback.platformRecommendations.raya ?? "",
+            selectedPlatform: parsed.feedback.platformRecommendations.selectedPlatform ?? "",
           }
         : undefined,
       sampleProfile: parsed.feedback?.sampleProfile?.headline

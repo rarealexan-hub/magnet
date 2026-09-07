@@ -175,6 +175,8 @@ export interface ProfileFeedback {
     hinge?: string;
     bumble?: string;
     tinder?: string;
+    raya?: string;
+    selectedPlatform?: string;
   };
   categoryAnalysis?: CategoryAnalysis;
   sampleProfile?: SampleProfile;

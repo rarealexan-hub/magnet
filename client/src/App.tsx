@@ -23,6 +23,7 @@ export default function App() {
   const [preselectedPlatform, setPreselectedPlatform] = useState<string | undefined>();
   const [fullReportViewed, setFullReportViewed] = useState(false);
   const [authContext, setAuthContext] = useState<"default" | "save-results">("default");
+  const [repeatAuditEmail, setRepeatAuditEmail] = useState("");
   const { user, loading, token, login, loginWithGoogle, register, logout } = useAuth();
 
   useEffect(() => {
@@ -320,7 +321,7 @@ export default function App() {
             <ProfileForm
               onResult={handleResult}
               onBack={() => setView("landing")}
-              userEmail={user?.email}
+              userEmail={user?.email || repeatAuditEmail}
               preselectedPlatform={preselectedPlatform}
             />
           )}
@@ -341,7 +342,17 @@ export default function App() {
               result={result}
               profileInput={profileInput}
               onBack={() => setView("results")}
-              onAnalyzeAnother={() => { trackAnalyzeAnother(); setFullReportViewed(false); setResult(null); setProfileInput(null); setView("form"); }}
+              onAnalyzeAnother={() => {
+                trackAnalyzeAnother();
+                setRepeatAuditEmail(profileInput.email);
+                setFullReportViewed(false);
+                setResult(null);
+                setProfileInput(null);
+                setView("form");
+                if (!user) openAuthForResults();
+              }}
+              isAuthenticated={!!user}
+              onSignIn={user ? undefined : openAuthForResults}
             />
           )}
           {view === "dashboard" && (
