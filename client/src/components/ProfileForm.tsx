@@ -868,6 +868,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
             </div>
             <div>
               <label className="form-label">What are you looking for?</label>
+              <p className="form-hint">Your relationship goal helps us tailor the recommendations.</p>
               <select className="form-input" value={relationshipIntent} onChange={(e) => setRelationshipIntent(e.target.value)}>
                 <option value="">Choose one</option>
                 <option value="long-term">Long-term relationship</option>
