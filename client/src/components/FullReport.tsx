@@ -168,6 +168,35 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother }: P
           );
         })}
 
+        {/* ── Audit takeaways ── */}
+        {(feedback.accidentalSignals || feedback.immediateFixes?.length || feedback.profileType) && (
+          <div className="report-section-card audit-takeaways-card">
+            <div className="report-section-header">
+              <div className="report-section-icon"><Zap size={18} /></div>
+              <div>
+                <h3>What your profile is really saying</h3>
+                <p className="report-section-subhead">The signal underneath the words</p>
+              </div>
+            </div>
+            <div className="report-section-body">
+              <div className="audit-archetype">
+                <span className="report-section-badge">Dating archetype</span>
+                <strong>{feedback.profileType.replace("-", " ")}</strong>
+                <p>{feedback.profileTypeExplanation}</p>
+              </div>
+              {feedback.accidentalSignals && <p className="report-section-analysis">{feedback.accidentalSignals}</p>}
+              {feedback.immediateFixes && feedback.immediateFixes.length > 0 && (
+                <div className="audit-immediate-fixes">
+                  <p className="report-fix-title">3 immediate fixes</p>
+                  <ol>
+                    {feedback.immediateFixes.slice(0, 3).map((fix, index) => <li key={index}><span>{index + 1}</span>{fix}</li>)}
+                  </ol>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ── Prompt recommendations ── */}
         {(hasPrompts || hasBio) && (
           <div className="report-section-card">
@@ -359,6 +388,28 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother }: P
           </div>
         )}
 
+        {feedback.photoRanking && feedback.photoRanking.length > 0 && (
+          <div className="report-section-card">
+            <div className="report-section-header">
+              <div className="report-section-icon"><Camera size={18} /></div>
+              <div>
+                <h3>Photo Signal Map</h3>
+                <p className="report-section-subhead">What each photo communicates and what to do with it</p>
+              </div>
+            </div>
+            <div className="report-section-body">
+              <div className="photo-signal-list">
+                {feedback.photoRanking.map((photo, index) => (
+                  <div className="photo-signal-item" key={`${photo.photo}-${index}`}>
+                    <span className="photo-signal-rank">{photo.rank || index + 1}</span>
+                    <div><strong>{photo.photo}</strong><p>{photo.signal}</p><small>{photo.recommendation}</small></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── Photo order recommendation ── */}
         {feedback.photoOrderRecommendation && (
           <div className="report-section-card">
@@ -464,6 +515,44 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother }: P
               <p className="sample-profile-disclaimer">
                 This is a directional sample — personalise it with your own voice and specifics before using it.
               </p>
+            </div>
+          </div>
+        )}
+
+        {feedback.reshootBriefs && feedback.reshootBriefs.length > 0 && (
+          <div className="report-section-card">
+            <div className="report-section-header">
+              <div className="report-section-icon"><Camera size={18} /></div>
+              <div>
+                <h3>Reshoot Briefs</h3>
+                <p className="report-section-subhead">Three concrete ways to fill the gaps in your current set</p>
+              </div>
+            </div>
+            <div className="report-section-body reshoot-grid">
+              {feedback.reshootBriefs.map((brief, index) => (
+                <div className="reshoot-brief" key={`${brief.title}-${index}`}>
+                  <span>0{index + 1}</span><h4>{brief.title}</h4>
+                  <p><strong>Capture:</strong> {brief.shot}</p>
+                  <p><strong>Why:</strong> {brief.why}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {feedback.platformRecommendations && (
+          <div className="report-section-card">
+            <div className="report-section-header">
+              <div className="report-section-icon"><Layout size={18} /></div>
+              <div>
+                <h3>App-Specific Direction</h3>
+                <p className="report-section-subhead">How to apply this audit on each major platform</p>
+              </div>
+            </div>
+            <div className="report-section-body platform-recommendations">
+              {(["hinge", "bumble", "tinder"] as const).map((app) => feedback.platformRecommendations?.[app] && (
+                <div key={app}><strong>{app}</strong><p>{feedback.platformRecommendations[app]}</p></div>
+              ))}
             </div>
           </div>
         )}
@@ -619,7 +708,7 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother }: P
             </div>
             <h3 style={{ marginBottom: "8px", fontSize: "18px" }}>On another app too?</h3>
             <p style={{ color: "#6b7280", marginBottom: "20px", fontSize: "14px" }}>
-              Analyze a different platform for $1.99 — full report included. Works on Tinder, Bumble, Hinge & more.
+              Run a Magnet Profile Audit for another platform and compare the signals. Works on Tinder, Bumble, Hinge & more.
             </p>
             <button
               className="cta-button"

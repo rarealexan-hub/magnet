@@ -7,12 +7,13 @@ import { FullReport } from "./components/FullReport";
 import { Dashboard } from "./components/Dashboard";
 import { AuthModal } from "./components/AuthModal";
 import { UserMenu } from "./components/UserMenu";
+import { HumanAuditAdmin } from "./components/HumanAudit";
 import { PrivacyPolicy } from "./components/PrivacyPolicy";
 import { useAuth } from "./hooks/useAuth";
 import type { ProfileInput, ProfileResult, AnalysisRecord } from "@shared/types";
 import { trackPageView, trackSignIn, trackSignUp, trackFullReportOpened, trackAnalyzeAnother } from "./lib/analytics";
 
-type View = "landing" | "form" | "results" | "full-report" | "dashboard" | "privacy";
+type View = "landing" | "form" | "results" | "full-report" | "dashboard" | "privacy" | "admin";
 
 export default function App() {
   const [view, setView] = useState<View>("landing");
@@ -174,6 +175,7 @@ export default function App() {
       "full-report": "Full Report",
       dashboard: "Dashboard",
       privacy: "Privacy Policy",
+      admin: "Audit Admin",
     };
     trackPageView(viewNames[view] ?? view);
   }, [view]);
@@ -246,6 +248,8 @@ export default function App() {
     setView("form");
   };
 
+  const handleOpenAdmin = () => setView("admin");
+
   const handleViewResultFromDashboard = (analysis: AnalysisRecord) => {
     setResult({
       score: analysis.score,
@@ -296,6 +300,7 @@ export default function App() {
                   user={user}
                   onLogout={() => { logout(); handleStartOver(); }}
                   onDashboard={() => setView("dashboard")}
+                   onAdmin={handleOpenAdmin}
                 />
               ) : (
                 <button
@@ -349,6 +354,12 @@ export default function App() {
               token={token}
             />
           )}
+           {view === "admin" && (
+             <HumanAuditAdmin
+               token={token}
+               onBack={() => setView(user ? "dashboard" : "landing")}
+             />
+           )}
 
           {showAuth && (
             <AuthModal

@@ -16,7 +16,7 @@ client/           - React frontend
   src/
     components/   - Landing, ProfileForm, Results, FullReport, Dashboard, ScoreRing, AuthModal, UserMenu
     hooks/        - useAuth (JWT auth state management)
-    App.tsx       - Main app with view routing (landing/form/results/full-report/dashboard)
+   App.tsx       - Main app with view routing (landing/form/results/full-report/dashboard/admin)
     styles.css    - Full app styles
   index.html
   public/
@@ -32,7 +32,7 @@ shared/
 
 ## Features
 
-1. **Free Magnet Analysis**: Magnet Score with 5-category breakdown (Photo Quality, Attraction Signals, Personality Signals, Match Targeting, First Impression) + witty roast + issues detected with "biggest match killer" callout
+1. **Magnet Profile Audit**: One AI-assisted product based on Magnet's structured dating-profile review framework. It collects profile screenshots/photos, context, and photo-preference calibration, then returns a complete report.
 2. **One Free Analysis Per Email (Per Platform)**: Server-side enforcement via `free_audits` table — each email gets one free analysis for one dating platform
 3. **Match Targeting**: Choose who you want to attract (7 preset types + custom)
 4. **Screenshot Upload**: Upload screenshots of dating profile instead of typing it out (uses OpenAI vision)
@@ -40,15 +40,17 @@ shared/
 6. **Email Collection**: Required email field on form
 7. **Shareable Results**: Copy Magnet Score roast for social sharing (viral loop)
 8. **Before/After Examples**: Landing page shows transformation case study
-9. **Pricing**: No payment flow. The Full Report is free during beta. A paywall will be rebuilt later.
-10. **Full Report Page**: Detailed per-category analysis with improvement suggestions and photo swap recommendations
-11. **Dashboard Page**: Functional Magnet Pro dashboard — fetches real analysis history from DB, shows score trend chart, per-platform health status with re-analyze buttons, analysis history list with clickthrough to results. Accessible from user menu for logged-in users. Requires authentication.
+9. **Complete Audit Report**: Magnet Score, photo ranking/order, photo signals, accidental messaging, prompt rewrites, profile archetype, immediate fixes, reshoot direction, and platform-aware recommendations.
+10. **Dashboard Page**: Functional dashboard — fetches real analysis history from DB, shows score trend chart, per-platform health status with re-analyze buttons, and analysis history.
+11. **Audit Admin**: Authenticated admin queue for completed profile audits, saved submission context, generated report JSON, status, and internal notes. Access is restricted by the `ADMIN_EMAILS` comma-separated environment variable.
 
 ## Database Tables
 
 - `users` — user accounts (id SERIAL PK, email TEXT UNIQUE, password_hash TEXT, created_at)
 - `free_audits` — tracks which emails have used their free Magnet analysis per platform (id, email, platform, created_at; UNIQUE on email+platform)
 - `analyses` — persists every analysis result (id SERIAL PK, user_email TEXT, platform TEXT, overall_score INT, photo_quality INT, attraction_signals INT, personality_signals INT, match_targeting INT, first_impression INT, roast TEXT, mistakes JSONB, profile_type TEXT, profile_type_explanation TEXT, created_at TIMESTAMP); indexed on user_email
+- `human_audits` — stores the single Profile Audit submission, calibration signals, generated report in `client_brief`, status, access token, and admin notes
+- `human_audit_questions` / `human_audit_answers` — optional follow-up history retained for admin use
 
 ## Design System
 

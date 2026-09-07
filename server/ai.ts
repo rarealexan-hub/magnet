@@ -516,6 +516,8 @@ function buildProfileText(input: ProfileInput): string {
     message += `\nScoring mandate: You are evaluating a ${genderLabel}'s profile as it will be seen by ${attractsLabel}. Every score — photoQuality, attractionSignals, personalitySignals, firstImpression — must be calibrated to what THIS specific audience responds to, not a generic standard.\n`;
     message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
   }
+  if (input.locationMarket) message += `Dating market / location: ${input.locationMarket}\n`;
+  if (input.preferredTone) message += `Preferred profile tone: ${input.preferredTone}\n`;
 
   message += `Platform: ${input.platform}\n`;
 
@@ -644,6 +646,28 @@ Respond in this exact JSON format:
     "photoOrderRecommendation": {
       "suggestedOrder": ["<Photo reference>", "<Photo reference>", "..."],
       "reason": "<explain the narrative logic of this order — what each position is doing, why this sequence builds interest rather than killing it>"
+    },
+    "photoRanking": [
+      {
+        "photo": "<Photo #N or Extra Photo X>",
+        "rank": <1-based rank>,
+        "signal": "<what this photo communicates to a potential match>",
+        "recommendation": "<keep, move, replace, or reshoot — with a specific reason>"
+      }
+    ],
+    "accidentalSignals": "<2-4 sentences on what the current profile accidentally communicates versus what the user says they want to communicate. Be direct and specific.>",
+    "immediateFixes": ["<highest-impact fix 1>", "<highest-impact fix 2>", "<highest-impact fix 3>"],
+    "reshootBriefs": [
+      {
+        "title": "<short brief name>",
+        "shot": "<exact scene, framing, expression, clothing, and setting to capture>",
+        "why": "<the signal this adds and the current gap it fixes>"
+      }
+    ],
+    "platformRecommendations": {
+      "hinge": "<specific recommendation for this profile on Hinge>",
+      "bumble": "<specific recommendation for this profile on Bumble>",
+      "tinder": "<specific recommendation for this profile on Tinder>"
     },
     "sampleProfile": {
       "headline": "<1 punchy line: who does the OPTIMIZED profile present as? Specific to their personality — e.g. 'Quietly competitive, weirdly well-read, makes great pasta'>",
@@ -934,6 +958,32 @@ export async function analyzeProfile(input: ProfileInput): Promise<ProfileResult
         ? {
             suggestedOrder: parsed.feedback.photoOrderRecommendation.suggestedOrder,
             reason: parsed.feedback.photoOrderRecommendation.reason ?? "",
+          }
+        : undefined,
+      photoRanking: Array.isArray(parsed.feedback?.photoRanking)
+        ? parsed.feedback.photoRanking.map((item: any, index: number) => ({
+            photo: item.photo ?? `Photo #${index + 1}`,
+            rank: item.rank ?? index + 1,
+            signal: item.signal ?? "",
+            recommendation: item.recommendation ?? "",
+          }))
+        : undefined,
+      accidentalSignals: parsed.feedback?.accidentalSignals ?? undefined,
+      immediateFixes: Array.isArray(parsed.feedback?.immediateFixes)
+        ? parsed.feedback.immediateFixes.slice(0, 3)
+        : undefined,
+      reshootBriefs: Array.isArray(parsed.feedback?.reshootBriefs)
+        ? parsed.feedback.reshootBriefs.slice(0, 3).map((brief: any) => ({
+            title: brief.title ?? "Reshoot brief",
+            shot: brief.shot ?? "",
+            why: brief.why ?? "",
+          }))
+        : undefined,
+      platformRecommendations: parsed.feedback?.platformRecommendations
+        ? {
+            hinge: parsed.feedback.platformRecommendations.hinge ?? "",
+            bumble: parsed.feedback.platformRecommendations.bumble ?? "",
+            tinder: parsed.feedback.platformRecommendations.tinder ?? "",
           }
         : undefined,
       sampleProfile: parsed.feedback?.sampleProfile?.headline

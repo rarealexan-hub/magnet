@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { AlertTriangle, Crosshair, ArrowRight, FileText, Zap, Lightbulb, TrendingUp, BookMarked, X, Smartphone } from "lucide-react";
+import { AlertTriangle, Crosshair, ArrowRight, FileText, Lightbulb, TrendingUp, BookMarked, X, Smartphone } from "lucide-react";
 import type { ProfileResult, ProfileInput } from "@shared/types";
 import { PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
@@ -61,7 +61,7 @@ interface Props {
   onSignIn?: () => void;
 }
 
-const BASIC_SUGGESTIONS: Record<string, { tip: string }> = {
+const QUICK_SUGGESTIONS: Record<string, { tip: string }> = {
   photoQuality: {
     tip: "Replace group shots, blurry photos, or bathroom selfies with clear solo photos taken in natural light. Every photo should pass a quick test: does this make someone want to know more about me?",
   },
@@ -79,7 +79,7 @@ const BASIC_SUGGESTIONS: Record<string, { tip: string }> = {
   },
 };
 
-function BasicSuggestions({ score, onFullReport }: { score: ProfileResult["score"]; onFullReport: () => void }) {
+function ImmediateDirection({ score, onFullReport }: { score: ProfileResult["score"]; onFullReport: () => void }) {
   const freeCategories = [
     { key: "photoQuality" as const, label: "Photo Quality" },
     { key: "attractionSignals" as const, label: "Attraction Signals" },
@@ -91,14 +91,14 @@ function BasicSuggestions({ score, onFullReport }: { score: ProfileResult["score
   return (
     <div className="basic-suggestions-section">
       <h3 className="basic-suggestions-title">
-        <Lightbulb size={18} /> Basic fixes to start with
+        <Lightbulb size={18} /> Direction to start with
       </h3>
       <p className="basic-suggestions-sub">
-        These are direction-level tips. The Full Report gives you the exact specifics.
+        Your complete Magnet Profile Audit has the exact photo, prompt, and order recommendations.
       </p>
       <div className="basic-suggestions-list">
         {weakFree.map((cat) => {
-          const s = BASIC_SUGGESTIONS[cat.key];
+           const s = QUICK_SUGGESTIONS[cat.key];
           return (
             <div key={cat.key} className="basic-suggestion-item">
               <div className="basic-suggestion-header">
@@ -209,30 +209,27 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
           </ul>
           {feedback.mistakes.length > 3 && (
             <p className="mistakes-more-count">
-              +{feedback.mistakes.length - 3} more issues detected — full breakdown and fixes in the Full Report
+               +{feedback.mistakes.length - 3} more issues detected — see the complete audit below
             </p>
           )}
         </div>
 
-        <BasicSuggestions score={score} onFullReport={onFullReport} />
+         <ImmediateDirection score={score} onFullReport={onFullReport} />
 
         {feedback.leadPhotoTeaser && (
-          <div className="basic-suggestion-item basic-suggestion-item--locked" onClick={onFullReport} style={{ cursor: "pointer" }}>
+          <div className="basic-suggestion-item">
             <div className="basic-suggestion-header">
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 15 }}>📸</span>
                 <span className="basic-suggestion-label">Lead Photo Intel</span>
               </div>
               <span className="basic-suggestion-score">
-                Full Report
+                In your audit
               </span>
             </div>
             <p className="basic-suggestion-tip" style={{ fontStyle: "italic" }}>
               {feedback.leadPhotoTeaser}
             </p>
-            <div className="basic-suggestion-locked">
-              <span>Open the Full Report to see the exact photo that should be your lead, and why</span>
-            </div>
           </div>
         )}
 
@@ -253,50 +250,15 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
           </div>
         )}
 
-        {!fullReportViewed && (
-          <div className="upgrade-section">
-            <h3 className="upgrade-title">Get the full fix, not just the diagnosis</h3>
-            <p className="upgrade-subtitle">
-              The Full Report tells you <em>exactly</em> what to change and how — per photo, per prompt, in order.
-            </p>
-
-            <div className="pricing-cards">
-              <div className="pricing-card">
-                <div className="pricing-card-header">
-                  <div className="pricing-icon">
-                    <FileText size={22} />
-                  </div>
-                  <div>
-                    <h4>Full Report</h4>
-                    <p className="pricing-tagline">One-time deep dive</p>
-                  </div>
-                </div>
-                <div className="pricing-price">
-                  <span className="price-amount">Free</span>
-                  <span className="price-period">during beta</span>
-                </div>
-                <ul className="pricing-features">
-                  <li><Zap size={14} /> Per-photo breakdown — exactly what each photo signals</li>
-                  <li><Zap size={14} /> Prompt coaching — what's wrong with each one & how to fix it</li>
-                  <li><Zap size={14} /> Photo swap picks — your uploaded extras compared to your current lineup, with exact swap suggestions and side-by-side previews</li>
-                  <li><Zap size={14} /> Optimal photo order — ranked 1–6 with reasoning</li>
-                  <li><Zap size={14} /> Category-level analysis written about your profile</li>
-                </ul>
-                <button className="pricing-btn" onClick={onFullReport}>
-                  <span>Open Full Report</span> <ArrowRight size={16} />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {fullReportViewed && (
-          <div className="results-footer">
-            <button className="pricing-btn" style={{ width: "100%" }} onClick={onFullReport}>
-              <FileText size={15} /> View Full Report
-            </button>
-          </div>
-        )}
+         <div className="upgrade-section audit-report-cta">
+           <h3 className="upgrade-title">Your complete Magnet Profile Audit</h3>
+           <p className="upgrade-subtitle">
+             See the full photo ranking, best order, accidental signals, rewrites, dating archetype, immediate fixes, reshoot briefs, and platform-specific guidance.
+           </p>
+           <button className="pricing-btn" onClick={onFullReport}>
+             <FileText size={15} /> {fullReportViewed ? "View your complete audit" : "Open your complete audit"} <ArrowRight size={16} />
+           </button>
+         </div>
 
         <div className="addon-section">
           <div className="addon-strip">

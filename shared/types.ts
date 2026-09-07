@@ -39,6 +39,8 @@ export interface ProfileInput {
   partnerPreferences?: string[];
   photoTasteSelections?: string[];
   relationshipIntent?: string;
+  locationMarket?: string;
+  preferredTone?: string;
   interests?: string[];
   partnerNonNegotiables?: string[];
   idealPartnerDescription?: string;
@@ -109,6 +111,19 @@ export interface PhotoOrderRecommendation {
   reason: string;
 }
 
+export interface PhotoSignalAnalysis {
+  photo: string;
+  rank: number;
+  signal: string;
+  recommendation: string;
+}
+
+export interface ReshootBrief {
+  title: string;
+  shot: string;
+  why: string;
+}
+
 export interface CategoryAnalysis {
   photoQuality: string;
   attractionSignals: string;
@@ -151,6 +166,15 @@ export interface ProfileFeedback {
   photoSwapRecommendations?: PhotoSwapRecommendation[];
   promptRecommendations?: PromptRecommendation[];
   photoOrderRecommendation?: PhotoOrderRecommendation;
+  photoRanking?: PhotoSignalAnalysis[];
+  accidentalSignals?: string;
+  immediateFixes?: string[];
+  reshootBriefs?: ReshootBrief[];
+  platformRecommendations?: {
+    hinge?: string;
+    bumble?: string;
+    tinder?: string;
+  };
   categoryAnalysis?: CategoryAnalysis;
   sampleProfile?: SampleProfile;
   potentialMatches?: PotentialMatch[];
@@ -183,6 +207,63 @@ export interface DashboardData {
     analysisCount: number;
     lastAnalyzed: string;
   }[];
+}
+
+export type HumanAuditStatus =
+  | "intake_started"
+  | "intake_complete"
+  | "awaiting_admin_review"
+  | "followup_sent"
+  | "followup_complete"
+  | "final_report_ready";
+
+export type HumanAuditQuestionStatus = "open" | "answered";
+
+export interface HumanAuditAnswer {
+  id: number;
+  questionId: number;
+  answer: string;
+  answeredByEmail?: string | null;
+  createdAt: string;
+}
+
+export interface HumanAuditQuestion {
+  id: number;
+  auditId: number;
+  question: string;
+  status: HumanAuditQuestionStatus;
+  createdAt: string;
+  answeredAt?: string | null;
+  answers: HumanAuditAnswer[];
+}
+
+export interface HumanAudit {
+  id: number;
+  email: string;
+  platform: string;
+  status: HumanAuditStatus;
+  intakeData: Record<string, unknown>;
+  photoCalibration: {
+    selectedIds: string[];
+    rankedIds: string[];
+  };
+  clientBrief?: Record<string, unknown> | null;
+  adminNotes?: string | null;
+  questions: HumanAuditQuestion[];
+  createdAt: string;
+  updatedAt: string;
+  finalReportReadyAt?: string | null;
+}
+
+export interface HumanAuditListItem {
+  id: number;
+  email: string;
+  platform: string;
+  status: HumanAuditStatus;
+  questionCount: number;
+  openQuestionCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export const PLATFORM_PROMPTS: Record<string, string[]> = {

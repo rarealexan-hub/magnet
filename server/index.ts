@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
+import crypto from "crypto";
 import multer from "multer";
 import { fileURLToPath } from "url";
 import { Pool } from "pg";
@@ -19,6 +20,7 @@ import type {
   AnalysisRecord,
   DashboardData,
 } from "../shared/types.js";
+import type { HumanAuditStatus } from "../shared/types.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -175,6 +177,82 @@ const analyzeUpload = upload.fields([
 
 interface AuthRequest extends Request {
   user?: { userId: number; email: string };
+}
+
+const HUMAN_AUDIT_STATUSES: HumanAuditStatus[] = [
+  "intake_started",
+  "intake_complete",
+  "awaiting_admin_review",
+  "followup_sent",
+  "followup_complete",
+  "final_report_ready",
+];
+
+function getAuditArray(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string");
+  if (typeof value === "string" && value.trim()) return [value];
+  return [];
+}
+
+function auditToken(): string {
+  return crypto.randomBytes(24).toString("hex");
+}
+
+function adminEmails(): Set<string> {
+  return new Set(
+    (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
+function authenticateAdmin(req: AuthRequest, res: Response, next: NextFunction) {
+  authenticateRequired(req, res, () => {
+    if (!adminEmails().has(req.user!.email.toLowerCase())) {
+      res.status(403).json({ error: "Admin access required" });
+      return;
+    }
+    next();
+  });
+}
+
+function mapAuditRow(row: any, questions: any[] = []) {
+  return {
+    id: Number(row.id),
+    email: row.email,
+    platform: row.platform,
+    status: row.status,
+    intakeData: row.intake_data || {},
+    photoCalibration: row.photo_calibration || { selectedIds: [], rankedIds: [] },
+    clientBrief: row.client_brief || null,
+    adminNotes: row.admin_notes || null,
+    questions,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    finalReportReadyAt: row.final_report_ready_at,
+  };
+}
+
+async function getAuditWithQuestions(id: string) {
+  const auditResult = await pool.query("SELECT * FROM human_audits WHERE id = $1", [id]);
+  if (auditResult.rows.length === 0) return null;
+  const questionsResult = await pool.query(
+    `SELECT q.id, q.audit_id, q.question, q.status, q.created_at, q.answered_at,
+            COALESCE(json_agg(
+              json_build_object(
+                'id', a.id, 'questionId', a.question_id, 'answer', a.answer,
+                'answeredByEmail', a.answered_by_email, 'createdAt', a.created_at
+              ) ORDER BY a.created_at
+            ) FILTER (WHERE a.id IS NOT NULL), '[]') AS answers
+     FROM human_audit_questions q
+     LEFT JOIN human_audit_answers a ON a.question_id = q.id
+     WHERE q.audit_id = $1
+     GROUP BY q.id
+     ORDER BY q.created_at`,
+    [id],
+  );
+  return mapAuditRow(auditResult.rows[0], questionsResult.rows);
 }
 
 function authenticateOptional(
@@ -484,6 +562,8 @@ app.post(
     const customTarget = body.customTarget;
     const gender = body.gender || "";
     const sexualOrientation = body.sexualOrientation || "";
+    const locationMarket = body.locationMarket || "";
+    const preferredTone = body.preferredTone || "";
     const partnerPreferences = body.partnerPreferences
       ? Array.isArray(body.partnerPreferences) ? body.partnerPreferences : [body.partnerPreferences]
       : [];
@@ -551,6 +631,8 @@ app.post(
       partnerPreferences: partnerPreferences.length > 0 ? partnerPreferences : undefined,
       photoTasteSelections: photoTasteSelections.length > 0 ? photoTasteSelections : undefined,
       relationshipIntent: relationshipIntent || undefined,
+      locationMarket: locationMarket || undefined,
+      preferredTone: preferredTone || undefined,
       interests: interests.length > 0 ? interests : undefined,
       partnerNonNegotiables: partnerNonNegotiables.length > 0 ? partnerNonNegotiables : undefined,
       idealPartnerDescription: idealPartnerDescription || undefined,
@@ -633,6 +715,49 @@ app.post(
           ],
         );
         const analysisId = insertResult.rows[0]?.id;
+        const intakeData = {
+          platform,
+          email,
+          gender,
+          sexualOrientation,
+          locationMarket,
+          relationshipIntent,
+          datingStruggle,
+          preferredTone,
+          targetQualities,
+          customTarget: customTarget || "",
+          partnerPreferences,
+          bio,
+          prompts,
+          screenshotCount: screenshotFiles.length,
+          currentPhotoCount: currentPhotoFiles.length,
+          additionalPhotoCount: additionalPhotoFiles.length,
+          screenshotLabels,
+          additionalPhotoLabels,
+        };
+        const calibration = {
+          selectedIds: photoTasteSelections,
+          rankedIds: photoTasteSelections,
+        };
+        try {
+          await pool.query(
+            `INSERT INTO human_audits
+              (access_token, user_id, email, platform, status, intake_data, photo_calibration, client_brief, final_report_ready_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+            [
+              auditToken(),
+              req.user?.userId || null,
+              ownerEmail,
+              platform,
+              "final_report_ready",
+              JSON.stringify(intakeData),
+              JSON.stringify(calibration),
+              JSON.stringify({ ...result, analysisId }),
+            ],
+          );
+        } catch (auditError) {
+          console.error("Completed audit save error:", auditError);
+        }
         analysisJobs.set(jobId, {
           status: "done",
           result: { ...result, analysisId },
@@ -643,6 +768,8 @@ app.post(
         const msg =
           error?.status === 413
             ? "Your photos are too large. Please try with fewer or smaller images."
+            : error?.status === 401
+              ? "The AI service could not authenticate this request. Please check the configured AI integration and try again."
             : error?.status === 404
               ? "AI model unavailable. Please try again shortly."
               : error?.status === 400 && error?.error?.message?.includes("internal error")
@@ -733,6 +860,127 @@ app.post("/api/feedback", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to submit feedback" });
   }
 });
+
+app.get(
+  "/api/admin/human-audits",
+  authenticateAdmin,
+  async (_req: AuthRequest, res: Response) => {
+    try {
+      const result = await pool.query(
+        `SELECT a.id, a.email, a.platform, a.status, a.created_at, a.updated_at,
+                COUNT(q.id)::int AS question_count,
+                COUNT(q.id) FILTER (WHERE q.status = 'open')::int AS open_question_count
+         FROM human_audits a
+         LEFT JOIN human_audit_questions q ON q.audit_id = a.id
+         GROUP BY a.id
+         ORDER BY a.created_at DESC
+         LIMIT 200`,
+      );
+      res.json({
+        audits: result.rows.map((row) => ({
+          id: Number(row.id),
+          email: row.email,
+          platform: row.platform,
+          status: row.status,
+          questionCount: row.question_count,
+          openQuestionCount: row.open_question_count,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        })),
+      });
+    } catch (error) {
+      console.error("Admin audit queue error:", error);
+      res.status(500).json({ error: "Failed to load audit queue" });
+    }
+  },
+);
+
+app.get(
+  "/api/admin/human-audits/:id",
+  authenticateAdmin,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const audit = await getAuditWithQuestions(String(req.params.id));
+      if (!audit) {
+        res.status(404).json({ error: "Audit not found" });
+        return;
+      }
+      res.json({ audit });
+    } catch (error) {
+      console.error("Admin audit detail error:", error);
+      res.status(500).json({ error: "Failed to load audit" });
+    }
+  },
+);
+
+app.patch(
+  "/api/admin/human-audits/:id",
+  authenticateAdmin,
+  async (req: AuthRequest, res: Response) => {
+    const { status, adminNotes } = req.body || {};
+    if (status !== undefined && !HUMAN_AUDIT_STATUSES.includes(status)) {
+      res.status(400).json({ error: "Invalid audit status" });
+      return;
+    }
+    if (adminNotes !== undefined && typeof adminNotes !== "string") {
+      res.status(400).json({ error: "Admin notes must be text" });
+      return;
+    }
+    try {
+      const result = await pool.query(
+        `UPDATE human_audits
+         SET status = COALESCE($1, status),
+             admin_notes = COALESCE($2, admin_notes),
+             final_report_ready_at = CASE WHEN $1 = 'final_report_ready' THEN COALESCE(final_report_ready_at, NOW()) ELSE final_report_ready_at END,
+             updated_at = NOW()
+         WHERE id = $3
+         RETURNING *`,
+        [status || null, adminNotes === undefined ? null : adminNotes, String(req.params.id)],
+      );
+      if (result.rows.length === 0) {
+        res.status(404).json({ error: "Audit not found" });
+        return;
+      }
+      const audit = await getAuditWithQuestions(String(req.params.id));
+      res.json({ audit });
+    } catch (error) {
+      console.error("Admin audit update error:", error);
+      res.status(500).json({ error: "Failed to update audit" });
+    }
+  },
+);
+
+app.post(
+  "/api/admin/human-audits/:id/questions",
+  authenticateAdmin,
+  async (req: AuthRequest, res: Response) => {
+    const question = typeof req.body?.question === "string" ? req.body.question.trim() : "";
+    if (!question) {
+      res.status(400).json({ error: "Question is required" });
+      return;
+    }
+    try {
+      const audit = await getAuditWithQuestions(String(req.params.id));
+      if (!audit) {
+        res.status(404).json({ error: "Audit not found" });
+        return;
+      }
+      await pool.query(
+        `INSERT INTO human_audit_questions (audit_id, question, asked_by_user_id, asked_by_email, status)
+         VALUES ($1, $2, $3, $4, 'open')`,
+        [String(req.params.id), question, req.user!.userId, req.user!.email],
+      );
+      await pool.query(
+        "UPDATE human_audits SET status = 'followup_sent', updated_at = NOW() WHERE id = $1",
+        [String(req.params.id)],
+      );
+      res.json({ audit: await getAuditWithQuestions(String(req.params.id)) });
+    } catch (error) {
+      console.error("Admin audit question error:", error);
+      res.status(500).json({ error: "Failed to add audit question" });
+    }
+  },
+);
 
 app.get("/api/admin/feedback", async (req: Request, res: Response) => {
   try {

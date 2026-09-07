@@ -17,21 +17,21 @@ export function Landing({ onStart, onPrivacy }: Props) {
             <MagnetIcon size={20} strokeWidth={2.2} />
             <span>Magnet</span>
           </div>
-          <span className="landing-hero-note">Find out what's costing you matches.</span>
+          <span className="landing-hero-note">AI-assisted, framework-led profile feedback.</span>
         </div>
         <div className="landing-hero-copy">
-          <p className="landing-kicker">The dating profile reality check</p>
+          <p className="landing-kicker">Magnet Profile Audit</p>
           <h1>
-            Your dating profile is
-            <span className="gradient-text"> sending the wrong signals.</span>
+              See exactly what your profile is
+              <span className="gradient-text"> really saying.</span>
           </h1>
           <div className="landing-hero-detail">
             <p className="subtitle">
-              Somewhere, someone is swiping left on you right now — for entirely fixable reasons. Magnet finds all of them: photos, prompts, first impression, and exactly who you're accidentally calling in.
+              Upload your profile and get one complete audit: photos, prompts, first impression, accidental signals, rewrites, and the changes most likely to improve your results.
             </p>
             <p className="subtitle-small">The honest breakdown no one else will give you.</p>
             <button className="cta-button" onClick={onStart}>
-              Analyze My Profile
+              Start your Profile Audit
               <ArrowRight size={17} />
             </button>
           </div>
@@ -61,7 +61,7 @@ export function Landing({ onStart, onPrivacy }: Props) {
         <div className="landing-section-intro">
           <p className="section-title">A profile, with the subtext included</p>
           <h2>See what people see.</h2>
-          <p>Magnet doesn't polish your profile into someone else. It makes the signal unmistakably yours.</p>
+          <p>Magnet doesn't polish your profile into someone else. It explains the signal you're already sending, then gives you a clearer way forward.</p>
         </div>
         <div className="ba-toggle-row" role="tablist" aria-label="Highlight an analysis">
           <button className={`ba-toggle-btn ${baView === "before" ? "active before" : ""}`} onClick={() => setBaView("before")} role="tab" aria-selected={baView === "before"}>
@@ -116,7 +116,7 @@ export function Landing({ onStart, onPrivacy }: Props) {
           <div className="feature-icon" style={{ background: "rgba(26,24,22,0.06)", color: "#1A1816" }}><TrendingUp size={20} /></div>
           <p className="feature-index">03 / WHAT TO DO NEXT</p>
           <h3>Guided Optimization</h3>
-          <p>Not just what's wrong — the Full Report tells you what to change, how to change it, and why it will perform better.</p>
+          <p>One complete report tells you what to change, how to change it, and why it will perform better on your app.</p>
           <span className="feature-arrow"><ArrowRight size={18} /></span>
         </div>
       </section>

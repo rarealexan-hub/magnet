@@ -12,7 +12,7 @@ interface Props {
   preselectedPlatform?: string;
 }
 
-type Step = "photos" | "details";
+type Step = "photos" | "details" | "calibration";
 
 interface UploadedPhoto {
   file: File;
@@ -36,6 +36,15 @@ const MAX_ADDITIONAL_PHOTOS = 10;
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif", "image/bmp", "image/tiff", "image/svg+xml"];
 const HEIC_TYPES = ["image/heic", "image/heif"];
+
+const CALIBRATION_EXAMPLES = [
+  { id: "clear-solo", label: "Clear solo portrait", detail: "Face-forward, relaxed, easy to read", tone: "sand" },
+  { id: "active-outdoors", label: "Active outdoors", detail: "A real setting with something going on", tone: "pine" },
+  { id: "social-context", label: "Social context", detail: "You with friends, still easy to identify", tone: "blue" },
+  { id: "personal-style", label: "Personal style", detail: "A look that says something specific", tone: "plum" },
+  { id: "creative-hobby", label: "Creative hobby", detail: "A detail that opens a conversation", tone: "gold" },
+  { id: "quiet-candid", label: "Quiet candid", detail: "Natural expression, no heavy posing", tone: "rose" },
+] as const;
 
 function isHeic(file: File): boolean {
   if (HEIC_TYPES.includes(file.type)) return true;
@@ -115,6 +124,12 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   const [customTarget, setCustomTarget] = useState("");
   const [gender, setGender] = useState("");
   const [attractedTo, setAttractedTo] = useState<string[]>([]);
+  const [sexualOrientation, setSexualOrientation] = useState("");
+  const [locationMarket, setLocationMarket] = useState("");
+  const [relationshipIntent, setRelationshipIntent] = useState("");
+  const [datingStruggle, setDatingStruggle] = useState("");
+  const [preferredTone, setPreferredTone] = useState("");
+  const [photoTasteSelections, setPhotoTasteSelections] = useState<string[]>([]);
   const [step, setStep] = useState<Step>("photos");
   const [contextOpen, setContextOpen] = useState(false);
   const [bioOpen, setBioOpen] = useState(false);
@@ -394,6 +409,12 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
     targetQualities.forEach((q) => fd.append("targetQualities", q));
     if (customTarget.trim()) fd.append("customTarget", customTarget);
     if (gender) fd.append("gender", gender);
+    if (sexualOrientation) fd.append("sexualOrientation", sexualOrientation);
+    if (locationMarket.trim()) fd.append("locationMarket", locationMarket.trim());
+    if (relationshipIntent) fd.append("relationshipIntent", relationshipIntent);
+    if (datingStruggle.trim()) fd.append("datingStruggle", datingStruggle.trim());
+    if (preferredTone) fd.append("preferredTone", preferredTone);
+    photoTasteSelections.forEach((selection) => fd.append("photoTasteSelections", selection));
     attractedTo.forEach((p) => fd.append("partnerPreferences", p));
     selectedPrompts
       .filter((sp) => sp.answer.trim())
@@ -456,9 +477,16 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 prompts: selectedPrompts.filter((sp) => sp.answer.trim()).map((sp) => `${sp.question}: ${sp.answer}`),
                 photoDescriptions: [],
                 screenshots: [], currentPhotos: [], additionalPhotos: [],
-                targetType: targetQualities.join(", "),
+                 targetType: targetQualities.join(", "),
                 customTarget: customTarget || undefined,
                 gender: gender || undefined,
+                 sexualOrientation: sexualOrientation || undefined,
+                 partnerPreferences: attractedTo,
+                 relationshipIntent: relationshipIntent || undefined,
+                 locationMarket: locationMarket || undefined,
+                 datingStruggle: datingStruggle || undefined,
+                 preferredTone: preferredTone || undefined,
+                 photoTasteSelections,
               };
               trackAnalysisComplete(platform, pollData.result?.score?.overall ?? 0);
               onResult(pollData.result, input);
@@ -501,7 +529,8 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
       return;
     }
     setError("");
-    runAnalysis();
+    setStep("calibration");
+    window.scrollTo({ top: 0, behavior: "instant" });
   };
 
   const platformInfo = PLATFORMS.find((p) => p.id === platform);
@@ -725,6 +754,20 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 </button>
               ))}
             </div>
+
+          <div className="form-section">
+            <label className="form-label">Your orientation <span className="form-label-optional">optional</span></label>
+            <div className="orientation-grid">
+              {[
+                ["straight", "Straight"], ["gay", "Gay / Lesbian"], ["bisexual", "Bisexual"],
+                ["pansexual", "Pansexual"], ["queer", "Queer"], ["prefer-not-to-say", "Prefer not to say"],
+              ].map(([id, label]) => (
+                <button key={id} type="button" className={`orientation-btn ${sexualOrientation === id ? "active" : ""}`} onClick={() => setSexualOrientation(sexualOrientation === id ? "" : id)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
           </div>
 
           <div className="form-section">
@@ -743,6 +786,30 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="form-section audit-context-grid">
+            <div>
+              <label className="form-label">Where are you dating?</label>
+              <p className="form-hint">City, region, or market type helps us calibrate the read.</p>
+              <input className="form-input" placeholder="e.g. New York, college town, suburban market" value={locationMarket} onChange={(e) => setLocationMarket(e.target.value)} />
+            </div>
+            <div>
+              <label className="form-label">What are you looking for?</label>
+              <select className="form-input" value={relationshipIntent} onChange={(e) => setRelationshipIntent(e.target.value)}>
+                <option value="">Choose one</option>
+                <option value="long-term">Long-term relationship</option>
+                <option value="short-term">Short-term / casual</option>
+                <option value="open-to-both">Open to both</option>
+                <option value="marriage-minded">Marriage-minded</option>
+                <option value="figuring-it-out">Still figuring it out</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="form-section">
+            <label className="form-label">What is not working right now? <span className="form-label-optional">optional</span></label>
+            <textarea className="form-textarea" rows={3} placeholder="Tell us what you want this audit to solve — low matches, weak conversations, the wrong people, or something else." value={datingStruggle} onChange={(e) => setDatingStruggle(e.target.value)} />
           </div>
 
           <div className="form-section">
@@ -782,6 +849,18 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               value={bio}
               onChange={(e) => setBio(e.target.value)}
             />
+          </div>
+
+          <div className="form-section">
+            <label className="form-label">What tone should your profile have?</label>
+            <p className="form-hint">Pick the direction that feels most like you at your best.</p>
+            <div className="tag-select-grid">
+              {["Warm & approachable", "Funny & playful", "Confident & direct", "Thoughtful & intentional", "Dry & understated", "Adventurous & spontaneous"].map((tone) => (
+                <button key={tone} type="button" className={`tag-select-btn ${preferredTone === tone ? "active" : ""}`} onClick={() => setPreferredTone(preferredTone === tone ? "" : tone)}>
+                  {tone}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="form-section">
@@ -916,7 +995,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           {error && <div className="form-error">{error}</div>}
 
           <button type="button" className="submit-btn" onClick={handleDetailsNext} disabled={loading}>
-            {loading ? <><Loader2 size={18} className="spin" /> Analyzing your profile…</> : "Continue →"}
+            Continue to photo calibration →
           </button>
           <button type="button" className="step-back-btn bottom" onClick={() => { setStep("photos"); window.scrollTo({ top: 0, behavior: "instant" }); }}>
             ← Back to photos
@@ -925,6 +1004,51 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
       </div>
 
       </>
+    );
+  }
+
+  if (step === "calibration") {
+    const toggleCalibration = (id: string) => {
+      setPhotoTasteSelections((current) => current.includes(id)
+        ? current.filter((item) => item !== id)
+        : current.length < 3 ? [...current, id] : current);
+    };
+
+    return (
+      <div className="form-page">
+        <div className="form-container calibration-container">
+          <div className="form-header">
+            <p className="audit-eyebrow">Final step · 03 / 03</p>
+            <h2>What makes a profile catch your eye?</h2>
+            <p>These are artificial examples, not real people. Pick the three profile-photo directions you instinctively respond to most. Your choices help calibrate the audit to your taste.</p>
+          </div>
+          <div className="calibration-grid">
+            {CALIBRATION_EXAMPLES.map((example) => {
+              const selectedIndex = photoTasteSelections.indexOf(example.id);
+              return (
+                <button key={example.id} type="button" className={`calibration-card ${selectedIndex >= 0 ? "selected" : ""}`} onClick={() => toggleCalibration(example.id)}>
+                  <span className={`calibration-image calibration-image-${example.tone}`}><span className="calibration-silhouette" /></span>
+                  <span className="calibration-card-copy"><strong>{example.label}</strong><small>{example.detail}</small></span>
+                  <span className="calibration-check">{selectedIndex >= 0 ? selectedIndex + 1 : ""}</span>
+                </button>
+              );
+            })}
+          </div>
+          {error && <div className="form-error">{error}</div>}
+          <div className="calibration-footer">
+            <span>{photoTasteSelections.length} of 3 selected</span>
+            <div className="step-nav">
+              <button type="button" className="step-back-btn" onClick={() => { setStep("details"); window.scrollTo({ top: 0, behavior: "instant" }); }}>Back</button>
+              <button type="button" className="submit-btn step-continue-btn" onClick={() => {
+                if (photoTasteSelections.length !== 3) { setError("Choose exactly three examples to continue."); return; }
+                runAnalysis();
+              }} disabled={loading || photoTasteSelections.length !== 3}>
+                {loading ? <><Loader2 size={18} className="spin" /> Building your audit…</> : "Generate my Magnet Profile Audit"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
