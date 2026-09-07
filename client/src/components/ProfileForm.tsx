@@ -329,7 +329,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
       void processFiles(Array.from(e.target.files), setCurrentPhotos, currentPhotos, MAX_CURRENT_PHOTOS)
         .finally(() => setProcessingOtherPhotos(false));
     }
-    if (currentPhotosRef.current) currentPhotosRef.current.value = "";
+    e.target.value = "";
   };
 
   const handleOtherPhotosInputDrop = (e: React.DragEvent<HTMLInputElement>) => {
@@ -367,7 +367,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
 
   const handleLeadPhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (leadPhotoRef.current) leadPhotoRef.current.value = "";
+    e.target.value = "";
     if (file) await processLeadPhoto(file);
   };
 
@@ -754,7 +754,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
             ) : (
               <label
                 htmlFor="lead-photo-input"
-                className={`lead-photo-dropzone ${dragUploadTarget === "lead" ? "is-dragging-files" : ""}`}
+                className={`lead-photo-dropzone desktop-photo-upload ${dragUploadTarget === "lead" ? "is-dragging-files" : ""}`}
                 onDragEnter={(e) => handleUploadDragOver(e, "lead")}
                 onDragOver={(e) => handleUploadDragOver(e, "lead")}
                 onDragLeave={handleUploadDragLeave}
@@ -764,6 +764,20 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                 <span className="photos-hero-title">Upload lead photo</span>
                 <span className="photos-hero-hint">Drop a photo here or tap to browse · JPG, PNG, HEIC, WebP, AVIF & more</span>
               </label>
+            )}
+            {!leadPhoto && (
+              <div className="mobile-photo-actions">
+                <label className="mobile-photo-action primary" htmlFor="lead-photo-mobile-library">
+                  <ImagePlus size={20} />
+                  <span><strong>Choose from photo library</strong><small>Select your first profile photo</small></span>
+                </label>
+                <input id="lead-photo-mobile-library" className="mobile-photo-input" type="file" accept="image/*,.heic,.heif" onChange={handleLeadPhotoSelect} />
+                <label className="mobile-photo-action" htmlFor="lead-photo-mobile-camera">
+                  <Camera size={20} />
+                  <span><strong>Take a photo</strong><small>Use your phone camera</small></span>
+                </label>
+                <input id="lead-photo-mobile-camera" className="mobile-photo-input" type="file" accept="image/*" capture="user" onChange={handleLeadPhotoSelect} />
+              </div>
             )}
           </div>
 
@@ -801,7 +815,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               </div>
             )}
             <div
-              className="upload-btn"
+              className="upload-btn desktop-photo-upload"
             >
               <input
                 id="other-photos-input"
@@ -828,6 +842,19 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                   {processingOtherPhotos ? "Your previews will appear as soon as the images are ready." : "Drop photos here or tap to browse · JPG, PNG, HEIC, WebP, AVIF & more"}
                 </span>
               </div>
+            </div>
+            <div className="mobile-photo-actions">
+              <label className="mobile-photo-action primary" htmlFor="other-photos-mobile-library">
+                <ImagePlus size={20} />
+                <span><strong>Choose from photo library</strong><small>Select multiple profile photos</small></span>
+              </label>
+              <input id="other-photos-mobile-library" className="mobile-photo-input" type="file" accept="image/*,.heic,.heif" multiple onChange={handleCurrentPhotos} />
+              <label className="mobile-photo-action" htmlFor="other-photos-mobile-camera">
+                <Camera size={20} />
+                <span><strong>Take a photo</strong><small>Add one photo with your camera</small></span>
+              </label>
+              <input id="other-photos-mobile-camera" className="mobile-photo-input" type="file" accept="image/*" capture="environment" onChange={handleCurrentPhotos} />
+              {processingOtherPhotos && <p className="mobile-photo-processing">Processing your photos…</p>}
             </div>
           </div>
 

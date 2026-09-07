@@ -1628,6 +1628,69 @@ h2, h3, h4, h5, h6 {
   cursor: pointer;
 }
 
+.mobile-photo-actions,
+.mobile-photo-input {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .desktop-photo-upload {
+    display: none;
+  }
+
+  .mobile-photo-actions {
+    display: grid;
+    gap: 10px;
+  }
+
+  .mobile-photo-action {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 58px;
+    padding: 13px 15px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-2);
+    color: var(--text);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .mobile-photo-action.primary {
+    border-color: var(--text);
+    background: var(--text);
+    color: var(--bg);
+  }
+
+  .mobile-photo-action span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: left;
+  }
+
+  .mobile-photo-action strong {
+    font-size: 14px;
+    line-height: 1.25;
+  }
+
+  .mobile-photo-action small {
+    color: inherit;
+    font-size: 12px;
+    line-height: 1.3;
+    opacity: .72;
+  }
+
+  .mobile-photo-processing {
+    margin: 2px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+}
+
 .upload-btn:hover {
   border-color: var(--accent);
   color: var(--accent-light);
