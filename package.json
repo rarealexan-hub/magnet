@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "concurrently \"tsx server/index.ts\" \"vite --host 0.0.0.0 --port 5000\"",
     "build": "vite build && tsc --noEmit",
+    "test": "tsx --test server/*.test.ts",
     "start": "tsx server/index.ts",
     "cap:sync": "npx cap sync ios",
     "cap:open": "npx cap open ios",
@@ -51,6 +52,7 @@
     "zod-validation-error": "^5.0.0"
   },
   "devDependencies": {
-    "@types/pg": "^8.18.0"
+    "@types/pg": "^8.18.0",
+    "pg-mem": "^3.0.14"
   }
 }
