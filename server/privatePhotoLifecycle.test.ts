@@ -14,6 +14,7 @@ import {
   persistPhotoMetadata,
   mapAuditReportPhotos,
   retentionCutoff,
+  uploadAndPersistAuditPhotos,
   uploadAuditPhotos,
   createPrivatePhotoRouter,
   type AuditPhoto,
@@ -24,7 +25,11 @@ import { PostgresPrivatePhotoRepository } from "./privatePhotoRepository.js";
 class MemoryStorage implements PrivatePhotoStorage {
   objects = new Map<string, Buffer>();
   failDelete = false;
+  failUploadAt = 0;
+  uploadCount = 0;
   async uploadFromBytes(key: string, bytes: Buffer) {
+    this.uploadCount++;
+    if (this.failUploadAt === this.uploadCount) return { ok: false, error: new Error("offline") };
     this.objects.set(key, Buffer.from(bytes));
     return { ok: true };
   }
@@ -59,6 +64,44 @@ test("production upload helper stores all photo groups at exact private keys", a
   assert.equal(JSON.stringify(metadata).includes("cz"), false);
   assert.equal(JSON.stringify(metadata).includes("YzE="), false);
   assert.deepEqual(Object.keys((metadata as unknown as { currentPhotos: object[] }).currentPhotos[0]).sort(), ["endpoint", "index", "kind", "label", "mimeType"]);
+});
+
+test("a later object upload failure removes earlier private objects and exposes no endpoints", async () => {
+  const storage = new MemoryStorage();
+  storage.failUploadAt = 2;
+  let response: ReturnType<typeof auditReportPhotos> | undefined;
+
+  await assert.rejects(async () => {
+    const photos = await uploadAndPersistAuditPhotos(storage, {
+      setPhotoMetadata: async () => assert.fail("metadata must not be persisted after upload failure"),
+    }, 43, [
+      { kind: "current", files: [file("one.png", "first"), file("two.png", "second")] },
+    ], async (bytes) => bytes);
+    response = auditReportPhotos(43, photos);
+  }, /Object storage upload failed/);
+
+  assert.equal(storage.uploadCount, 2);
+  assert.equal(storage.objects.size, 0);
+  assert.equal(response, undefined);
+});
+
+test("photo metadata persistence failure removes every uploaded object and exposes no endpoints", async () => {
+  const storage = new MemoryStorage();
+  let response: ReturnType<typeof auditReportPhotos> | undefined;
+
+  await assert.rejects(async () => {
+    const photos = await uploadAndPersistAuditPhotos(storage, {
+      setPhotoMetadata: async () => { throw new Error("PostgreSQL unavailable"); },
+    }, 44, [
+      { kind: "screenshots", files: [file("screen.png", "screen")] },
+      { kind: "current", files: [file("one.png", "first"), file("two.png", "second")] },
+    ], async (bytes) => bytes);
+    response = auditReportPhotos(44, photos);
+  }, /PostgreSQL unavailable/);
+
+  assert.equal(storage.uploadCount, 3);
+  assert.equal(storage.objects.size, 0);
+  assert.equal(response, undefined);
 });
 
 test("photo metadata persistence stores references only, never image bytes", async () => {

@@ -99,6 +99,23 @@ export async function uploadAuditPhotos(
   }
 }
 
+export async function uploadAndPersistAuditPhotos(
+  storage: PrivatePhotoStorage,
+  repository: Pick<PrivatePhotoRepository, "setPhotoMetadata">,
+  auditId: string | number,
+  groups: Array<{ kind: string; files: PrivatePhotoFile[]; labels?: string[] }>,
+  convertHeic: (buffer: Buffer) => Promise<Buffer>,
+): Promise<AuditPhoto[]> {
+  const photos = await uploadAuditPhotos(storage, auditId, groups, convertHeic);
+  try {
+    await persistPhotoMetadata(repository, auditId, photos);
+    return photos;
+  } catch (error) {
+    await deleteAuditObjects(storage, photos.map((photo) => photo.key), true);
+    throw error;
+  }
+}
+
 export function newPollingCapabilityId(): string {
   return newPollingCapabilityIdFrom((size) => crypto.randomBytes(size));
 }

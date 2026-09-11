@@ -28,12 +28,11 @@ import {
   mapAuditReportPhotos,
   deleteAuditObjects,
   deleteAuditPhotos,
-  uploadAuditPhotos,
+  uploadAndPersistAuditPhotos,
   canReadPrivatePhoto,
   newPollingCapabilityId,
   createPrivatePhotoRouter,
   processExpiredAuditPhotos,
-  persistPhotoMetadata,
   type AuditPhoto,
 } from "./privatePhotoLifecycle.js";
 import { PostgresPrivatePhotoRepository } from "./privatePhotoRepository.js";
@@ -938,17 +937,11 @@ app.post(
           [accessToken],
         );
         const auditId = auditResult.rows[0]?.id;
-         const photoKeys = await uploadAuditPhotos(objectStorage, auditId, [
+         const photoKeys = await uploadAndPersistAuditPhotos(objectStorage, privatePhotoRepository, auditId, [
            { kind: "screenshots", files: screenshotFiles, labels: screenshotLabels },
            { kind: "current", files: currentPhotoFiles },
            { kind: "additional", files: additionalPhotoFiles, labels: additionalPhotoLabels },
          ], convertHeicBuffer);
-         try {
-           await persistPhotoMetadata(privatePhotoRepository, auditId, photoKeys);
-         } catch (metadataError) {
-           await deleteAuditObjects(objectStorage, photoKeys.map((photo) => photo.key), true);
-           throw metadataError;
-         }
         const firstRead = {
           score: result.score,
           feedback: {
