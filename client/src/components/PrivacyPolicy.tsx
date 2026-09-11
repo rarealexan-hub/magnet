@@ -25,7 +25,7 @@ export function PrivacyPolicy({ onBack }: Props) {
           <section className="privacy-section">
             <h2>What we collect</h2>
             <ul>
-              <li><strong>Email address</strong> — when you create an account or sign in. Used for account management only.</li>
+              <li><strong>Email address</strong> — used for your account, to verify your address, and to tell you when your reviewed audit is ready. We do not send marketing email.</li>
               <li><strong>Photos and screenshots you upload</strong> — stored privately so a reviewer can check your audit and you can view your report later.</li>
               <li><strong>Profile text</strong> — bios, prompts, and answers you enter into the form. Used solely to generate your analysis.</li>
               <li><strong>Analysis results</strong> — your Magnet Score and report, saved to your account so you can access them from your dashboard.</li>
@@ -37,7 +37,7 @@ export function PrivacyPolicy({ onBack }: Props) {
             <ul>
               <li>To generate and deliver your profile analysis.</li>
               <li>To save your results to your account dashboard.</li>
-              <li>To send you account-related emails (e.g. password reset). We do not send marketing emails without your explicit consent.</li>
+              <li>To verify your email address and tell you when your reviewed audit is ready. We do not send marketing email.</li>
             </ul>
             <p>We do not sell, rent, or share your personal data with third parties for their own marketing purposes.</p>
           </section>

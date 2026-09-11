@@ -57,6 +57,10 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [verificationRequired, setVerificationRequired] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
+  const [resending, setResending] = useState(false);
+  const [verifiedConfirmation] = useState(() => new URLSearchParams(window.location.search).get("verified") === "1");
 
   useEffect(() => {
     if (!token) { setLoading(false); return; }
@@ -67,11 +71,16 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
     try {
       setLoading(true);
       setError("");
+      setVerificationRequired(false);
       const res = await fetch("/api/dashboard", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
+        if (body.code === "EMAIL_NOT_VERIFIED") {
+          setVerificationRequired(true);
+          return;
+        }
         throw new Error(body.error || "Failed to load dashboard");
       }
       setData(await res.json());
@@ -79,6 +88,24 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
       setError(err.message || "Failed to load dashboard");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const resendVerification = async () => {
+    setResending(true);
+    setResendMessage("");
+    try {
+      const response = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error || "Could not resend the verification email.");
+      setResendMessage(body.alreadyVerified ? "Your email is already verified." : "Verification email sent.");
+    } catch (caught) {
+      setResendMessage(caught instanceof Error ? caught.message : "Could not resend the verification email.");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -106,6 +133,26 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
           <div className="dashboard-loading">
             <Loader2 size={32} className="spin" />
             <p>Loading your dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (verificationRequired) {
+    return (
+      <div className="results-page">
+        <div className="results-container">
+          <div className="results-header">
+            <button className="back-link" onClick={onBack}><ArrowLeft size={16} /> Back</button>
+          </div>
+          <div className="dashboard-empty">
+            <h3>Verify your email</h3>
+            <p>Check your inbox to verify your email. Your audits appear here once it is verified.</p>
+            <button className="pricing-btn" onClick={() => void resendVerification()} disabled={resending} style={{ maxWidth: 240 }}>
+              {resending ? <Loader2 size={16} className="spin" /> : <RefreshCw size={16} />} Resend email
+            </button>
+            {resendMessage && <p className="dashboard-verification-message">{resendMessage}</p>}
           </div>
         </div>
       </div>
@@ -195,6 +242,7 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
           <h2 className="dash-hero-title">Your Dashboard</h2>
           <p className="dash-hero-sub">{userEmail}</p>
         </div>
+        {verifiedConfirmation && <div className="dashboard-verification-confirmation">Email verified. Your audits are now available.</div>}
 
         {!hasAnalyses ? (
           <div className="dashboard-empty-state">

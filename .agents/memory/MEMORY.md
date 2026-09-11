@@ -1,0 +1,1 @@
+- [Temporary server ports](temporary-server-ports.md) — workflow reconciliation may re-add ports opened by temporary acceptance servers; clean them after the final restart.

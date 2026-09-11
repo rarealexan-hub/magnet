@@ -207,6 +207,27 @@ export function HumanAuditAdmin({ token, onBack }: Props) {
     }
   };
 
+  const resendReadyEmail = async () => {
+    if (!selected) return;
+    setSaving(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/admin/human-audits/${selected.id}/resend-ready-email`, {
+        method: "POST",
+        headers: authHeaders(token, adminKey),
+      });
+      noteForbidden(response);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Could not resend the ready email.");
+      if (!data.success) throw new Error(data.error || "The ready email could not be sent. You can retry.");
+      setSelected(data.audit);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not resend the ready email.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return <div className="audit-shell audit-centered"><Loader2 size={30} className="spin" /><p>Loading review queue…</p></div>;
   }
@@ -303,6 +324,19 @@ export function HumanAuditAdmin({ token, onBack }: Props) {
                     {selected.status === "final_report_ready" ? "Release update" : "Approve and release"}
                   </button>
                 </div>
+              </div>
+              <div className="brief-block">
+                <h3>Ready email</h3>
+                {selected.reportEmailSentAt ? (
+                  <p>Sent {new Date(selected.reportEmailSentAt).toLocaleString()}</p>
+                ) : selected.status === "final_report_ready" ? (
+                  <>
+                    <p>Not sent. You can retry without releasing the report again.</p>
+                    <button className="audit-secondary-btn" onClick={() => void resendReadyEmail()} disabled={saving}>Resend ready email</button>
+                  </>
+                ) : (
+                  <p>Not sent yet. It will be sent when this report is released.</p>
+                )}
               </div>
               <div className="brief-block">
                 <h3>Submission context</h3>

@@ -280,6 +280,7 @@ export interface HumanAudit {
   createdAt: string;
   updatedAt: string;
   finalReportReadyAt?: string | null;
+  reportEmailSentAt?: string | null;
   reportPhotos?: ProfileResult["reportPhotos"];
 }
 

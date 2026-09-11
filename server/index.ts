@@ -16,6 +16,7 @@ import {
   verifyToken,
 } from "./auth.js";
 import { getUncachableGoogleSheetClient } from "./googleSheets.js";
+import { sendEmail } from "./email.js";
 import type { Request, Response, NextFunction } from "express";
 import type {
   ProfileInput,
@@ -94,6 +95,18 @@ async function initAuditTracking() {
       )
     `);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ`);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS email_verification_tokens (
+        id BIGSERIAL PRIMARY KEY,
+        user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token_hash TEXT NOT NULL UNIQUE,
+        expires_at TIMESTAMPTZ NOT NULL,
+        used_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_user_created ON email_verification_tokens (user_id, created_at DESC)`);
     await pool.query(`
       DO $$ BEGIN
         IF EXISTS (
@@ -153,6 +166,7 @@ async function initAuditTracking() {
     await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS reviewed_by_email TEXT`);
     await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS photo_keys JSONB NOT NULL DEFAULT '[]'`);
     await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS photos_deleted_at TIMESTAMPTZ`);
+    await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS report_email_sent_at TIMESTAMPTZ`);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS human_audit_questions (
         id BIGSERIAL PRIMARY KEY,
@@ -343,6 +357,62 @@ function auditToken(): string {
   return crypto.randomBytes(24).toString("hex");
 }
 
+function requestBaseUrl(req: Request): string {
+  const configured = process.env.APP_BASE_URL;
+  const candidate = configured || req.get("origin") || `${req.protocol}://${req.get("host")}`;
+  try {
+    const parsed = new URL(candidate);
+    if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("Unsupported protocol");
+    return parsed.toString().replace(/\/+$/, "");
+  } catch {
+    return `${req.protocol}://${req.get("host")}`.replace(/\/+$/, "");
+  }
+}
+
+function tokenHash(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+async function isEmailVerified(userId: number, email: string): Promise<boolean> {
+  const result = await pool.query(
+    "SELECT email_verified_at IS NOT NULL AS verified FROM users WHERE id = $1 AND email = $2",
+    [userId, email.toLowerCase()],
+  );
+  return result.rows[0]?.verified === true;
+}
+
+async function issueVerificationEmail(
+  user: { id: number; email: string },
+  baseUrl: string,
+  database: Pick<typeof pool, "query"> = pool,
+): Promise<boolean> {
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  await database.query(
+    `INSERT INTO email_verification_tokens (user_id, token_hash, expires_at)
+     VALUES ($1, $2, NOW() + INTERVAL '24 hours')`,
+    [user.id, tokenHash(rawToken)],
+  );
+  const link = `${baseUrl}/api/auth/verify-email?token=${encodeURIComponent(rawToken)}`;
+  return sendEmail({
+    to: user.email,
+    subject: "Verify your Magnet email",
+    text: `Verify your email address for Magnet:\n${link}`,
+    html: `<p>Verify your email address for Magnet.</p><p><a href="${link}">Verify email</a></p>`,
+    idempotencyKey: `magnet-verify-${tokenHash(rawToken)}`,
+  });
+}
+
+async function sendReadyEmail(audit: { id: string | number; email: string; access_token: string }, baseUrl: string): Promise<boolean> {
+  const link = `${baseUrl}/?audit=${encodeURIComponent(String(audit.id))}&token=${encodeURIComponent(audit.access_token)}`;
+  return sendEmail({
+    to: audit.email,
+    subject: "Your Magnet audit is ready",
+    text: `Your report has been reviewed and is ready.\n\nView your report: ${link}\n\nYou received this because this email address was entered on Magnet.`,
+    html: `<p>Your report has been reviewed and is ready.</p><p><a href="${link}">View your report</a></p><p>You received this because this email address was entered on Magnet.</p>`,
+    idempotencyKey: `magnet-audit-ready-${audit.id}`,
+  });
+}
+
 function adminEmails(): Set<string> {
   return new Set(
     (process.env.ADMIN_EMAILS || "")
@@ -394,6 +464,7 @@ function mapAuditRow(row: any, questions: any[] = []) {
     finalReport: row.final_report || null,
     analysisId: row.analysis_id ? Number(row.analysis_id) : null,
     reviewedByEmail: row.reviewed_by_email || null,
+    reportEmailSentAt: row.report_email_sent_at || null,
     adminNotes: row.admin_notes || null,
     questions,
     createdAt: row.created_at,
@@ -459,12 +530,13 @@ app.post("/api/auth/register", async (req, res) => {
 
     const passwordHash = await hashPassword(password);
     const result = await pool.query(
-      "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email",
+      "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email, email_verified_at",
       [email.toLowerCase().trim(), passwordHash],
     );
     const user = result.rows[0];
     const token = generateToken({ userId: user.id, email: user.email });
-    res.json({ token, user: { id: user.id, email: user.email } });
+    await issueVerificationEmail(user, requestBaseUrl(req));
+    res.json({ token, user: { id: user.id, email: user.email, emailVerified: false } });
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({ error: "Registration failed. Please try again." });
@@ -479,7 +551,7 @@ app.post("/api/auth/login", async (req, res) => {
       return;
     }
     const result = await pool.query(
-      "SELECT id, email, password_hash FROM users WHERE email = $1",
+      "SELECT id, email, password_hash, email_verified_at FROM users WHERE email = $1",
       [email.toLowerCase().trim()],
     );
     if (result.rows.length === 0) {
@@ -487,14 +559,14 @@ app.post("/api/auth/login", async (req, res) => {
       return;
     }
     const user = result.rows[0];
-    const valid = await comparePassword(password, user.password_hash);
+    const valid = !!user.password_hash && await comparePassword(password, user.password_hash);
     if (!valid) {
       res.status(401).json({ error: "Invalid email or password" });
       return;
     }
 
     const token = generateToken({ userId: user.id, email: user.email });
-    res.json({ token, user: { id: user.id, email: user.email } });
+    res.json({ token, user: { id: user.id, email: user.email, emailVerified: !!user.email_verified_at } });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ error: "Login failed. Please try again." });
@@ -512,7 +584,50 @@ app.get("/api/auth/me", async (req: AuthRequest, res) => {
     res.status(401).json({ error: "Invalid or expired token" });
     return;
   }
-  res.json({ user: { id: payload.userId, email: payload.email } });
+  const result = await pool.query(
+    "SELECT id, email, email_verified_at FROM users WHERE id = $1 AND email = $2",
+    [payload.userId, payload.email],
+  );
+  if (!result.rows.length) {
+    res.status(401).json({ error: "Account not found" });
+    return;
+  }
+  const user = result.rows[0];
+  res.json({ user: { id: user.id, email: user.email, emailVerified: !!user.email_verified_at } });
+});
+
+app.get("/api/auth/verify-email", async (req, res) => {
+  const token = typeof req.query.token === "string" ? req.query.token : "";
+  if (!token) {
+    res.status(400).send("Verification link is invalid or expired.");
+    return;
+  }
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await client.query(
+      `SELECT id, user_id FROM email_verification_tokens
+       WHERE token_hash = $1 AND used_at IS NULL AND expires_at > NOW()
+       FOR UPDATE`,
+      [tokenHash(token)],
+    );
+    if (!result.rows.length) {
+      await client.query("ROLLBACK");
+      res.status(400).send("Verification link is invalid, expired, or already used.");
+      return;
+    }
+    const verification = result.rows[0];
+    await client.query("UPDATE users SET email_verified_at = COALESCE(email_verified_at, NOW()) WHERE id = $1", [verification.user_id]);
+    await client.query("UPDATE email_verification_tokens SET used_at = NOW() WHERE id = $1", [verification.id]);
+    await client.query("COMMIT");
+    res.redirect(302, "/?verified=1");
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    console.error("Email verification error:", error);
+    res.status(500).send("Could not verify this email address.");
+  } finally {
+    client.release();
+  }
 });
 
 app.post("/api/auth/google", async (req, res) => {
@@ -534,25 +649,39 @@ app.post("/api/auth/google", async (req, res) => {
       res.status(400).json({ error: "Invalid Google credential" });
       return;
     }
+    if (payload.email_verified !== true) {
+      res.status(400).json({ error: "Google has not verified this email address" });
+      return;
+    }
     const { email, sub: googleId } = payload;
     const normalizedEmail = email.toLowerCase().trim();
     const existing = await pool.query(
-      "SELECT id, email FROM users WHERE email = $1 OR google_id = $2",
+      "SELECT id, email, email_verified_at FROM users WHERE email = $1 OR google_id = $2",
       [normalizedEmail, googleId]
     );
-    let user: { id: number; email: string };
+    let user: { id: number; email: string; email_verified_at?: string | null };
     if (existing.rows.length > 0) {
       user = existing.rows[0];
-      await pool.query("UPDATE users SET google_id = $1 WHERE id = $2", [googleId, user.id]);
+      const updated = await pool.query(
+        `UPDATE users
+         SET google_id = $1,
+             email_verified_at = CASE WHEN $2 THEN COALESCE(email_verified_at, NOW()) ELSE email_verified_at END
+         WHERE id = $3
+         RETURNING id, email, email_verified_at`,
+        [googleId, payload.email_verified === true, user.id],
+      );
+      user = updated.rows[0];
     } else {
       const result = await pool.query(
-        "INSERT INTO users (email, google_id) VALUES ($1, $2) RETURNING id, email",
-        [normalizedEmail, googleId]
+        `INSERT INTO users (email, google_id, email_verified_at)
+         VALUES ($1, $2, CASE WHEN $3 THEN NOW() ELSE NULL END)
+         RETURNING id, email, email_verified_at`,
+        [normalizedEmail, googleId, payload.email_verified === true]
       );
       user = result.rows[0];
     }
     const token = generateToken({ userId: user.id, email: user.email });
-    res.json({ token, user: { id: user.id, email: user.email } });
+    res.json({ token, user: { id: user.id, email: user.email, emailVerified: !!user.email_verified_at } });
   } catch (error) {
     console.error("Google auth error:", error);
     res.status(500).json({ error: "Google sign-in failed. Please try again." });
@@ -578,12 +707,61 @@ function authenticateRequired(
   next();
 }
 
+app.post("/api/auth/resend-verification", authenticateRequired, async (req: AuthRequest, res: Response) => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const userResult = await client.query(
+      "SELECT id, email, email_verified_at FROM users WHERE id = $1 AND email = $2 FOR UPDATE",
+      [req.user!.userId, req.user!.email],
+    );
+    const user = userResult.rows[0];
+    if (!user) {
+      await client.query("ROLLBACK");
+      res.status(401).json({ error: "Account not found" });
+      return;
+    }
+    if (user.email_verified_at) {
+      await client.query("COMMIT");
+      res.json({ success: true, alreadyVerified: true });
+      return;
+    }
+    const recent = await client.query(
+      `SELECT COUNT(*)::int AS token_count FROM email_verification_tokens
+       WHERE user_id = $1 AND created_at > NOW() - INTERVAL '1 minute'
+      `,
+      [user.id],
+    );
+    if ((recent.rows[0]?.token_count || 0) >= 2) {
+      await client.query("ROLLBACK");
+      res.status(429).json({ error: "Please wait one minute before requesting another verification email." });
+      return;
+    }
+    await issueVerificationEmail(user, requestBaseUrl(req), client);
+    await client.query("COMMIT");
+    res.json({ success: true });
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    console.error("Resend verification error:", error);
+    res.status(500).json({ error: "Could not resend the verification email." });
+  } finally {
+    client.release();
+  }
+});
+
 app.get(
   "/api/dashboard",
   authenticateRequired,
   async (req: AuthRequest, res: Response) => {
     try {
       const email = req.user!.email;
+      if (!await isEmailVerified(req.user!.userId, email)) {
+        res.status(403).json({
+          error: "Check your inbox to verify your email. Your audits appear here once it is verified.",
+          code: "EMAIL_NOT_VERIFIED",
+        });
+        return;
+      }
       const result = await pool.query(
         `SELECT a.id, a.user_email, a.platform, a.overall_score, a.photo_quality, a.attraction_signals,
               a.personality_signals, a.match_targeting, a.first_impression, a.roast, a.mistakes,
@@ -1004,10 +1182,15 @@ app.get("/api/analyze/result/:jobId", (req: Request, res: Response) => {
 app.use(createPrivatePhotoRouter({
   repository: privatePhotoRepository,
   storage: objectStorage,
-  identify: (request) => {
+  identify: async (request) => {
     const header = request.headers.authorization;
     if (!header?.startsWith("Bearer ")) return undefined;
-    return verifyToken(header.slice(7)) || undefined;
+    const identity = verifyToken(header.slice(7));
+    if (!identity) return undefined;
+    return {
+      email: identity.email,
+      emailVerified: await isEmailVerified(identity.userId, identity.email),
+    };
   },
   adminEmails: adminEmails(),
   adminKey: process.env.ADMIN_KEY,
@@ -1022,7 +1205,10 @@ app.get("/api/audits/:auditId", authenticateOptional, async (req: AuthRequest, r
     }
     const audit = result.rows[0];
     const token = typeof req.query.token === "string" ? req.query.token : "";
-    if (token !== audit.access_token && req.user?.email?.toLowerCase() !== String(audit.email).toLowerCase()) {
+    const verifiedOwner = !!req.user &&
+      req.user.email.toLowerCase() === String(audit.email).toLowerCase() &&
+      await isEmailVerified(req.user.userId, req.user.email);
+    if (token !== audit.access_token && !verifiedOwner) {
       res.status(403).json({ error: "Not authorized to view this audit" });
       return;
     }
@@ -1242,6 +1428,7 @@ app.post(
         return;
       }
       const audit = auditResult.rows[0];
+      const firstRelease = !audit.final_report_ready_at;
       if (!audit.analysis_id) {
         await client.query("ROLLBACK");
         res.status(400).json({ error: "Audit is not linked to an analysis" });
@@ -1272,12 +1459,68 @@ app.post(
           feedback.profileTypeExplanation, audit.analysis_id,
         ],
       );
+      if (firstRelease) {
+        const sent = await sendReadyEmail(audit, requestBaseUrl(req));
+        if (sent) {
+          await client.query(
+            "UPDATE human_audits SET report_email_sent_at = COALESCE(report_email_sent_at, NOW()) WHERE id = $1",
+            [String(req.params.id)],
+          );
+        }
+      }
       await client.query("COMMIT");
       res.json({ audit: await getAuditWithQuestions(String(req.params.id)) });
     } catch (error) {
       await client.query("ROLLBACK").catch(() => undefined);
       console.error("Audit release error:", error);
       res.status(500).json({ error: "Failed to release audit" });
+    } finally {
+      client.release();
+    }
+  },
+);
+
+app.post(
+  "/api/admin/human-audits/:id/resend-ready-email",
+  authenticateAdmin,
+  async (req: AuthRequest, res: Response) => {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await client.query("SELECT * FROM human_audits WHERE id = $1 FOR UPDATE", [String(req.params.id)]);
+      const audit = result.rows[0];
+      if (!audit) {
+        await client.query("ROLLBACK");
+        res.status(404).json({ error: "Audit not found" });
+        return;
+      }
+      if (audit.status !== "final_report_ready") {
+        await client.query("ROLLBACK");
+        res.status(400).json({ error: "The report has not been released yet." });
+        return;
+      }
+      if (audit.report_email_sent_at) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "The ready email was already sent." });
+        return;
+      }
+      const sent = await sendReadyEmail(audit, requestBaseUrl(req));
+      if (!sent) {
+        await client.query("COMMIT");
+        res.json({
+          success: false,
+          error: "The ready email could not be sent. You can retry.",
+          audit: await getAuditWithQuestions(String(req.params.id)),
+        });
+        return;
+      }
+      await client.query("UPDATE human_audits SET report_email_sent_at = NOW() WHERE id = $1 AND report_email_sent_at IS NULL", [audit.id]);
+      await client.query("COMMIT");
+      res.json({ success: true, audit: await getAuditWithQuestions(String(req.params.id)) });
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      console.error("Ready email resend error:", error);
+      res.status(500).json({ error: "Could not resend the ready email." });
     } finally {
       client.release();
     }

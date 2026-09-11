@@ -129,12 +129,13 @@ export function canReadPrivatePhoto(input: {
   providedToken?: string;
   ownerEmail?: string;
   authenticatedEmail?: string;
+  authenticatedEmailVerified?: boolean;
   adminEmails?: Iterable<string>;
   adminKey?: string;
   providedAdminKey?: string;
 }): boolean {
   if (input.providedToken && input.accessToken && input.providedToken === input.accessToken) return true;
-  if (input.ownerEmail && input.authenticatedEmail &&
+  if (input.authenticatedEmailVerified && input.ownerEmail && input.authenticatedEmail &&
       input.ownerEmail.toLowerCase() === input.authenticatedEmail.toLowerCase()) return true;
   const admins = new Set(Array.from(input.adminEmails || [], (email) => email.toLowerCase()));
   if (!input.authenticatedEmail || !admins.has(input.authenticatedEmail.toLowerCase())) return false;
@@ -178,7 +179,7 @@ export async function processExpiredAuditPhotos(
 export function createPrivatePhotoRouter(deps: {
   repository: Pick<PrivatePhotoRepository, "findAudit">;
   storage: { downloadAsStream(key: string): NodeJS.ReadableStream };
-  identify?: (req: Request) => { email?: string } | undefined;
+  identify?: (req: Request) => Promise<{ email?: string; emailVerified?: boolean } | undefined> | { email?: string; emailVerified?: boolean } | undefined;
   adminEmails?: Iterable<string>;
   adminKey?: string;
 }): Router {
@@ -187,12 +188,13 @@ export function createPrivatePhotoRouter(deps: {
     try {
       const audit = await deps.repository.findAudit(String(req.params.auditId));
       if (!audit) { res.status(404).json({ error: "Audit not found" }); return; }
-      const identity = deps.identify?.(req);
+      const identity = await deps.identify?.(req);
       if (!canReadPrivatePhoto({
         accessToken: audit.access_token,
         providedToken: typeof req.query.token === "string" ? req.query.token : "",
         ownerEmail: String(audit.email),
         authenticatedEmail: identity?.email,
+        authenticatedEmailVerified: identity?.emailVerified,
         adminEmails: deps.adminEmails,
         adminKey: deps.adminKey,
         providedAdminKey: req.get("x-admin-key"),

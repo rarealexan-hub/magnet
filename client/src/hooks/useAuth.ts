@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 export interface AuthUser {
   id: number;
   email: string;
+  emailVerified: boolean;
 }
 
 interface AuthState {

@@ -176,7 +176,9 @@ test("Postgres private-photo adapter persists metadata and selects deterministic
 test("private photo authorization allows token, owner, and valid admin only", () => {
   const base = { accessToken: "token", ownerEmail: "owner@example.com", adminEmails: ["admin@example.com"], adminKey: "secret" };
   assert.equal(canReadPrivatePhoto({ ...base, providedToken: "token" }), true);
-  assert.equal(canReadPrivatePhoto({ ...base, authenticatedEmail: "owner@example.com" }), true);
+  assert.equal(canReadPrivatePhoto({ ...base, authenticatedEmail: "owner@example.com", authenticatedEmailVerified: true }), true);
+  assert.equal(canReadPrivatePhoto({ ...base, authenticatedEmail: "owner@example.com", authenticatedEmailVerified: false }), false);
+  assert.equal(canReadPrivatePhoto({ ...base, authenticatedEmail: "owner@example.com" }), false);
   assert.equal(canReadPrivatePhoto({ ...base, authenticatedEmail: "admin@example.com", providedAdminKey: "secret" }), true);
   assert.equal(canReadPrivatePhoto({ ...base }), false);
   assert.equal(canReadPrivatePhoto({ ...base, providedToken: "bad" }), false);
@@ -191,7 +193,7 @@ test("production photo router serves bytes only to authorized identities", async
   app.use(createPrivatePhotoRouter({
     repository: { findAudit: async () => audit },
     storage: { downloadAsStream: () => Readable.from(bytes) },
-    identify: (req) => req.headers.authorization === "Bearer owner-jwt" ? { email: "owner@example.com" } : req.headers.authorization === "Bearer admin-jwt" ? { email: "admin@example.com" } : undefined,
+    identify: (req) => req.headers.authorization === "Bearer owner-jwt" ? { email: "owner@example.com", emailVerified: true } : req.headers.authorization === "Bearer unverified-owner-jwt" ? { email: "owner@example.com", emailVerified: false } : req.headers.authorization === "Bearer admin-jwt" ? { email: "admin@example.com", emailVerified: false } : undefined,
     adminEmails: ["admin@example.com"],
     adminKey: "admin-secret",
   }));
@@ -206,6 +208,7 @@ test("production photo router serves bytes only to authorized identities", async
     }); req.end();
   });
   assert.equal((await request()).status, 403);
+  assert.equal((await request({ authorization: "Bearer unverified-owner-jwt" })).status, 403);
   for (const headers of [
     { authorization: "Bearer owner-jwt" },
     { authorization: "Bearer admin-jwt", "x-admin-key": "admin-secret" },
