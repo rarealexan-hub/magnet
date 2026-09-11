@@ -60,3 +60,6 @@ build = ["npm", "run", "build"]
 
 [userenv.shared]
 FEEDBACK_SPREADSHEET_ID = "1DwV5NQ8d0T0CHZfX_T9B7-sd1yVZ8y772S3ilgB41PY"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-97663ec9-1d6a-41d3-b3f3-dbc9039121e1"

@@ -36,7 +36,7 @@ interface AnalysisJob {
 }
 const analysisJobs = new Map<string, AnalysisJob>();
 function newJobId(): string {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  return crypto.randomBytes(32).toString("hex");
 }
 setInterval(() => {
   const cutoff = Date.now() - 30 * 60 * 1000;
@@ -256,15 +256,15 @@ async function uploadAuditPhotos(
 async function migrateLegacyAuditPhotos() {
   const result = await pool.query("SELECT id, intake_data, client_brief, photo_keys FROM human_audits WHERE intake_data ? 'reportPhotos' OR client_brief ? 'reportPhotos'");
   for (const row of result.rows) {
-    const legacySources = [row.intake_data?.reportPhotos, row.client_brief?.reportPhotos].filter(Boolean);
-    if (!legacySources.length) continue;
+    const legacy = row.client_brief?.reportPhotos || row.intake_data?.reportPhotos;
+    if (!legacy) continue;
     const keys: AuditPhoto[] = Array.isArray(row.photo_keys) ? [...row.photo_keys] : [];
     const uploadedKeys: string[] = [];
     const existing = new Set(keys.map((photo) => `${photo.kind}:${photo.index}`));
     const groups = [
-      { kind: "screenshots", values: legacySources.flatMap((legacy) => Array.isArray(legacy.screenshots) ? legacy.screenshots : []) },
-      { kind: "current", values: legacySources.flatMap((legacy) => Array.isArray(legacy.currentPhotos) ? legacy.currentPhotos : []) },
-      { kind: "additional", values: legacySources.flatMap((legacy) => Array.isArray(legacy.additionalPhotos) ? legacy.additionalPhotos : []) },
+      { kind: "screenshots", values: Array.isArray(legacy.screenshots) ? legacy.screenshots : [] },
+      { kind: "current", values: Array.isArray(legacy.currentPhotos) ? legacy.currentPhotos : [] },
+      { kind: "additional", values: Array.isArray(legacy.additionalPhotos) ? legacy.additionalPhotos : [] },
     ];
     try {
       for (const group of groups) {
@@ -987,7 +987,12 @@ app.post(
            { kind: "current", files: currentPhotoFiles },
            { kind: "additional", files: additionalPhotoFiles, labels: additionalPhotoLabels },
          ]);
-         await pool.query("UPDATE human_audits SET photo_keys = $1, updated_at = NOW() WHERE id = $2", [JSON.stringify(photoKeys), auditId]);
+         try {
+           await pool.query("UPDATE human_audits SET photo_keys = $1, updated_at = NOW() WHERE id = $2", [JSON.stringify(photoKeys), auditId]);
+         } catch (metadataError) {
+           await deleteAuditObjects(photoKeys.map((photo) => photo.key), true);
+           throw metadataError;
+         }
         const firstRead = {
           score: result.score,
           feedback: {
@@ -1393,8 +1398,13 @@ app.delete("/api/admin/human-audits/:id/photos", authenticateAdmin, async (req: 
 async function cleanupExpiredAuditPhotos() {
   const releasedSetting = process.env.AUDIT_PHOTO_RETENTION_RELEASED_DAYS;
   const unreleasedSetting = process.env.AUDIT_PHOTO_RETENTION_UNRELEASED_DAYS;
-  const releasedDays = releasedSetting === undefined ? 30 : Number(releasedSetting);
-  const unreleasedDays = unreleasedSetting === undefined ? 60 : Number(unreleasedSetting);
+  const retentionDays = (value: string | undefined, fallback: number) => {
+    if (value === undefined) return fallback;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+  };
+  const releasedDays = retentionDays(releasedSetting, 30);
+  const unreleasedDays = retentionDays(unreleasedSetting, 60);
   const result = await pool.query(
     `SELECT id, photo_keys FROM human_audits
      WHERE photos_deleted_at IS NULL AND jsonb_array_length(photo_keys) > 0
@@ -1403,9 +1413,13 @@ async function cleanupExpiredAuditPhotos() {
     [releasedDays, unreleasedDays],
   );
   for (const row of result.rows) {
-    const photos: AuditPhoto[] = row.photo_keys || [];
-    await deleteAuditObjects(photos.map((photo) => photo.key));
-    await pool.query("UPDATE human_audits SET photo_keys = '[]'::jsonb, photos_deleted_at = NOW(), updated_at = NOW() WHERE id = $1", [row.id]);
+    try {
+      const photos: AuditPhoto[] = row.photo_keys || [];
+      await deleteAuditObjects(photos.map((photo) => photo.key));
+      await pool.query("UPDATE human_audits SET photo_keys = '[]'::jsonb, photos_deleted_at = NOW(), updated_at = NOW() WHERE id = $1", [row.id]);
+    } catch (error) {
+      console.error("Audit photo retention deletion failed:", row.id, error);
+    }
   }
 }
 void cleanupExpiredAuditPhotos().catch((error) => console.error("Audit photo cleanup error:", error));

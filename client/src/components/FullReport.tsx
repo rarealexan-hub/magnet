@@ -23,6 +23,12 @@ function parsePhotoData(raw: string): { data: string; mimeType: string } | null 
   return null;
 }
 
+function photoSource(raw: string): string | null {
+  const parsed = parsePhotoData(raw);
+  if (parsed) return `data:${parsed.mimeType};base64,${parsed.data}`;
+  return raw.startsWith("blob:") || raw.startsWith("/") || raw.startsWith("http") ? raw : null;
+}
+
 function privatePhotoEndpoint(photo: string | PrivatePhotoReference): string | null {
   if (typeof photo === "string") return /^\/api\/|^https?:\/\//.test(photo) ? photo : null;
   return photo.endpoint || photo.path || photo.url || null;
@@ -33,11 +39,8 @@ function photoLabel(photo: string | PrivatePhotoReference, fallback: string): st
 }
 
 function PhotoThumb({ raw, label }: { raw: string; label: string }) {
-  const parsed = parsePhotoData(raw);
-  if (!parsed && (raw.startsWith("blob:") || raw.startsWith("/") || raw.startsWith("http"))) {
-    return <div className="photo-thumb-wrap"><img src={raw} alt={label} className="photo-thumb" /><span className="photo-thumb-label">{label}</span></div>;
-  }
-  if (!parsed) return (
+  const src = photoSource(raw);
+  if (!src) return (
     <div className="photo-thumb-wrap photo-missing">
       <div className="photo-placeholder">📷</div>
       <span className="photo-thumb-label">{label}</span>
@@ -46,7 +49,7 @@ function PhotoThumb({ raw, label }: { raw: string; label: string }) {
   return (
     <div className="photo-thumb-wrap">
       <img
-        src={`data:${parsed.mimeType};base64,${parsed.data}`}
+        src={src}
         alt={label}
         className="photo-thumb"
       />
@@ -67,6 +70,7 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isA
   const [progressSubmitting, setProgressSubmitting] = useState(false);
   const [privatePhotos, setPrivatePhotos] = useState<{ currentPhotos: string[]; additionalPhotos: string[]; screenshots: string[] } | null>(null);
   const [photosRemoved, setPhotosRemoved] = useState(false);
+  const [photosUnavailable, setPhotosUnavailable] = useState(false);
 
   useEffect(() => {
     const reportPhotos = result.reportPhotos || {
@@ -87,6 +91,7 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isA
       const urls: string[][] = [];
       let hadPrivate = false;
       let removed = !!reportPhotos.deleted;
+      let unavailable = false;
       for (const group of groups) {
         const loaded: string[] = [];
         for (const photo of group) {
@@ -98,16 +103,21 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isA
               ? `${endpoint}${endpoint.includes("?") ? "&" : "?"}token=${encodeURIComponent(result.accessToken)}`
               : endpoint;
             const response = await fetch(requestEndpoint, { headers: requestHeaders });
-            if (!response.ok) { removed = true; continue; }
+            if (!response.ok) {
+              if (response.status === 404) removed = true;
+              else unavailable = true;
+              continue;
+            }
             const objectUrl = URL.createObjectURL(await response.blob());
             createdUrls.push(objectUrl);
             loaded.push(objectUrl);
-          } catch { removed = true; }
+          } catch { unavailable = true; }
         }
         urls.push(loaded);
       }
       if (!cancelled) {
         setPhotosRemoved(removed);
+        setPhotosUnavailable(unavailable);
         if (hadPrivate) setPrivatePhotos({ screenshots: urls[0], currentPhotos: urls[1], additionalPhotos: urls[2] });
       } else urls.flat().forEach((url) => { if (url.startsWith("blob:")) URL.revokeObjectURL(url); });
     };
@@ -202,7 +212,7 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isA
           </div>
         </div>
 
-        {(displayInput.screenshots.length > 0 || displayInput.currentPhotos.length > 0 || displayInput.additionalPhotos.length > 0 || photosRemoved) && (
+        {(displayInput.screenshots.length > 0 || displayInput.currentPhotos.length > 0 || displayInput.additionalPhotos.length > 0 || photosRemoved || photosUnavailable) && (
           <div className="report-section-card uploaded-photos-card">
             <div className="report-section-header"><div className="report-section-icon"><Camera size={18} /></div><h3>Uploaded photos</h3></div>
             <div className="report-section-body">
@@ -213,6 +223,7 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isA
                     photo ? <PhotoThumb key={`${label}-${i}`} raw={photo} label={label} /> : null,
                   )}
                 {photosRemoved && <div className="photo-thumb-wrap photo-missing"><div className="photo-placeholder">📷</div><span className="photo-thumb-label">Photos removed after 30 days</span></div>}
+                {photosUnavailable && !photosRemoved && <div className="photo-thumb-wrap photo-missing"><div className="photo-placeholder">📷</div><span className="photo-thumb-label">Photos temporarily unavailable</span></div>}
               </div>
             </div>
           </div>
@@ -501,13 +512,13 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isA
                   const rawPhoto = isExtra
                     ? displayInput.additionalPhotos?.[extraIndex]
                     : displayInput.currentPhotos?.[currentIndex];
-                  const parsedPhoto = rawPhoto ? parsePhotoData(rawPhoto) : null;
+                  const photoSrc = rawPhoto ? photoSource(rawPhoto) : null;
                   return (
                   <div className="photo-signal-item" key={`${photo.photo}-${index}`}>
                     <span className="photo-signal-rank">{photo.rank || index + 1}</span>
-                     {parsedPhoto ? <img className="photo-signal-thumb" src={`data:${parsedPhoto.mimeType};base64,${parsedPhoto.data}`} alt={photo.photo} /> : <div className="photo-signal-thumb photo-placeholder">Photo {index + 1}</div>}
+                     {photoSrc ? <img className="photo-signal-thumb" src={photoSrc} alt={photo.photo} /> : <div className="photo-signal-thumb photo-placeholder">Photo {index + 1}</div>}
                     <div>
-                      <strong>{parsedPhoto ? (isExtra ? "Extra photo option" : currentIndex === 0 ? "Lead photo" : "Profile photo") : photo.photo}</strong>
+                      <strong>{photoSrc ? (isExtra ? "Extra photo option" : currentIndex === 0 ? "Lead photo" : "Profile photo") : photo.photo}</strong>
                       <p>{photo.signal}</p><small>{photo.recommendation}</small>
                     </div>
                   </div>
@@ -540,13 +551,14 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isA
                   const rawPhoto = isExtra
                     ? displayInput.additionalPhotos?.[additionalIdx]
                     : displayInput.currentPhotos?.[currentIdx];
+                   const photoSrc = rawPhoto ? photoSource(rawPhoto) : null;
 
                   return (
                     <div key={i} className="photo-order-item">
                       <div className="photo-order-num">{i + 1}</div>
-                      {rawPhoto ? (
+                      {photoSrc ? (
                         <img
-                          src={`data:${parsePhotoData(rawPhoto)?.mimeType};base64,${parsePhotoData(rawPhoto)?.data}`}
+                          src={photoSrc}
                           alt={photoRef}
                           className="photo-order-thumb"
                         />
@@ -555,7 +567,7 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isA
                           <Camera size={16} />
                         </div>
                       )}
-                      {!rawPhoto && <span className="photo-order-ref">{photoRef}</span>}
+                      {!photoSrc && <span className="photo-order-ref">{photoRef}</span>}
                       {i === 0 && <span className="photo-order-badge first-badge">Lead photo</span>}
                       {isExtra && <span className="photo-order-badge new-badge">New addition</span>}
                     </div>

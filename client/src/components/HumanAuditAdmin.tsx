@@ -288,7 +288,7 @@ export function HumanAuditAdmin({ token, onBack }: Props) {
                     <h3>Uploaded photos</h3>
                     <div className="swap-photo-thumbs">
                       {uploadedPhotos.map((photo) => <div className="photo-thumb-wrap" key={photo.url}><img src={photo.url} alt={photo.label} className="photo-thumb" /><span className="photo-thumb-label">{photo.label}</span></div>)}
-                      {photosRemoved && <div className="photo-thumb-wrap photo-missing"><div className="photo-placeholder">📷</div><span className="photo-thumb-label">Photos removed after 30 days</span></div>}
+                      {photosRemoved && <div className="photo-thumb-wrap photo-missing"><div className="photo-placeholder">📷</div><span className="photo-thumb-label">Photos removed under the retention policy</span></div>}
                     </div>
                     <button className="audit-secondary-btn" onClick={() => void deletePhotos()} disabled={saving}>Delete photos now</button>
                   </div>

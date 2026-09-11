@@ -52,7 +52,7 @@ export function PrivacyPolicy({ onBack }: Props) {
           <section className="privacy-section">
             <h2>Data retention</h2>
             <p>
-               A person on the Magnet team reviews and edits every full audit before it is released. Photos are deleted 30 days after your report is released. Report text stays with your account until you ask us to delete it. You can request immediate removal of photos, your account, or all associated data at any time.
+               A person on the Magnet team reviews and edits every full audit before it is released. Photos are deleted 30 days after your report is released, or after 60 days if an audit is never released. Report text stays with your account until you ask us to delete it. You can request immediate removal of photos, your account, or all associated data at any time.
             </p>
           </section>
 
