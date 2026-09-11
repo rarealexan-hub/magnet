@@ -8,7 +8,13 @@ export interface SendEmailInput {
   idempotencyKey?: string;
 }
 
-export async function sendEmail(input: SendEmailInput): Promise<boolean> {
+export type EmailDeliveryStatus = "sent" | "logged" | "failed";
+
+export interface EmailDeliveryResult {
+  status: EmailDeliveryStatus;
+}
+
+export async function sendEmail(input: SendEmailInput): Promise<EmailDeliveryResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM || "Magnet <onboarding@resend.dev>";
 
@@ -19,7 +25,7 @@ export async function sendEmail(input: SendEmailInput): Promise<boolean> {
       subject: input.subject,
       links: [...new Set(links)],
     }));
-    return true;
+    return { status: "logged" };
   }
 
   try {
@@ -30,13 +36,13 @@ export async function sendEmail(input: SendEmailInput): Promise<boolean> {
       idempotencyKey ? { idempotencyKey } : undefined,
     );
     if (result.error) throw new Error(result.error.message);
-    return true;
+    return { status: "sent" };
   } catch (error) {
     console.error("Email send failed:", {
       to: input.to,
       subject: input.subject,
       error: error instanceof Error ? error.message : String(error),
     });
-    return false;
+    return { status: "failed" };
   }
 }

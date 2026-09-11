@@ -331,7 +331,7 @@ export function HumanAuditAdmin({ token, onBack }: Props) {
                   <p>Sent {new Date(selected.reportEmailSentAt).toLocaleString()}</p>
                 ) : selected.status === "final_report_ready" ? (
                   <>
-                    <p>Not sent. You can retry without releasing the report again.</p>
+                    <p>{selected.reportEmailDeliveryStatus === "logged" ? "Not sent (email not configured)" : "Not sent. You can retry without releasing the report again."}</p>
                     <button className="audit-secondary-btn" onClick={() => void resendReadyEmail()} disabled={saving}>Resend ready email</button>
                   </>
                 ) : (

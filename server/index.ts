@@ -168,6 +168,7 @@ async function initAuditTracking() {
     await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS photo_keys JSONB NOT NULL DEFAULT '[]'`);
     await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS photos_deleted_at TIMESTAMPTZ`);
     await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS report_email_sent_at TIMESTAMPTZ`);
+    await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS report_email_logged_at TIMESTAMPTZ`);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS private_photo_cleanup_queue (
         object_key TEXT PRIMARY KEY,
@@ -369,7 +370,10 @@ function auditToken(): string {
 
 function requestBaseUrl(req: Request): string {
   const configured = process.env.APP_BASE_URL;
-  const candidate = configured || req.get("origin") || `${req.protocol}://${req.get("host")}`;
+  if (!configured) {
+    console.error("APP_BASE_URL is not configured; falling back to the request host for email links.");
+  }
+  const candidate = configured || `${req.protocol}://${req.get("host")}`;
   try {
     const parsed = new URL(candidate);
     if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("Unsupported protocol");
@@ -395,7 +399,7 @@ async function issueVerificationEmail(
   user: { id: number; email: string },
   baseUrl: string,
   database: Pick<typeof pool, "query"> = pool,
-): Promise<boolean> {
+) {
   const rawToken = crypto.randomBytes(32).toString("hex");
   await database.query(
     `INSERT INTO email_verification_tokens (user_id, token_hash, expires_at)
@@ -412,7 +416,7 @@ async function issueVerificationEmail(
   });
 }
 
-async function sendReadyEmail(audit: { id: string | number; email: string; access_token: string }, baseUrl: string): Promise<boolean> {
+async function sendReadyEmail(audit: { id: string | number; email: string; access_token: string }, baseUrl: string) {
   const link = `${baseUrl}/?audit=${encodeURIComponent(String(audit.id))}&token=${encodeURIComponent(audit.access_token)}`;
   return sendEmail({
     to: audit.email,
@@ -475,6 +479,7 @@ function mapAuditRow(row: any, questions: any[] = []) {
     analysisId: row.analysis_id ? Number(row.analysis_id) : null,
     reviewedByEmail: row.reviewed_by_email || null,
     reportEmailSentAt: row.report_email_sent_at || null,
+    reportEmailDeliveryStatus: row.report_email_sent_at ? "sent" : row.report_email_logged_at ? "logged" : "not_sent",
     adminNotes: row.admin_notes || null,
     questions,
     createdAt: row.created_at,
@@ -1469,16 +1474,21 @@ app.post(
           feedback.profileTypeExplanation, audit.analysis_id,
         ],
       );
+      await client.query("COMMIT");
       if (firstRelease) {
-        const sent = await sendReadyEmail(audit, requestBaseUrl(req));
-        if (sent) {
-          await client.query(
+        const delivery = await sendReadyEmail(audit, requestBaseUrl(req));
+        if (delivery.status === "sent") {
+          await pool.query(
             "UPDATE human_audits SET report_email_sent_at = COALESCE(report_email_sent_at, NOW()) WHERE id = $1",
             [String(req.params.id)],
-          );
+          ).catch((error) => console.error("Could not record ready email delivery:", error));
+        } else if (delivery.status === "logged") {
+          await pool.query(
+            "UPDATE human_audits SET report_email_logged_at = NOW() WHERE id = $1 AND report_email_sent_at IS NULL",
+            [String(req.params.id)],
+          ).catch((error) => console.error("Could not record logged ready email:", error));
         }
       }
-      await client.query("COMMIT");
       res.json({ audit: await getAuditWithQuestions(String(req.params.id)) });
     } catch (error) {
       await client.query("ROLLBACK").catch(() => undefined);
@@ -1494,29 +1504,23 @@ app.post(
   "/api/admin/human-audits/:id/resend-ready-email",
   authenticateAdmin,
   async (req: AuthRequest, res: Response) => {
-    const client = await pool.connect();
     try {
-      await client.query("BEGIN");
-      const result = await client.query("SELECT * FROM human_audits WHERE id = $1 FOR UPDATE", [String(req.params.id)]);
+      const result = await pool.query("SELECT * FROM human_audits WHERE id = $1", [String(req.params.id)]);
       const audit = result.rows[0];
       if (!audit) {
-        await client.query("ROLLBACK");
         res.status(404).json({ error: "Audit not found" });
         return;
       }
       if (audit.status !== "final_report_ready") {
-        await client.query("ROLLBACK");
         res.status(400).json({ error: "The report has not been released yet." });
         return;
       }
       if (audit.report_email_sent_at) {
-        await client.query("ROLLBACK");
         res.status(409).json({ error: "The ready email was already sent." });
         return;
       }
-      const sent = await sendReadyEmail(audit, requestBaseUrl(req));
-      if (!sent) {
-        await client.query("COMMIT");
+      const delivery = await sendReadyEmail(audit, requestBaseUrl(req));
+      if (delivery.status === "failed") {
         res.json({
           success: false,
           error: "The ready email could not be sent. You can retry.",
@@ -1524,15 +1528,19 @@ app.post(
         });
         return;
       }
-      await client.query("UPDATE human_audits SET report_email_sent_at = NOW() WHERE id = $1 AND report_email_sent_at IS NULL", [audit.id]);
-      await client.query("COMMIT");
-      res.json({ success: true, audit: await getAuditWithQuestions(String(req.params.id)) });
+      if (delivery.status === "sent") {
+        await pool.query("UPDATE human_audits SET report_email_sent_at = NOW() WHERE id = $1 AND report_email_sent_at IS NULL", [audit.id]);
+      } else {
+        await pool.query("UPDATE human_audits SET report_email_logged_at = NOW() WHERE id = $1 AND report_email_sent_at IS NULL", [audit.id]);
+      }
+      res.json({
+        success: true,
+        deliveryStatus: delivery.status,
+        audit: await getAuditWithQuestions(String(req.params.id)),
+      });
     } catch (error) {
-      await client.query("ROLLBACK").catch(() => undefined);
       console.error("Ready email resend error:", error);
       res.status(500).json({ error: "Could not resend the ready email." });
-    } finally {
-      client.release();
     }
   },
 );

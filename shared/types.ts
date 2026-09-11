@@ -281,6 +281,7 @@ export interface HumanAudit {
   updatedAt: string;
   finalReportReadyAt?: string | null;
   reportEmailSentAt?: string | null;
+  reportEmailDeliveryStatus?: "sent" | "logged" | "not_sent";
   reportPhotos?: ProfileResult["reportPhotos"];
 }
 
