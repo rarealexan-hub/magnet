@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Plus, X, Loader2, Upload, GripVertical, ImagePlus, ChevronUp, ChevronDown, Camera } from "lucide-react";
-import { TARGET_QUALITIES, GENDER_OPTIONS, PARTNER_PREFERENCES, PLATFORMS, PLATFORM_PROMPTS } from "@shared/types";
+import { TARGET_QUALITIES, GENDER_OPTIONS, PARTNER_PREFERENCES, PLATFORMS, PLATFORM_AUDIT_FOCUS, PLATFORM_PROMPTS } from "@shared/types";
 import type { ProfileInput, ProfileResult, PlatformId } from "@shared/types";
 import { trackAnalysisStarted, trackAnalysisComplete } from "../lib/analytics";
 
@@ -35,14 +35,7 @@ const MAX_ADDITIONAL_PHOTOS = 10;
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif", "image/bmp", "image/tiff", "image/svg+xml"];
 const HEIC_TYPES = ["image/heic", "image/heif"];
-const HIDDEN_PLATFORM_OPTIONS = new Set([
-  "okcupid",
-  "coffee-meets-bagel",
-  "plenty-of-fish",
-  "zoosk",
-  "badoo",
-]);
-const SELECTABLE_PLATFORMS = PLATFORMS.filter((platform) => !HIDDEN_PLATFORM_OPTIONS.has(platform.id));
+const SELECTABLE_PLATFORMS = PLATFORMS;
 
 const CALIBRATION_EXAMPLES = [
   { id: "clear-solo", label: "Clear solo portrait", detail: "Face-forward, relaxed, easy to read", tone: "sand" },
@@ -273,6 +266,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   >([]);
   const additionalPromptFileRef = useRef<HTMLInputElement>(null);
   const additionalPromptEditIndex = useRef<number>(-1);
+  const screenshotUploadLabelRef = useRef("");
 
   const handleAdditionalPromptScreenshot = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -282,6 +276,12 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   };
 
   const setAdditionalPromptScreenshot = async (idx: number, file: File) => {
+    const existingScreenshot = additionalPromptEntries[idx]?.screenshot;
+    const totalScreenshots = screenshots.length + additionalPromptEntries.filter((entry) => entry.screenshot).length;
+    if (!existingScreenshot && totalScreenshots >= MAX_SCREENSHOTS) {
+      setError(`Maximum ${MAX_SCREENSHOTS} screenshots allowed across your full profile.`);
+      return;
+    }
     let processed = file;
     if (isHeic(file)) {
       try { processed = await convertHeicToJpeg(file); }
@@ -538,9 +538,10 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   const handleScreenshotSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    const remaining = MAX_SCREENSHOTS - screenshots.length;
+    const additionalPromptScreenshotCount = additionalPromptEntries.filter((entry) => entry.screenshot).length;
+    const remaining = MAX_SCREENSHOTS - screenshots.length - additionalPromptScreenshotCount;
     if (remaining <= 0) {
-      setError(`Maximum ${MAX_SCREENSHOTS} screenshots allowed.`);
+      setError(`Maximum ${MAX_SCREENSHOTS} screenshots allowed across your full profile.`);
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -567,7 +568,11 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
         continue;
       }
       processed = await compressImage(processed);
-      newScreenshots.push({ file: processed, preview: URL.createObjectURL(processed), label: "" });
+       newScreenshots.push({
+         file: processed,
+         preview: URL.createObjectURL(processed),
+         label: screenshotUploadLabelRef.current,
+       });
     }
     if (skipped.length > 0) setError(`Skipped: ${skipped.join(", ")}`);
     setScreenshots((prev) => [...prev, ...newScreenshots]);
@@ -587,6 +592,20 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
       updated[i] = { ...updated[i], label };
       return updated;
     });
+  };
+
+  const triggerScreenshotUpload = (label: string) => {
+    screenshotUploadLabelRef.current = label;
+    fileInputRef.current?.click();
+  };
+
+  const handlePlatformChange = (nextPlatform: PlatformId) => {
+    if (nextPlatform === platform) return;
+    if (selectedPrompts.length > 0 && !window.confirm("Changing the app will clear the selected profile sections and typed answers because each app uses different fields. Continue?")) {
+      return;
+    }
+    setPlatform(nextPlatform);
+    setSelectedPrompts([]);
   };
 
   const buildFormData = () => {
@@ -804,6 +823,19 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           <div className="form-header">
             <h2>Your photos are everything.</h2>
             <p>We analyze each photo — what it signals, what to fix, and what to swap in.</p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,.heic,.heif"
+                multiple
+                style={{ display: "none" }}
+                onChange={handleScreenshotSelect}
+              />
+              <button type="button" className="evidence-inline-action evidence-inline-action-prominent" onClick={() => triggerScreenshotUpload("Full profile view")}>
+                <Camera size={15} />
+                Upload screenshots of your {platformInfo?.label} profile
+              </button>
+              {screenshots.length > 0 && <p className="form-hint">{screenshots.length} profile screenshot{screenshots.length === 1 ? "" : "s"} ready for your audit.</p>}
           </div>
 
           <input id="lead-photo-input" ref={leadPhotoRef} type="file" accept="image/*,.heic,.heif" onChange={handleLeadPhotoSelect} style={{ display: "none" }} />
@@ -1009,12 +1041,75 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
             </div>
             <div className="platform-select">
               {SELECTABLE_PLATFORMS.map((p) => (
-                <button key={p.id} type="button" className={`platform-btn ${platform === p.id ? "active" : ""}`} onClick={() => setPlatform(p.id as PlatformId)}>
+                <button key={p.id} type="button" className={`platform-btn ${platform === p.id ? "active" : ""}`} onClick={() => handlePlatformChange(p.id)}>
                   <span className="platform-btn-dot" style={{ background: p.color }} />
                   {p.label}
                 </button>
               ))}
             </div>
+            <div className="platform-context-card" style={{ borderColor: platformInfo?.color }}>
+              <span className="platform-context-kicker">Audit structure</span>
+              <strong>{platformInfo?.label} profile, not a generic dating profile</strong>
+              <p>
+                {PLATFORM_AUDIT_FOCUS[platform]}
+              </p>
+            </div>
+          </div>
+
+          <div className="form-section screenshot-evidence-section">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.heic,.heif"
+              multiple
+              style={{ display: "none" }}
+              onChange={handleScreenshotSelect}
+            />
+            <div className="form-label-row">
+              <div>
+                <label className="form-label">Best evidence: screenshots of your {platformInfo?.label} profile</label>
+                <p className="form-hint">Screenshots are preferred because they preserve the real app layout. Typed text is still a useful fallback.</p>
+              </div>
+              <span className="form-label-badge screenshot-preferred-badge"><Camera size={12} /> Preferred</span>
+            </div>
+            <div className="screenshot-action-grid">
+              <button type="button" className="screenshot-action screenshot-action-primary" onClick={() => triggerScreenshotUpload("Full profile view")}>
+                <Upload size={18} />
+                <span><strong>Upload a full profile view</strong><small>Show the complete {platformInfo?.label} profile in context</small></span>
+              </button>
+              <button type="button" className="screenshot-action" onClick={() => triggerScreenshotUpload("Profile photos")}>
+                <ImagePlus size={18} />
+                <span><strong>Upload profile photos</strong><small>Include the photo order people see</small></span>
+              </button>
+              <button type="button" className="screenshot-action" onClick={() => triggerScreenshotUpload("Prompts")}>
+                <Camera size={18} />
+                <span><strong>Upload your prompts</strong><small>Capture questions and answers together</small></span>
+              </button>
+              <button type="button" className="screenshot-action" onClick={() => triggerScreenshotUpload("Bio/About")}>
+                <Upload size={18} />
+                <span><strong>Upload your bio or About section</strong><small>Capture the exact text and formatting</small></span>
+              </button>
+            </div>
+            {screenshots.length > 0 && (
+              <div className="screenshot-evidence-list">
+                {screenshots.map((s, i) => (
+                  <div className="screenshot-evidence-item" key={`${s.preview}-${i}`}>
+                    <img src={s.preview} alt={`${s.label || "Profile"} screenshot ${i + 1}`} />
+                    <div>
+                      <label className="screenshot-evidence-label">What does this show?</label>
+                      <input
+                        className="form-input screenshot-evidence-input"
+                        value={s.label}
+                        placeholder="e.g. Full profile view"
+                        onChange={(e) => updateScreenshotLabel(i, e.target.value)}
+                      />
+                    </div>
+                    <button type="button" className="screenshot-remove" aria-label={`Remove screenshot ${i + 1}`} onClick={() => removeScreenshot(i)}><X size={14} /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="screenshot-fallback-note">No screenshots? You can type your answers below. We will use your typed entry as a fallback.</p>
           </div>
 
           <div className="form-section">
@@ -1102,12 +1197,57 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
             </div>
           </div>
 
+          {platformPrompts && (
+            <div className="form-section platform-prompts-section">
+              <div className="form-label-row">
+                <div>
+                  <label className="form-label">{platformInfo?.label} profile sections</label>
+                  <p className="form-hint">Select the sections that appear on your profile, then add a screenshot or type the exact text as a fallback.</p>
+                </div>
+                <span className="form-label-badge">{selectedPrompts.length} selected</span>
+              </div>
+              <div className="prompt-picker-grid">
+                {platformPrompts.slice(0, 18).map((question) => {
+                  const selected = selectedPrompts.some((prompt) => prompt.question === question);
+                  return (
+                    <button key={question} type="button" className={`prompt-pill ${selected ? "selected" : ""}`} onClick={() => toggleSelectedPrompt(question)}>
+                      {selected && <span className="prompt-pill-check">Selected</span>}
+                      {question}
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedPrompts.length > 0 && (
+                <div className="selected-prompts-list" style={{ marginTop: 14 }}>
+                  {selectedPrompts.map((prompt, i) => (
+                    <div className="prompt-answer-item" key={prompt.question}>
+                      <div className="prompt-answer-header">
+                        <span className="prompt-answer-question">{prompt.question}</span>
+                        <button type="button" className="prompt-answer-remove" aria-label={`Remove ${prompt.question}`} onClick={() => removeSelectedPrompt(i)}><X size={14} /></button>
+                      </div>
+                      <textarea
+                        className="form-textarea prompt-answer-textarea"
+                        rows={2}
+                        placeholder={`Type your ${platformInfo?.label} answer here if you are not uploading a prompt screenshot`}
+                        value={prompt.answer}
+                        onChange={(e) => updatePromptAnswer(i, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button type="button" className="evidence-inline-action" onClick={() => triggerScreenshotUpload("Prompts")}>
+                  <Camera size={15} /> Upload a screenshot of these {platformInfo?.label} profile sections
+              </button>
+            </div>
+          )}
+
           <div className="form-section">
             <div className="form-label-row">
-              <label className="form-label">Additional prompts</label>
+              <label className="form-label">Other {platformInfo?.label} profile sections</label>
               <span className="form-label-badge">optional</span>
             </div>
-            <p className="form-hint">Add any other prompts from your profile so we can review them too.</p>
+            <p className="form-hint">Add anything else that appears on your {platformInfo?.label} profile so we can review the real structure too.</p>
             <input
               ref={additionalPromptFileRef}
               type="file"
@@ -1181,17 +1321,20 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
 
           <div className="form-section">
             <button type="button" className="context-toggle-btn" onClick={() => setBioOpen(!bioOpen)}>
-              <span>Any bio or about section?</span>
+              <span>Your {platformInfo?.label} bio or About section</span>
               <span className="form-label-badge">optional</span>
               {bioOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
-            <p className="form-hint" style={{ marginTop: 6 }}>Paste in your full bio or about me text — helps us give more targeted feedback.</p>
+            <p className="form-hint" style={{ marginTop: 6 }}>Screenshot the real {platformInfo?.label} section first. If you cannot, paste the full text below.</p>
             {bioOpen && (
               <div className="context-toggle-body">
+                <button type="button" className="evidence-inline-action evidence-inline-action-prominent" onClick={() => triggerScreenshotUpload("Bio/About")}>
+                  <Camera size={16} /> Upload a screenshot of your bio or About section
+                </button>
                 <textarea
                   className="form-textarea"
                   rows={4}
-                  placeholder="Paste or type your bio / about section here..."
+                  placeholder={`Fallback: paste or type your ${platformInfo?.label} bio / About text here...`}
                   value={bioAbout}
                   onChange={(e) => setBioAbout(e.target.value)}
                 />
@@ -1262,7 +1405,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
     };
 
     return (
-      <div className="form-page">
+      <div className="form-page calibration-page">
         <div className="form-container calibration-container">
           <div className="form-header">
             <p className="audit-eyebrow">Final step · 03 / 03</p>

@@ -13,10 +13,13 @@ export class PostgresPrivatePhotoRepository implements PrivatePhotoRepository, P
   }
 
   async setPhotoMetadata(id: string | number, photos: AuditPhoto[]): Promise<void> {
-    await this.db.query(
+    const result = await this.db.query(
       "UPDATE human_audits SET photo_keys = $1::jsonb, updated_at = $2 WHERE id = $3",
       [JSON.stringify(photos), new Date(), id],
     );
+    if (result.rowCount !== 1) {
+      throw new Error(`Audit record ${id} was not found while saving photo metadata`);
+    }
   }
 
   async clearPhotos(id: string): Promise<void> {

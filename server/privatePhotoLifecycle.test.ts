@@ -138,7 +138,10 @@ test("failed rollback deletion is durably queued and succeeds on retry", async (
 });
 
 test("photo metadata persistence stores references only, never image bytes", async () => {
-  let record: any = { intake_data: { screenshotCount: 1 }, client_brief: { score: { overall: 80 } } };
+  const record: { intake_data: { screenshotCount: number }; client_brief: { score: { overall: number } }; photo_keys?: AuditPhoto[] } = {
+    intake_data: { screenshotCount: 1 },
+    client_brief: { score: { overall: 80 } },
+  };
   const photos: AuditPhoto[] = [{ key: "audits/1/screenshots/0", kind: "screenshots", index: 0, mimeType: "image/png" }];
   await persistPhotoMetadata({
     setPhotoMetadata: async (_id, references) => { record.photo_keys = references; },
@@ -178,8 +181,6 @@ test("Postgres private-photo adapter persists metadata and selects deterministic
   );
   const repository = new PostgresPrivatePhotoRepository(pool);
   const storage = new MemoryStorage();
-
-  const queued = new Map<string, Date>();
   const sentinel = "RAW_SENTINEL_SCREENSHOT_BASE64";
   const uploaded = await uploadAuditPhotos(storage, 1, [
     { kind: "screenshots", files: [file("screen.png", sentinel)] },
@@ -211,6 +212,33 @@ test("Postgres private-photo adapter persists metadata and selects deterministic
   assert.deepEqual(mapAuditReportPhotos(cleared), {
     screenshots: [], currentPhotos: [], additionalPhotos: [], deleted: true,
   });
+});
+
+test("a zero-row metadata update rolls back uploaded objects and exposes no endpoints", async () => {
+  const db = newDb();
+  const pg = db.adapters.createPg();
+  const pool = new pg.Pool();
+  await pool.query(`CREATE TABLE human_audits (
+    id bigint primary key,
+    photo_keys jsonb not null default '[]',
+    updated_at timestamptz
+  )`);
+  const repository = new PostgresPrivatePhotoRepository(pool);
+  const storage = new MemoryStorage();
+  let response: ReturnType<typeof auditReportPhotos> | undefined;
+
+  await assert.rejects(async () => {
+    const photos = await uploadAndPersistAuditPhotos(storage, repository, 404, [
+      { kind: "screenshots", files: [file("screen.png", "screen")] },
+      { kind: "current", files: [file("current.png", "current")] },
+      { kind: "additional", files: [file("additional.png", "additional")] },
+    ], async (bytes) => bytes);
+    response = auditReportPhotos(404, photos);
+  }, /Audit record 404 was not found while saving photo metadata/);
+
+  assert.equal(storage.uploadCount, 3);
+  assert.equal(storage.objects.size, 0);
+  assert.equal(response, undefined);
 });
 
 test("Postgres cleanup queue deduplicates, defers, and completes object retries", async () => {

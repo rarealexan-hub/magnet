@@ -24,6 +24,29 @@ export type PlatformId = typeof PLATFORMS[number]["id"];
 export const PLATFORM_LABEL: Record<string, string> = Object.fromEntries(PLATFORMS.map(p => [p.id, p.label]));
 export const PLATFORM_COLOR: Record<string, string> = Object.fromEntries(PLATFORMS.map(p => [p.id, p.color]));
 
+/** Platform-native modules to evaluate. Screenshots are the source of truth
+ * when an app changes its profile layout or available fields. */
+export const PLATFORM_AUDIT_FOCUS: Record<PlatformId, string> = {
+  hinge: "Evaluate the photo and prompt sequence as individual like/comment opportunities. Prioritize reply-worthy prompts, clear first impressions, and a profile that gives someone an easy reason to engage.",
+  tinder: "Evaluate the fast swipe experience first: lead photo, visual impact, photo order, short bio, passions, and intent. Do not overvalue text that most people will not see before deciding.",
+  bumble: "Evaluate first-message readiness: photo order, prompts, badges, and signals that make the right person feel comfortable and able to start a conversation.",
+  raya: "Evaluate the complete editorial profile: main image, click-through photo sequence, freeform bio, identity details, cities, saved places, interests, and profile song as one coherent personal world.",
+  okcupid: "Evaluate the long-form profile and compatibility context: self-summary, written answers, interests, values, and what the profile makes clear about who the person is seeking.",
+  "coffee-meets-bagel": "Evaluate the curated, high-intent profile: concise About Me copy, values and lifestyle context, clear relationship intent, and an easy first-conversation opening.",
+  match: "Evaluate the detailed relationship profile: headline, About Me, lifestyle and interest fields, relationship goals, and enough specificity for an intentional dater to act on.",
+  happn: "Evaluate the proximity-led discovery profile: photos, bio, interests, lifestyle details, and the signals that make a nearby connection feel natural and safe to start.",
+  "the-league": "Evaluate the selective, professional profile: visual polish, career and education context, concise personality signals, and enough warmth to feel human rather than transactional.",
+  feeld: "Evaluate clarity and consent: relationship style, desires, boundaries, interests, and photos. Recommendations must help the user communicate honestly without assumptions or pressure.",
+  hily: "Evaluate the complete discovery profile: photos, bio, interests, lifestyle details, compatibility signals, and clear intent that helps the right people self-select.",
+  "plenty-of-fish": "Evaluate the detailed written profile: headline, About Me, interests, first-date preferences, and relationship goals alongside the photo sequence.",
+  zoosk: "Evaluate the profile story and behavioral-match context: photos, About Me, interests, dating intent, and conversation starters that make the user easy to understand quickly.",
+  grindr: "Evaluate the grid-first profile: immediately readable photos, concise bio, identity and intent details the user chooses to share, and clear boundaries that support respectful matching.",
+  badoo: "Evaluate the discovery profile: photos, bio, interests, lifestyle and verification signals, relationship goals, and prompts that make an authentic connection easy to begin.",
+  blk: "Evaluate the profile's personal voice and cultural context with care: photos, bio, interests, values, and relationship intent should feel specific, authentic, and welcoming.",
+  her: "Evaluate identity, community, and connection signals: photos, bio, interests, values, relationship goals, and the details that help the right people recognize shared ground.",
+  other: "Use the uploaded screenshots as the source of truth for this app's layout. Identify the visible modules before giving advice, then evaluate only the profile elements the app actually supports.",
+};
+
 export interface ProfileInput {
   platform: PlatformId;
   email: string;
@@ -328,6 +351,10 @@ export const PLATFORM_PROMPTS: Record<string, string[]> = {
     "The best way to ask me out is", "My most useless skill",
     "My personal hell is", "I once got in trouble for",
   ],
+  tinder: [
+    "About me", "Passions", "Looking for", "Relationship goals",
+    "Lifestyle", "Job", "School", "Profile anthem", "Pronouns",
+  ],
   bumble: [
     "Right now I'm obsessed with", "Believe it or not, I",
     "My love language is", "I geek out on", "My simple pleasures",
@@ -378,6 +405,42 @@ export const PLATFORM_PROMPTS: Record<string, string[]> = {
     "About me", "I'm here for", "My desires", "What I'm looking for",
     "Something unique about me", "My relationship style",
     "I'm most passionate about",
+  ],
+  match: [
+    "Headline", "About me", "What I'm looking for", "My interests",
+    "My lifestyle", "My values", "A typical weekend", "Ideal first date",
+  ],
+  happn: [
+    "About me", "My interests", "My lifestyle", "My favorite places",
+    "My music", "What I'm looking for", "A conversation starter",
+  ],
+  hily: [
+    "About me", "My interests", "My lifestyle", "Relationship goals",
+    "My values", "A fun fact about me", "Conversation starters",
+  ],
+  "plenty-of-fish": [
+    "Headline", "About me", "Interests", "First date", "Relationship goals",
+    "What makes me unique", "Conversation starters",
+  ],
+  zoosk: [
+    "About me", "My story", "My interests", "Ideal first date",
+    "What I'm looking for", "Relationship goals", "Conversation starters",
+  ],
+  grindr: [
+    "About me", "Looking for", "Interests", "Identity details",
+    "Relationship intentions", "Boundaries", "Social links",
+  ],
+  badoo: [
+    "About me", "Interests", "Lifestyle", "Relationship goals",
+    "Job or education", "A fun fact about me", "Conversation starters",
+  ],
+  blk: [
+    "About me", "Interests", "Relationship goals", "Values",
+    "A fun fact about me", "Conversation starters",
+  ],
+  other: [
+    "Profile bio", "Interests", "Relationship goals", "Profile badges",
+    "Conversation starters", "Other visible profile sections",
   ],
 };
 

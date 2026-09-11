@@ -849,6 +849,107 @@ h2, h3, h4, h5, h6 {
   .proof-item:first-of-type { border-top: 0; padding-top: 0; }
 }
 
+/* Profile evidence intake */
+.platform-context-card {
+  margin-top: 14px;
+  padding: 15px 16px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-left-width: 4px;
+  border-radius: 10px;
+}
+.platform-context-kicker {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.platform-context-card strong { display: block; font-size: 15px; margin-bottom: 4px; }
+.platform-context-card p { color: var(--text-muted); font-size: 13px; line-height: 1.5; }
+.screenshot-evidence-section {
+  padding: 20px;
+  background: rgba(142, 215, 198, .09);
+  border: 1px solid rgba(35, 120, 104, .2);
+  border-radius: 12px;
+}
+.screenshot-preferred-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #237868;
+  background: rgba(142, 215, 198, .2);
+  border-color: rgba(35, 120, 104, .24);
+}
+.screenshot-action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+.screenshot-action {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 72px;
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s, transform .15s, background .15s;
+}
+.screenshot-action:hover, .screenshot-action:focus-visible {
+  border-color: #237868;
+  background: rgba(142, 215, 198, .12);
+  transform: translateY(-1px);
+}
+.screenshot-action-primary { border-color: #237868; }
+.screenshot-action svg { flex: 0 0 auto; color: #237868; margin-top: 1px; }
+.screenshot-action strong, .screenshot-action small { display: block; }
+.screenshot-action strong { font-size: 13px; line-height: 1.25; }
+.screenshot-action small { margin-top: 4px; color: var(--text-muted); font-size: 11px; line-height: 1.35; }
+.screenshot-evidence-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.screenshot-evidence-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 58px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.screenshot-evidence-item img { width: 58px; height: 58px; object-fit: cover; border-radius: 5px; }
+.screenshot-evidence-label { display: block; margin-bottom: 4px; color: var(--text-muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.screenshot-evidence-input { width: 100%; min-height: 34px; padding: 7px 9px; font-size: 12px; }
+.screenshot-fallback-note { margin-top: 12px; color: var(--text-muted); font-size: 12px; line-height: 1.45; }
+.evidence-inline-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border: 1px solid rgba(35, 120, 104, .28);
+  border-radius: 7px;
+  background: rgba(142, 215, 198, .12);
+  color: #237868;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.evidence-inline-action:hover { background: rgba(142, 215, 198, .22); }
+.evidence-inline-action-prominent { margin: 0 0 10px; }
+@media (max-width: 540px) {
+  .screenshot-action-grid { grid-template-columns: 1fr; }
+  .screenshot-evidence-section { padding: 16px; }
+}
+
 /* Form Page */
 .form-page {
   max-width: 700px;
@@ -7797,6 +7898,10 @@ button {
   max-width: 620px;
 }
 
+.calibration-page {
+  max-width: 1120px;
+}
+
 .calibration-container .form-header p:last-child {
   color: var(--text-muted);
   line-height: 1.6;
@@ -7805,8 +7910,8 @@ button {
 .calibration-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin: 28px 0;
+  gap: 18px;
+  margin: 30px 0;
 }
 
 .calibration-card {
@@ -7837,17 +7942,17 @@ button {
 .calibration-image {
   position: relative;
   display: block;
-  height: 170px;
+  height: clamp(280px, 29vw, 340px);
   overflow: hidden;
-  background: #ddd8d0;
+  background: #e5ded3;
 }
 
 .calibration-image img {
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: cover;
-  object-position: center 28%;
+  object-fit: contain;
+  object-position: center;
   transition: transform .25s ease;
 }
 
@@ -8590,7 +8695,7 @@ button {
   }
 
   .calibration-image {
-    height: 150px;
+    height: clamp(280px, 78vw, 390px);
   }
 
   .audit-shell {

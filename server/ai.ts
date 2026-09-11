@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import sharp from "sharp";
 import type { ChatCompletionContentPart } from "openai/resources/chat/completions";
-import type { ProfileInput, ProfileResult } from "../shared/types.js";
+import { PLATFORM_AUDIT_FOCUS, type ProfileInput, type ProfileResult } from "../shared/types.js";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -438,7 +438,7 @@ function parseImagePayload(raw: string): { data: string; mimeType: string; label
   return null;
 }
 
-async function buildUserContent(input: ProfileInput, promptText: string): Promise<ChatCompletionContentPart[]> {
+export async function buildUserContent(input: ProfileInput, promptText: string): Promise<ChatCompletionContentPart[]> {
   const parts: ChatCompletionContentPart[] = [];
   const hasScreenshots = input.screenshots?.length > 0;
   const hasCurrentPhotos = input.currentPhotos?.length > 0;
@@ -472,6 +472,12 @@ async function buildUserContent(input: ProfileInput, promptText: string): Promis
       const s = parseImagePayload(raw);
       if (!s) continue;
       const img = await compressImage(s.data);
+      parts.push({
+        type: "text",
+        text: s.label
+          ? `\n[Profile screenshot — ${s.label}]\n`
+          : "\n[Profile screenshot]\n",
+      });
       parts.push({
         type: "image_url",
         image_url: { url: `data:${img.mimeType};base64,${img.data}`, detail: "high" },
@@ -535,6 +541,10 @@ function buildProfileText(input: ProfileInput): string {
   if (input.preferredTone) message += `Preferred profile tone: ${input.preferredTone}\n`;
 
   message += `Platform: ${input.platform}\n`;
+  message += `\n━━━ PLATFORM-SPECIFIC AUDIT RULES ━━━\n`;
+  message += `${PLATFORM_AUDIT_FOCUS[input.platform]}\n`;
+  message += "Treat the uploaded screenshots as the source of truth for the current profile layout and visible modules. Do not recommend a profile field, prompt, badge, or feature that is not supported by this app or not visible in the screenshots. If a visible module is missing from the written intake, call it out and tailor feedback to it.\n";
+  message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
 
   if (input.bio) {
     message += `\nBio:\n"${input.bio}"\n`;
