@@ -14,7 +14,7 @@ export function PrivacyPolicy({ onBack }: Props) {
 
         <div className="privacy-header">
           <h1 className="privacy-title">Privacy Policy</h1>
-          <p className="privacy-updated">Last updated: April 2026</p>
+          <p className="privacy-updated">Last updated: September 11, 2026</p>
         </div>
 
         <div className="privacy-body">
@@ -26,7 +26,7 @@ export function PrivacyPolicy({ onBack }: Props) {
             <h2>What we collect</h2>
             <ul>
               <li><strong>Email address</strong> — when you create an account or sign in. Used for account management only.</li>
-              <li><strong>Photos you upload</strong> — processed to generate your analysis. Photos are not stored on our servers after your analysis is complete.</li>
+              <li><strong>Photos and screenshots you upload</strong> — stored privately so a reviewer can check your audit and you can view your report later.</li>
               <li><strong>Profile text</strong> — bios, prompts, and answers you enter into the form. Used solely to generate your analysis.</li>
               <li><strong>Analysis results</strong> — your Magnet Score and report, saved to your account so you can access them from your dashboard.</li>
             </ul>
@@ -52,7 +52,7 @@ export function PrivacyPolicy({ onBack }: Props) {
           <section className="privacy-section">
             <h2>Data retention</h2>
             <p>
-              Photos are processed in real time and not stored on our servers after your analysis completes. Your email address and analysis results are retained for as long as your account is active. You can request deletion of your account and all associated data at any time.
+               A person on the Magnet team reviews and edits every full audit before it is released. Photos are deleted 30 days after your report is released. Report text stays with your account until you ask us to delete it. You can request immediate removal of photos, your account, or all associated data at any time.
             </p>
           </section>
 

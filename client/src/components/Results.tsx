@@ -135,6 +135,7 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
         if (data.status === "final_report_ready" && data.report) {
           onAuditReady?.({
             ...data.report,
+            reportPhotos: data.reportPhotos,
             analysisId: data.analysisId,
             auditId: auditAccess.auditId,
             accessToken: auditAccess.token,

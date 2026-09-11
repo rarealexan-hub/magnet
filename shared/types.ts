@@ -50,6 +50,16 @@ export interface ProfileInput {
   additionalContext?: string;
 }
 
+/** A reference to an image retained in private storage.  The reference is
+ * deliberately metadata only: clients must fetch it with auth headers. */
+export interface PrivatePhotoReference {
+  endpoint?: string;
+  url?: string;
+  path?: string;
+  label?: string;
+  deleted?: boolean;
+}
+
 export const GENDER_OPTIONS = [
   { id: "man", label: "Man" },
   { id: "woman", label: "Woman" },
@@ -195,8 +205,10 @@ export interface ProfileResult {
   accessToken?: string;
   reviewStatus?: HumanAuditStatus;
   reportPhotos?: {
-    currentPhotos: string[];
-    additionalPhotos: string[];
+    screenshots?: Array<string | PrivatePhotoReference>;
+    currentPhotos: Array<string | PrivatePhotoReference>;
+    additionalPhotos: Array<string | PrivatePhotoReference>;
+    deleted?: boolean;
   } | null;
 }
 
@@ -268,6 +280,7 @@ export interface HumanAudit {
   createdAt: string;
   updatedAt: string;
   finalReportReadyAt?: string | null;
+  reportPhotos?: ProfileResult["reportPhotos"];
 }
 
 export interface HumanAuditListItem {

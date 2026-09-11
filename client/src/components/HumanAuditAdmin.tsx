@@ -50,6 +50,8 @@ export function HumanAuditAdmin({ token, onBack }: Props) {
   const [adminKey, setAdminKey] = useState(() => sessionStorage.getItem("magnet_admin_key") || "");
   const [adminKeyInput, setAdminKeyInput] = useState("");
   const [needsAdminKey, setNeedsAdminKey] = useState(false);
+  const [uploadedPhotos, setUploadedPhotos] = useState<Array<{ url: string; label: string }>>([]);
+  const [photosRemoved, setPhotosRemoved] = useState(false);
 
   const noteForbidden = (response: Response) => {
     if (response.status === 403) setNeedsAdminKey(true);
@@ -77,12 +79,63 @@ export function HumanAuditAdmin({ token, onBack }: Props) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Could not load client brief.");
       setSelected(data.audit);
+      setUploadedPhotos([]);
+      setPhotosRemoved(false);
       setNotes(data.audit.adminNotes || "");
       setReportJson(JSON.stringify(data.audit.finalReport || data.audit.clientBrief || {}, null, 2));
       setPreview(null);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not load client brief.");
     }
+  };
+
+  useEffect(() => {
+    if (!selected) return;
+    const metadata = selected.reportPhotos
+      || (selected.intakeData as { reportPhotos?: { screenshots?: unknown[]; currentPhotos?: unknown[]; additionalPhotos?: unknown[]; deleted?: boolean } }).reportPhotos;
+    if (!metadata) return;
+    setPhotosRemoved(!!metadata.deleted);
+    const groups = [
+      ...(metadata.screenshots || []).map((photo, i) => ({ photo, label: typeof photo === "object" && photo && "label" in photo ? String(photo.label) : `Screenshot ${i + 1}` })),
+      ...(metadata.currentPhotos || []).map((photo, i) => ({ photo, label: typeof photo === "object" && photo && "label" in photo ? String(photo.label) : `Current photo ${i + 1}` })),
+      ...(metadata.additionalPhotos || []).map((photo, i) => ({ photo, label: typeof photo === "object" && photo && "label" in photo ? String(photo.label) : `Additional photo ${i + 1}` })),
+    ];
+    let cancelled = false;
+    const urls: string[] = [];
+    const load = async () => {
+      const loaded: Array<{ url: string; label: string }> = [];
+      for (const item of groups) {
+        const photo = item.photo as string | { endpoint?: string; path?: string; url?: string; label?: string };
+        const endpoint = typeof photo === "string" ? (/^\/api\/|^https?:\/\//.test(photo) ? photo : null) : (photo.endpoint || photo.path || photo.url);
+        if (!endpoint) continue;
+        try {
+          const response = await fetch(endpoint, { headers: authHeaders(token, adminKey) });
+          if (!response.ok) { setPhotosRemoved(true); continue; }
+          const url = URL.createObjectURL(await response.blob());
+          urls.push(url);
+          loaded.push({ url, label: typeof photo === "string" ? item.label : photo.label || item.label });
+        } catch { setPhotosRemoved(true); }
+      }
+      if (!cancelled) setUploadedPhotos(loaded);
+    };
+    void load();
+    return () => { cancelled = true; urls.forEach((url) => URL.revokeObjectURL(url)); };
+  }, [selected, token, adminKey]);
+
+  const deletePhotos = async () => {
+    if (!selected || !window.confirm("Delete all uploaded photos now?")) return;
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/admin/human-audits/${selected.id}/photos`, { method: "DELETE", headers: authHeaders(token, adminKey) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Could not delete photos.");
+      setUploadedPhotos([]);
+      setPhotosRemoved(true);
+      await loadAudit(selected.id);
+      setPhotosRemoved(true);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not delete photos.");
+    } finally { setSaving(false); }
   };
 
   useEffect(() => {
@@ -169,15 +222,17 @@ export function HumanAuditAdmin({ token, onBack }: Props) {
     setLoading(true);
     void loadAudits(nextKey);
   };
+  const previewPhotos = selected && (selected.reportPhotos
+    || (selected.intakeData as { reportPhotos?: { screenshots?: string[]; currentPhotos?: string[]; additionalPhotos?: string[] } }).reportPhotos);
   const previewInput: ProfileInput | null = selected ? {
     platform: selected.platform as ProfileInput["platform"],
     email: selected.email,
     bio: "",
     prompts: [],
     photoDescriptions: [],
-    screenshots: [],
-    currentPhotos: [],
-    additionalPhotos: [],
+    screenshots: previewPhotos?.screenshots || [],
+    currentPhotos: previewPhotos?.currentPhotos || [],
+    additionalPhotos: previewPhotos?.additionalPhotos || [],
     targetType: "",
   } : null;
 
@@ -228,6 +283,16 @@ export function HumanAuditAdmin({ token, onBack }: Props) {
                 )}
               </div>
               <div className="brief-block">
+                {(uploadedPhotos.length > 0 || photosRemoved) && (
+                  <div className="uploaded-photos-card">
+                    <h3>Uploaded photos</h3>
+                    <div className="swap-photo-thumbs">
+                      {uploadedPhotos.map((photo) => <div className="photo-thumb-wrap" key={photo.url}><img src={photo.url} alt={photo.label} className="photo-thumb" /><span className="photo-thumb-label">{photo.label}</span></div>)}
+                      {photosRemoved && <div className="photo-thumb-wrap photo-missing"><div className="photo-placeholder">📷</div><span className="photo-thumb-label">Photos removed after 30 days</span></div>}
+                    </div>
+                    <button className="audit-secondary-btn" onClick={() => void deletePhotos()} disabled={saving}>Delete photos now</button>
+                  </div>
+                )}
                 <h3>Editable report JSON</h3>
                 <textarea className="admin-report-editor" value={reportJson} onChange={(event) => setReportJson(event.target.value)} rows={18} spellCheck={false} />
                 <div className="audit-actions">
@@ -260,7 +325,12 @@ export function HumanAuditAdmin({ token, onBack }: Props) {
         <div className="admin-preview-overlay">
           <div className="admin-preview-panel">
             <button className="audit-secondary-btn" onClick={() => setPreview(null)}>Close preview</button>
-            <FullReport result={preview} profileInput={previewInput} onBack={() => setPreview(null)} />
+            <FullReport
+              result={{ ...preview, reportPhotos: selected.reportPhotos || preview.reportPhotos }}
+              profileInput={previewInput}
+              photoRequestHeaders={authHeaders(token, adminKey)}
+              onBack={() => setPreview(null)}
+            />
           </div>
         </div>
       )}

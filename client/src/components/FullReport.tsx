@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, FileText, Zap, Camera, Type, Layout, ArrowRight, ArrowLeftRight, PlusCircle, MinusCircle, MoveVertical, ListOrdered, MessageSquare, AlertCircle, Lightbulb, Sparkles, Quote, TrendingUp, Users, ChevronRight, Copy, Check, TrendingDown, Minus, Send, Smartphone } from "lucide-react";
-import type { ProfileResult, ProfileInput } from "@shared/types";
+import type { ProfileResult, ProfileInput, PrivatePhotoReference } from "@shared/types";
 import { PLATFORM_COLOR, PLATFORM_LABEL } from "@shared/types";
 import { ScoreRing } from "./ScoreRing";
 
@@ -12,6 +12,7 @@ interface Props {
   onAnalyzeAnother?: () => void;
   isAuthenticated?: boolean;
   onSignIn?: () => void;
+  photoRequestHeaders?: HeadersInit;
 }
 
 function parsePhotoData(raw: string): { data: string; mimeType: string } | null {
@@ -22,8 +23,20 @@ function parsePhotoData(raw: string): { data: string; mimeType: string } | null 
   return null;
 }
 
+function privatePhotoEndpoint(photo: string | PrivatePhotoReference): string | null {
+  if (typeof photo === "string") return /^\/api\/|^https?:\/\//.test(photo) ? photo : null;
+  return photo.endpoint || photo.path || photo.url || null;
+}
+
+function photoLabel(photo: string | PrivatePhotoReference, fallback: string): string {
+  return typeof photo === "string" ? fallback : photo.label || fallback;
+}
+
 function PhotoThumb({ raw, label }: { raw: string; label: string }) {
   const parsed = parsePhotoData(raw);
+  if (!parsed && (raw.startsWith("blob:") || raw.startsWith("/") || raw.startsWith("http"))) {
+    return <div className="photo-thumb-wrap"><img src={raw} alt={label} className="photo-thumb" /><span className="photo-thumb-label">{label}</span></div>;
+  }
   if (!parsed) return (
     <div className="photo-thumb-wrap photo-missing">
       <div className="photo-placeholder">📷</div>
@@ -42,7 +55,7 @@ function PhotoThumb({ raw, label }: { raw: string; label: string }) {
   );
 }
 
-export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isAuthenticated, onSignIn }: Props) {
+export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isAuthenticated, onSignIn, photoRequestHeaders }: Props) {
   const { score, feedback } = result;
   const platform = profileInput.platform || "other";
   const platformLabel = PLATFORM_LABEL[platform] ?? platform;
@@ -52,6 +65,62 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isA
   const [progressNotes, setProgressNotes] = useState("");
   const [progressSubmitted, setProgressSubmitted] = useState(false);
   const [progressSubmitting, setProgressSubmitting] = useState(false);
+  const [privatePhotos, setPrivatePhotos] = useState<{ currentPhotos: string[]; additionalPhotos: string[]; screenshots: string[] } | null>(null);
+  const [photosRemoved, setPhotosRemoved] = useState(false);
+
+  useEffect(() => {
+    const reportPhotos = result.reportPhotos || {
+      screenshots: profileInput.screenshots,
+      currentPhotos: profileInput.currentPhotos,
+      additionalPhotos: profileInput.additionalPhotos,
+    };
+    const ownerToken = localStorage.getItem("magnet_token");
+    const requestHeaders = photoRequestHeaders || (ownerToken ? { Authorization: `Bearer ${ownerToken}` } : {});
+    const groups = [
+      reportPhotos.screenshots || [],
+      reportPhotos.currentPhotos || [],
+      reportPhotos.additionalPhotos || [],
+    ];
+    let cancelled = false;
+    const createdUrls: string[] = [];
+    const load = async () => {
+      const urls: string[][] = [];
+      let hadPrivate = false;
+      let removed = !!reportPhotos.deleted;
+      for (const group of groups) {
+        const loaded: string[] = [];
+        for (const photo of group) {
+          const endpoint = privatePhotoEndpoint(photo);
+          if (!endpoint) { loaded.push(typeof photo === "string" ? photo : ""); continue; }
+          hadPrivate = true;
+          try {
+            const requestEndpoint = !photoRequestHeaders && !ownerToken && result.accessToken
+              ? `${endpoint}${endpoint.includes("?") ? "&" : "?"}token=${encodeURIComponent(result.accessToken)}`
+              : endpoint;
+            const response = await fetch(requestEndpoint, { headers: requestHeaders });
+            if (!response.ok) { removed = true; continue; }
+            const objectUrl = URL.createObjectURL(await response.blob());
+            createdUrls.push(objectUrl);
+            loaded.push(objectUrl);
+          } catch { removed = true; }
+        }
+        urls.push(loaded);
+      }
+      if (!cancelled) {
+        setPhotosRemoved(removed);
+        if (hadPrivate) setPrivatePhotos({ screenshots: urls[0], currentPhotos: urls[1], additionalPhotos: urls[2] });
+      } else urls.flat().forEach((url) => { if (url.startsWith("blob:")) URL.revokeObjectURL(url); });
+    };
+    void load();
+    return () => {
+      cancelled = true;
+      createdUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [result.reportPhotos, result.accessToken, profileInput.screenshots, profileInput.currentPhotos, profileInput.additionalPhotos]);
+
+  const displayInput = privatePhotos
+    ? { ...profileInput, screenshots: privatePhotos.screenshots, currentPhotos: privatePhotos.currentPhotos, additionalPhotos: privatePhotos.additionalPhotos }
+    : profileInput;
 
   const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -132,6 +201,22 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isA
             <ScoreRing score={score.overall} size={120} />
           </div>
         </div>
+
+        {(displayInput.screenshots.length > 0 || displayInput.currentPhotos.length > 0 || displayInput.additionalPhotos.length > 0 || photosRemoved) && (
+          <div className="report-section-card uploaded-photos-card">
+            <div className="report-section-header"><div className="report-section-icon"><Camera size={18} /></div><h3>Uploaded photos</h3></div>
+            <div className="report-section-body">
+              <div className="swap-photo-thumbs">
+                {[...displayInput.screenshots.map((photo, i) => ({ photo, label: `Screenshot ${i + 1}` })),
+                  ...displayInput.currentPhotos.map((photo, i) => ({ photo, label: `Current photo ${i + 1}` })),
+                  ...displayInput.additionalPhotos.map((photo, i) => ({ photo, label: photoLabel((result.reportPhotos?.additionalPhotos || [])[i] || photo, `Additional photo ${i + 1}`) }))].map(({ photo, label }, i) =>
+                    photo ? <PhotoThumb key={`${label}-${i}`} raw={photo} label={label} /> : null,
+                  )}
+                {photosRemoved && <div className="photo-thumb-wrap photo-missing"><div className="photo-placeholder">📷</div><span className="photo-thumb-label">Photos removed after 30 days</span></div>}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Score category breakdown cards ── */}
         {scoreCategories.map((cat) => {
@@ -348,8 +433,8 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isA
                       ? extraLetter.toUpperCase().charCodeAt(0) - 65
                       : -1;
 
-                    const currentPhotoRaw = currentIdx >= 0 ? profileInput.currentPhotos?.[currentIdx] : null;
-                    const additionalPhotoRaw = additionalIdx >= 0 ? profileInput.additionalPhotos?.[additionalIdx] : null;
+                    const currentPhotoRaw = currentIdx >= 0 ? displayInput.currentPhotos?.[currentIdx] : null;
+                    const additionalPhotoRaw = additionalIdx >= 0 ? displayInput.additionalPhotos?.[additionalIdx] : null;
 
                     return (
                       <div key={i} className="swap-rec-item">
@@ -414,8 +499,8 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isA
                   const extraLetter = isExtra ? photo.photo.match(/extra photo ([A-Z])/i)?.[1] : null;
                   const extraIndex = extraLetter ? extraLetter.toUpperCase().charCodeAt(0) - 65 : -1;
                   const rawPhoto = isExtra
-                    ? profileInput.additionalPhotos?.[extraIndex]
-                    : profileInput.currentPhotos?.[currentIndex];
+                    ? displayInput.additionalPhotos?.[extraIndex]
+                    : displayInput.currentPhotos?.[currentIndex];
                   const parsedPhoto = rawPhoto ? parsePhotoData(rawPhoto) : null;
                   return (
                   <div className="photo-signal-item" key={`${photo.photo}-${index}`}>
@@ -453,8 +538,8 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isA
                   const extraLetter = isExtra ? photoRef.match(/extra photo ([A-Z])/i)?.[1] : null;
                   const additionalIdx = extraLetter ? extraLetter.toUpperCase().charCodeAt(0) - 65 : -1;
                   const rawPhoto = isExtra
-                    ? profileInput.additionalPhotos?.[additionalIdx]
-                    : profileInput.currentPhotos?.[currentIdx];
+                    ? displayInput.additionalPhotos?.[additionalIdx]
+                    : displayInput.currentPhotos?.[currentIdx];
 
                   return (
                     <div key={i} className="photo-order-item">
@@ -563,7 +648,7 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isA
           </div>
         )}
 
-        {profileInput.additionalPhotos.length === 0 && (
+        {displayInput.additionalPhotos.length === 0 && (
           <div className="report-section-card">
             <div className="report-section-header">
               <div className="report-section-icon"><Camera size={18} /></div>

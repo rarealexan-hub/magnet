@@ -189,12 +189,12 @@ export default function App() {
         const reportPhotos = data.reportPhotos || {};
         const input: ProfileInput = {
           platform: (data.platform || "other") as ProfileInput["platform"], email: data.email || "",
-          bio: "", prompts: [], photoDescriptions: [], screenshots: [],
+          bio: "", prompts: [], photoDescriptions: [], screenshots: reportPhotos.screenshots || [],
           currentPhotos: reportPhotos.currentPhotos || [], additionalPhotos: reportPhotos.additionalPhotos || [], targetType: "",
         };
         setAuditAccess({ auditId: Number(auditId), token: accessToken, status: data.status });
         setProfileInput(input);
-        setResult({ ...(data.status === "final_report_ready" && data.report ? data.report : first), analysisId: data.analysisId, auditId: Number(auditId), accessToken, reviewStatus: data.status } as any);
+        setResult({ ...(data.status === "final_report_ready" && data.report ? data.report : first), reportPhotos, analysisId: data.analysisId, auditId: Number(auditId), accessToken, reviewStatus: data.status } as any);
         setFullReportViewed(data.status === "final_report_ready");
         setView(data.status === "final_report_ready" && data.report ? "full-report" : "results");
       } catch (error) {
@@ -341,12 +341,18 @@ export default function App() {
       return;
     }
     let report: any = null;
+    let reportPhotos: any = null;
     if (auditId && token) {
       const response = await fetch(`/api/audits/${auditId}`, { headers: { Authorization: `Bearer ${token}` } });
-      if (response.ok) report = (await response.json()).report;
+      if (response.ok) {
+        const auditData = await response.json();
+        report = auditData.report;
+        reportPhotos = auditData.reportPhotos;
+      }
     }
     setResult({
       ...(report || { score: analysis.score, feedback: analysis.feedback }),
+      reportPhotos,
       analysisId: analysis.id,
       auditId, reviewStatus: "final_report_ready",
     } as any);

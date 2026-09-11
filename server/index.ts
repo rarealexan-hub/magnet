@@ -6,6 +6,7 @@ import multer from "multer";
 import { spawn } from "child_process";
 import { fileURLToPath } from "url";
 import { Pool } from "pg";
+import { Client as ObjectStorageClient } from "@replit/object-storage";
 import { OAuth2Client } from "google-auth-library";
 import { analyzeProfile } from "./ai.js";
 import {
@@ -25,6 +26,7 @@ import type { HumanAuditStatus } from "../shared/types.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const objectStorage = new ObjectStorageClient();
 
 interface AnalysisJob {
   status: "pending" | "done" | "error";
@@ -124,6 +126,8 @@ async function initAuditTracking() {
         intake_data JSONB NOT NULL DEFAULT '{}',
         photo_calibration JSONB NOT NULL DEFAULT '{}',
         client_brief JSONB NOT NULL DEFAULT '{}',
+        photo_keys JSONB NOT NULL DEFAULT '[]',
+        photos_deleted_at TIMESTAMPTZ,
         admin_notes TEXT,
         final_report_ready_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT NOW(),
@@ -133,6 +137,8 @@ async function initAuditTracking() {
     await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS analysis_id INTEGER REFERENCES analyses(id)`);
     await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS final_report JSONB`);
     await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS reviewed_by_email TEXT`);
+    await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS photo_keys JSONB NOT NULL DEFAULT '[]'`);
+    await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS photos_deleted_at TIMESTAMPTZ`);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS human_audit_questions (
         id BIGSERIAL PRIMARY KEY,
@@ -187,6 +193,105 @@ async function initAuditTracking() {
 await initAuditTracking();
 
 app.use(express.json({ limit: "50mb" }));
+
+type AuditPhoto = { key: string; mimeType: string; label?: string; kind: string; index: number };
+
+function auditReportPhotos(auditId: string | number, photos: AuditPhoto[], deleted = false) {
+  const grouped: Record<string, any[]> = { screenshots: [], currentPhotos: [], additionalPhotos: [] };
+  for (const photo of photos || []) {
+    const publicKind = photo.kind === "screenshots" ? "screenshots" : photo.kind;
+    const group = publicKind === "screenshots" ? "screenshots" : publicKind === "current" ? "currentPhotos" : "additionalPhotos";
+    grouped[group].push({
+      endpoint: `/api/audits/${auditId}/photos/${publicKind}/${photo.index}`,
+      label: photo.label || null,
+      mimeType: photo.mimeType,
+      kind: publicKind,
+      index: photo.index,
+    });
+  }
+  return { ...grouped, deleted };
+}
+
+async function deleteAuditObjects(keys: string[], bestEffort = false) {
+  await Promise.all(keys.map(async (key) => {
+    try {
+      const result = await objectStorage.delete(key, { ignoreNotFound: true });
+      if (!result.ok) throw new Error(result.error.message);
+    } catch (error) {
+      if (!bestEffort) throw error;
+    }
+  }));
+}
+
+async function uploadAuditPhotos(
+  auditId: string | number,
+  groups: Array<{ kind: string; files: Express.Multer.File[]; labels?: string[] }>,
+): Promise<AuditPhoto[]> {
+  const uploaded: AuditPhoto[] = [];
+  try {
+    for (const group of groups) {
+      for (let index = 0; index < group.files.length; index++) {
+        const file = group.files[index];
+        const isHeic = /image\/hei[cf]/i.test(file.mimetype || "") || /\.hei[cf]$/i.test(file.originalname || "");
+        const bytes = isHeic ? await convertHeicBuffer(file.buffer) : file.buffer;
+        const photo: AuditPhoto = {
+          key: `audits/${auditId}/${group.kind}/${index}`,
+          mimeType: isHeic ? "image/jpeg" : (file.mimetype || "application/octet-stream"),
+          ...(group.labels?.[index] ? { label: group.labels[index] } : {}),
+          kind: group.kind,
+          index,
+        };
+        const result = await objectStorage.uploadFromBytes(photo.key, bytes, { compress: false });
+        if (!result.ok) throw new Error(`Object storage upload failed: ${result.error}`);
+        uploaded.push(photo);
+      }
+    }
+    return uploaded;
+  } catch (error) {
+    await deleteAuditObjects(uploaded.map((photo) => photo.key), true);
+    throw error;
+  }
+}
+
+async function migrateLegacyAuditPhotos() {
+  const result = await pool.query("SELECT id, intake_data, client_brief, photo_keys FROM human_audits WHERE intake_data ? 'reportPhotos' OR client_brief ? 'reportPhotos'");
+  for (const row of result.rows) {
+    const legacySources = [row.intake_data?.reportPhotos, row.client_brief?.reportPhotos].filter(Boolean);
+    if (!legacySources.length) continue;
+    const keys: AuditPhoto[] = Array.isArray(row.photo_keys) ? [...row.photo_keys] : [];
+    const uploadedKeys: string[] = [];
+    const existing = new Set(keys.map((photo) => `${photo.kind}:${photo.index}`));
+    const groups = [
+      { kind: "screenshots", values: legacySources.flatMap((legacy) => Array.isArray(legacy.screenshots) ? legacy.screenshots : []) },
+      { kind: "current", values: legacySources.flatMap((legacy) => Array.isArray(legacy.currentPhotos) ? legacy.currentPhotos : []) },
+      { kind: "additional", values: legacySources.flatMap((legacy) => Array.isArray(legacy.additionalPhotos) ? legacy.additionalPhotos : []) },
+    ];
+    try {
+      for (const group of groups) {
+        for (let index = 0; index < group.values.length; index++) {
+          const parsed = typeof group.values[index] === "string" ? JSON.parse(group.values[index]) : group.values[index];
+          if (!parsed?.data) continue;
+          const photo: AuditPhoto = { key: `audits/${row.id}/${group.kind}/${index}`, mimeType: parsed.mimeType || "image/jpeg", ...(parsed.label ? { label: parsed.label } : {}), kind: group.kind, index };
+          if (existing.has(`${photo.kind}:${photo.index}`)) continue;
+          const upload = await objectStorage.uploadFromBytes(photo.key, Buffer.from(parsed.data, "base64"), { compress: false });
+          if (!upload.ok) throw new Error(`Legacy photo upload failed: ${upload.error}`);
+          keys.push(photo);
+          uploadedKeys.push(photo.key);
+          existing.add(`${photo.kind}:${photo.index}`);
+        }
+      }
+      const intake = { ...(row.intake_data || {}) }; delete intake.reportPhotos;
+      const brief = { ...(row.client_brief || {}) }; delete brief.reportPhotos;
+      await pool.query("UPDATE human_audits SET photo_keys = $1, intake_data = $2, client_brief = $3 WHERE id = $4", [JSON.stringify(keys), JSON.stringify(intake), JSON.stringify(brief), row.id]);
+    } catch (error) {
+      await deleteAuditObjects(uploadedKeys, true);
+      console.error("Legacy audit photo migration failed:", row.id, error);
+    }
+  }
+}
+await migrateLegacyAuditPhotos().catch((error) => {
+  console.error("Legacy audit photo migration could not start:", error);
+});
 
 const ALLOWED_MIME_TYPES = [
   "image/jpeg",
@@ -318,14 +423,19 @@ function authenticateAdmin(req: AuthRequest, res: Response, next: NextFunction) 
 }
 
 function mapAuditRow(row: any, questions: any[] = []) {
+  const intakeData = { ...(row.intake_data || {}) };
+  delete intakeData.reportPhotos;
+  const clientBrief = { ...(row.client_brief || {}) };
+  delete clientBrief.reportPhotos;
   return {
     id: Number(row.id),
     email: row.email,
     platform: row.platform,
     status: row.status,
-    intakeData: row.intake_data || {},
+    intakeData,
     photoCalibration: row.photo_calibration || { selectedIds: [], rankedIds: [] },
-    clientBrief: row.client_brief || null,
+    clientBrief,
+    reportPhotos: auditReportPhotos(row.id, row.photo_keys || [], !!row.photos_deleted_at),
     finalReport: row.final_report || null,
     analysisId: row.analysis_id ? Number(row.analysis_id) : null,
     reviewedByEmail: row.reviewed_by_email || null,
@@ -819,6 +929,8 @@ app.post(
         );
         const analysisId = insertResult.rows[0]?.id;
         const accessToken = auditToken();
+        const clientBrief = { ...result };
+        delete clientBrief.reportPhotos;
         const intakeData = {
           platform,
           email,
@@ -836,12 +948,8 @@ app.post(
           screenshotCount: screenshotFiles.length,
           currentPhotoCount: currentPhotoFiles.length,
           additionalPhotoCount: additionalPhotoFiles.length,
-          screenshotLabels,
-          additionalPhotoLabels,
-          reportPhotos: {
-            currentPhotos: currentPhotoStrings,
-            additionalPhotos: additionalPhotoStrings,
-          },
+           screenshotLabels,
+           additionalPhotoLabels,
         };
         const calibration = {
           selectedIds: photoTasteSelections,
@@ -849,7 +957,7 @@ app.post(
         };
         try {
           await pool.query(
-            `INSERT INTO human_audits
+             `INSERT INTO human_audits
               (access_token, user_id, email, platform, status, intake_data, photo_calibration, client_brief, analysis_id)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
              RETURNING id`,
@@ -861,7 +969,7 @@ app.post(
               "awaiting_admin_review",
               JSON.stringify(intakeData),
               JSON.stringify(calibration),
-              JSON.stringify(result),
+              JSON.stringify(clientBrief),
               analysisId,
             ],
           );
@@ -869,11 +977,17 @@ app.post(
           console.error("Audit save error:", auditError);
           throw auditError;
         }
-        const auditResult = await pool.query(
+         const auditResult = await pool.query(
           "SELECT id FROM human_audits WHERE access_token = $1",
           [accessToken],
         );
         const auditId = auditResult.rows[0]?.id;
+         const photoKeys = await uploadAuditPhotos(auditId, [
+           { kind: "screenshots", files: screenshotFiles, labels: screenshotLabels },
+           { kind: "current", files: currentPhotoFiles },
+           { kind: "additional", files: additionalPhotoFiles, labels: additionalPhotoLabels },
+         ]);
+         await pool.query("UPDATE human_audits SET photo_keys = $1, updated_at = NOW() WHERE id = $2", [JSON.stringify(photoKeys), auditId]);
         const firstRead = {
           score: result.score,
           feedback: {
@@ -883,10 +997,7 @@ app.post(
             profileTypeExplanation: result.feedback.profileTypeExplanation,
             leadPhotoTeaser: result.feedback.leadPhotoTeaser ?? null,
           },
-          reportPhotos: {
-            currentPhotos: currentPhotoStrings,
-            additionalPhotos: additionalPhotoStrings,
-          },
+           reportPhotos: auditReportPhotos(auditId, photoKeys),
           analysisId,
           auditId,
           accessToken,
@@ -936,6 +1047,32 @@ app.get("/api/analyze/result/:jobId", (req: Request, res: Response) => {
   res.json({ status: "done", result: job.result });
 });
 
+app.get("/api/audits/:auditId/photos/:kind/:index", authenticateOptional, async (req: AuthRequest, res: Response) => {
+  try {
+    const result = await pool.query("SELECT * FROM human_audits WHERE id = $1", [String(req.params.auditId)]);
+    const audit = result.rows[0];
+    if (!audit) { res.status(404).json({ error: "Audit not found" }); return; }
+    const token = typeof req.query.token === "string" ? req.query.token : "";
+    const owner = req.user?.email?.toLowerCase() === String(audit.email).toLowerCase();
+    const admin = adminEmails().has(req.user?.email?.toLowerCase() || "") && (() => {
+      const configured = process.env.ADMIN_KEY || "", provided = req.get("x-admin-key") || "";
+      const a = Buffer.from(configured), b = Buffer.from(provided);
+      return !!configured && a.length === b.length && crypto.timingSafeEqual(a, b);
+    })();
+    if (token !== audit.access_token && !owner && !admin) { res.status(403).json({ error: "Not authorized" }); return; }
+    const photo = (audit.photo_keys || []).find((item: AuditPhoto) => item.kind === req.params.kind && item.index === Number(req.params.index));
+    if (!photo) { res.status(404).json({ error: "Photo not found" }); return; }
+    const stream = objectStorage.downloadAsStream(photo.key);
+    res.setHeader("Content-Type", photo.mimeType);
+    res.setHeader("Cache-Control", "private, no-store");
+    stream.on("error", () => { if (!res.headersSent) res.status(404).json({ error: "Photo unavailable" }); else res.destroy(); });
+    stream.pipe(res);
+  } catch (error) {
+    console.error("Audit photo download error:", error);
+    res.status(500).json({ error: "Failed to load photo" });
+  }
+});
+
 app.get("/api/audits/:auditId", authenticateOptional, async (req: AuthRequest, res: Response) => {
   try {
     const result = await pool.query("SELECT * FROM human_audits WHERE id = $1", [String(req.params.auditId)]);
@@ -959,7 +1096,7 @@ app.get("/api/audits/:auditId", authenticateOptional, async (req: AuthRequest, r
         profileTypeExplanation: draft.feedback?.profileTypeExplanation || "",
         leadPhotoTeaser: draft.feedback?.leadPhotoTeaser ?? null,
       },
-      reportPhotos: draft.reportPhotos || audit.intake_data?.reportPhotos || null,
+      reportPhotos: auditReportPhotos(audit.id, audit.photo_keys || [], !!audit.photos_deleted_at),
       analysisId: audit.analysis_id ? Number(audit.analysis_id) : draft.analysisId || null,
       auditId: Number(audit.id),
       reviewStatus: audit.status,
@@ -1238,6 +1375,42 @@ app.post(
     }
   },
 );
+
+app.delete("/api/admin/human-audits/:id/photos", authenticateAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const result = await pool.query("SELECT photo_keys FROM human_audits WHERE id = $1", [String(req.params.id)]);
+    if (!result.rows.length) { res.status(404).json({ error: "Audit not found" }); return; }
+    const photos: AuditPhoto[] = result.rows[0].photo_keys || [];
+    await deleteAuditObjects(photos.map((photo) => photo.key));
+    await pool.query("UPDATE human_audits SET photo_keys = '[]'::jsonb, photos_deleted_at = NOW(), updated_at = NOW() WHERE id = $1", [String(req.params.id)]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Audit photo deletion error:", error);
+    res.status(500).json({ error: "Failed to delete audit photos" });
+  }
+});
+
+async function cleanupExpiredAuditPhotos() {
+  const releasedSetting = process.env.AUDIT_PHOTO_RETENTION_RELEASED_DAYS;
+  const unreleasedSetting = process.env.AUDIT_PHOTO_RETENTION_UNRELEASED_DAYS;
+  const releasedDays = releasedSetting === undefined ? 30 : Number(releasedSetting);
+  const unreleasedDays = unreleasedSetting === undefined ? 60 : Number(unreleasedSetting);
+  const result = await pool.query(
+    `SELECT id, photo_keys FROM human_audits
+     WHERE photos_deleted_at IS NULL AND jsonb_array_length(photo_keys) > 0
+       AND ((final_report_ready_at IS NOT NULL AND final_report_ready_at < NOW() - ($1 || ' days')::interval)
+         OR (final_report_ready_at IS NULL AND created_at < NOW() - ($2 || ' days')::interval))`,
+    [releasedDays, unreleasedDays],
+  );
+  for (const row of result.rows) {
+    const photos: AuditPhoto[] = row.photo_keys || [];
+    await deleteAuditObjects(photos.map((photo) => photo.key));
+    await pool.query("UPDATE human_audits SET photo_keys = '[]'::jsonb, photos_deleted_at = NOW(), updated_at = NOW() WHERE id = $1", [row.id]);
+  }
+}
+void cleanupExpiredAuditPhotos().catch((error) => console.error("Audit photo cleanup error:", error));
+const photoCleanupTimer = setInterval(() => void cleanupExpiredAuditPhotos().catch((error) => console.error("Audit photo cleanup error:", error)), 24 * 60 * 60 * 1000);
+photoCleanupTimer.unref();
 
 app.get("/api/admin/feedback", authenticateAdmin, async (req: AuthRequest, res: Response) => {
   try {
