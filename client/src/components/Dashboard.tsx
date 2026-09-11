@@ -130,7 +130,7 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
     );
   }
 
-  const analyses = data?.analyses || [];
+  const analyses = (data?.analyses || []) as (AnalysisRecord & { auditId?: number; reviewStatus?: string })[];
   const platforms = data?.platforms || [];
   const hasAnalyses = analyses.length > 0;
   const latest = analyses[0];
@@ -275,8 +275,8 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
                   <button className="dash-view-btn" onClick={() => onViewResult(latest)}>
                     View Results <ChevronRight size={14} />
                   </button>
-                  <button className="dash-view-full-btn" onClick={(e) => { e.stopPropagation(); onViewFullReport(latest); }}>
-                    <FileText size={13} /> Full Report
+                   <button className="dash-view-full-btn" onClick={(e) => { e.stopPropagation(); onViewFullReport(latest); }}>
+                     <FileText size={13} /> {latest.reviewStatus === "awaiting_admin_review" ? "In review" : "Full Report"}
                   </button>
                 </div>
               </div>
@@ -392,8 +392,8 @@ export function Dashboard({ onAnalyze, onViewResult, onViewFullReport, onBack, u
                           >
                             {PLATFORM_LABEL[a.platform] || a.platform}
                           </span>
-                          <span className="dash-history-report-badge">
-                            <FileText size={10} /> Full Report
+                           <span className="dash-history-report-badge">
+                             <FileText size={10} /> {a.reviewStatus === "awaiting_admin_review" ? "In review" : "Full Report"}
                           </span>
                           <span className="dash-history-date">{timeAgo(a.created_at)}</span>
                         </div>

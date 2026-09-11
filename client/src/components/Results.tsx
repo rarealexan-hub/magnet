@@ -59,6 +59,8 @@ interface Props {
   fullReportViewed?: boolean;
   user?: AuthUser | null;
   onSignIn?: () => void;
+  reviewStatus?: string;
+  auditAccess?: { auditId: number; token: string; status: string } | null;
 }
 
 const QUICK_SUGGESTIONS: Record<string, { tip: string }> = {
@@ -114,10 +116,17 @@ function ImmediateDirection({ score, onFullReport }: { score: ProfileResult["sco
   );
 }
 
-export function Results({ result, profileInput, onStartOver, onFullReport, onBundle, fullReportViewed, user, onSignIn }: Props) {
+export function Results({ result, profileInput, onStartOver, onFullReport, onBundle, fullReportViewed, user, onSignIn, reviewStatus, auditAccess }: Props) {
+  const pending = reviewStatus === "awaiting_admin_review";
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
+
+  useEffect(() => {
+    if (!auditAccess || reviewStatus !== "awaiting_admin_review") return;
+    const timer = window.setInterval(() => window.location.reload(), 60000);
+    return () => window.clearInterval(timer);
+  }, [auditAccess, reviewStatus]);
 
   const { score, feedback } = result;
 
@@ -250,7 +259,18 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
           </div>
         )}
 
-         <div className="upgrade-section audit-report-cta">
+         {pending ? (
+           <div className="upgrade-section audit-report-cta audit-pending-card">
+             <h3 className="upgrade-title">Your full audit is in review. It will be ready within 48 hours.</h3>
+             {auditAccess && (
+               <div className="audit-private-link">
+                 <code>{`${window.location.origin}/?audit=${auditAccess.auditId}&token=${auditAccess.token}`}</code>
+                 <button className="pricing-btn" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/?audit=${auditAccess.auditId}&token=${auditAccess.token}`)}>Copy link</button>
+               </div>
+             )}
+             {!user && onSignIn && <button className="pricing-btn" onClick={onSignIn}>Create an account to save your audit</button>}
+           </div>
+         ) : <div className="upgrade-section audit-report-cta">
            <h3 className="upgrade-title">Your complete Magnet Profile Audit</h3>
            <p className="upgrade-subtitle">
              See the full photo ranking, best order, accidental signals, rewrites, dating archetype, immediate fixes, reshoot briefs, and platform-specific guidance.
@@ -258,7 +278,7 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
            <button className="pricing-btn" onClick={onFullReport}>
              <FileText size={15} /> {fullReportViewed ? "View your complete audit" : "Open your complete audit"} <ArrowRight size={16} />
            </button>
-         </div>
+         </div>}
 
         <div className="addon-section">
           <div className="addon-strip">

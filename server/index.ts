@@ -5,6 +5,7 @@ import crypto from "crypto";
 import multer from "multer";
 import { spawn } from "child_process";
 import { fileURLToPath } from "url";
+import { isDeepStrictEqual } from "node:util";
 import { Pool } from "pg";
 import { OAuth2Client } from "google-auth-library";
 import { analyzeProfile } from "./ai.js";
@@ -112,6 +113,48 @@ async function initAuditTracking() {
     `);
     await pool.query(`
       ALTER TABLE analyses ADD COLUMN IF NOT EXISTS full_report_data JSONB
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS human_audits (
+        id BIGSERIAL PRIMARY KEY,
+        access_token TEXT NOT NULL UNIQUE,
+        user_id BIGINT,
+        email TEXT NOT NULL,
+        platform TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'intake_started',
+        intake_data JSONB NOT NULL DEFAULT '{}',
+        photo_calibration JSONB NOT NULL DEFAULT '{}',
+        client_brief JSONB NOT NULL DEFAULT '{}',
+        admin_notes TEXT,
+        final_report_ready_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS analysis_id INTEGER REFERENCES analyses(id)`);
+    await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS final_report JSONB`);
+    await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS reviewed_by_email TEXT`);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS human_audit_questions (
+        id BIGSERIAL PRIMARY KEY,
+        audit_id BIGINT NOT NULL REFERENCES human_audits(id) ON DELETE CASCADE,
+        question TEXT NOT NULL,
+        asked_by_user_id BIGINT,
+        asked_by_email TEXT,
+        status TEXT NOT NULL DEFAULT 'open',
+        created_at TIMESTAMP DEFAULT NOW(),
+        answered_at TIMESTAMP
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS human_audit_answers (
+        id BIGSERIAL PRIMARY KEY,
+        question_id BIGINT NOT NULL REFERENCES human_audit_questions(id) ON DELETE CASCADE,
+        answer TEXT NOT NULL,
+        answered_by_user_id BIGINT,
+        answered_by_email TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
     `);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS feedback_submissions (
@@ -269,6 +312,9 @@ function mapAuditRow(row: any, questions: any[] = []) {
     intakeData: row.intake_data || {},
     photoCalibration: row.photo_calibration || { selectedIds: [], rankedIds: [] },
     clientBrief: row.client_brief || null,
+    finalReport: row.final_report || null,
+    analysisId: row.analysis_id ? Number(row.analysis_id) : null,
+    reviewedByEmail: row.reviewed_by_email || null,
     adminNotes: row.admin_notes || null,
     questions,
     createdAt: row.created_at,
@@ -462,15 +508,16 @@ app.get(
       const result = await pool.query(
         `SELECT a.id, a.user_email, a.platform, a.overall_score, a.photo_quality, a.attraction_signals,
               a.personality_signals, a.match_targeting, a.first_impression, a.roast, a.mistakes,
-              a.profile_type, a.profile_type_explanation, a.full_report_data, a.created_at
+               a.profile_type, a.profile_type_explanation, a.created_at,
+               ha.id AS audit_id, ha.status AS review_status
          FROM analyses a
+         LEFT JOIN human_audits ha ON ha.analysis_id = a.id
          WHERE a.user_email = $1
          ORDER BY a.created_at DESC`,
         [email],
       );
 
       const analyses: AnalysisRecord[] = result.rows.map((r: any) => {
-        const fullReportData = r.full_report_data || {};
         return {
           id: r.id,
           email: r.user_email,
@@ -488,16 +535,9 @@ app.get(
             mistakes: r.mistakes || [],
             profileType: r.profile_type || "generic",
             profileTypeExplanation: r.profile_type_explanation || "",
-            categoryAnalysis: fullReportData.categoryAnalysis,
-            promptRecommendations: fullReportData.promptRecommendations,
-            photoSwapRecommendations: fullReportData.photoSwapRecommendations,
-            photoOrderRecommendation: fullReportData.photoOrderRecommendation,
-            sampleProfile: fullReportData.sampleProfile,
-            matchPotential: fullReportData.matchPotential,
-            potentialMatches: fullReportData.potentialMatches,
-            betterLeadPhotoSuggestion: fullReportData.betterLeadPhotoSuggestion,
-            personalitySignalsPromptRewrite: fullReportData.personalitySignalsPromptRewrite,
           },
+          auditId: r.audit_id ? Number(r.audit_id) : null,
+          reviewStatus: r.review_status || null,
           created_at: r.created_at,
         };
       });
@@ -764,6 +804,7 @@ app.post(
           ],
         );
         const analysisId = insertResult.rows[0]?.id;
+        const accessToken = auditToken();
         const intakeData = {
           platform,
           email,
@@ -783,6 +824,10 @@ app.post(
           additionalPhotoCount: additionalPhotoFiles.length,
           screenshotLabels,
           additionalPhotoLabels,
+          reportPhotos: {
+            currentPhotos: currentPhotoStrings,
+            additionalPhotos: additionalPhotoStrings,
+          },
         };
         const calibration = {
           selectedIds: photoTasteSelections,
@@ -791,32 +836,51 @@ app.post(
         try {
           await pool.query(
             `INSERT INTO human_audits
-              (access_token, user_id, email, platform, status, intake_data, photo_calibration, client_brief, final_report_ready_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+              (access_token, user_id, email, platform, status, intake_data, photo_calibration, client_brief, analysis_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+             RETURNING id`,
             [
-              auditToken(),
+              accessToken,
               req.user?.userId || null,
               ownerEmail,
               platform,
-              "final_report_ready",
+              "awaiting_admin_review",
               JSON.stringify(intakeData),
               JSON.stringify(calibration),
-              JSON.stringify({ ...result, analysisId }),
+              JSON.stringify(result),
+              analysisId,
             ],
           );
         } catch (auditError) {
-          console.error("Completed audit save error:", auditError);
+          console.error("Audit save error:", auditError);
+          throw auditError;
         }
+        const auditResult = await pool.query(
+          "SELECT id FROM human_audits WHERE access_token = $1",
+          [accessToken],
+        );
+        const auditId = auditResult.rows[0]?.id;
+        const firstRead = {
+          score: result.score,
+          feedback: {
+            roast: result.feedback.roast,
+            mistakes: result.feedback.mistakes,
+            profileType: result.feedback.profileType,
+            profileTypeExplanation: result.feedback.profileTypeExplanation,
+            leadPhotoTeaser: result.feedback.leadPhotoTeaser ?? null,
+          },
+          reportPhotos: {
+            currentPhotos: currentPhotoStrings,
+            additionalPhotos: additionalPhotoStrings,
+          },
+          analysisId,
+          auditId,
+          accessToken,
+          reviewStatus: "awaiting_admin_review",
+        };
         analysisJobs.set(jobId, {
           status: "done",
-          result: {
-            ...result,
-            analysisId,
-            reportPhotos: {
-              currentPhotos: currentPhotoStrings,
-              additionalPhotos: additionalPhotoStrings,
-            },
-          },
+          result: firstRead,
           createdAt: Date.now(),
         });
       } catch (error: any) {
@@ -856,6 +920,45 @@ app.get("/api/analyze/result/:jobId", (req: Request, res: Response) => {
     return;
   }
   res.json({ status: "done", result: job.result });
+});
+
+app.get("/api/audits/:auditId", authenticateOptional, async (req: AuthRequest, res: Response) => {
+  try {
+    const result = await pool.query("SELECT * FROM human_audits WHERE id = $1", [String(req.params.auditId)]);
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: "Audit not found" });
+      return;
+    }
+    const audit = result.rows[0];
+    const token = typeof req.query.token === "string" ? req.query.token : "";
+    if (token !== audit.access_token && req.user?.email?.toLowerCase() !== String(audit.email).toLowerCase()) {
+      res.status(403).json({ error: "Not authorized to view this audit" });
+      return;
+    }
+    const draft = audit.client_brief || {};
+    const firstRead = {
+      score: draft.score || {},
+      feedback: {
+        roast: draft.feedback?.roast || "",
+        mistakes: draft.feedback?.mistakes || [],
+        profileType: draft.feedback?.profileType || "generic",
+        profileTypeExplanation: draft.feedback?.profileTypeExplanation || "",
+        leadPhotoTeaser: draft.feedback?.leadPhotoTeaser ?? null,
+      },
+      reportPhotos: draft.reportPhotos || audit.intake_data?.reportPhotos || null,
+      analysisId: audit.analysis_id ? Number(audit.analysis_id) : draft.analysisId || null,
+      auditId: Number(audit.id),
+      reviewStatus: audit.status,
+    };
+    res.json({
+      ...firstRead,
+      status: audit.status,
+      report: audit.status === "final_report_ready" ? audit.final_report : null,
+    });
+  } catch (error) {
+    console.error("Audit access error:", error);
+    res.status(500).json({ error: "Failed to load audit" });
+  }
 });
 
 app.post("/api/progress", async (req: Request, res: Response) => {
@@ -925,14 +1028,17 @@ app.get(
       const result = await pool.query(
         `SELECT a.id, a.email, a.platform, a.status, a.created_at, a.updated_at,
                 COUNT(q.id)::int AS question_count,
-                COUNT(q.id) FILTER (WHERE q.status = 'open')::int AS open_question_count
+                 COUNT(q.id) FILTER (WHERE q.status = 'open')::int AS open_question_count,
+                 COUNT(*) FILTER (WHERE a.status = 'awaiting_admin_review') OVER ()::int AS awaiting_review_count
          FROM human_audits a
          LEFT JOIN human_audit_questions q ON q.audit_id = a.id
          GROUP BY a.id
-         ORDER BY a.created_at DESC
+          ORDER BY CASE WHEN a.status = 'awaiting_admin_review' THEN 0 ELSE 1 END, a.created_at DESC
          LIMIT 200`,
       );
       res.json({
+        awaitingReviewCount: result.rows[0]?.awaiting_review_count || 0,
+        count: result.rows[0]?.awaiting_review_count || 0,
         audits: result.rows.map((row) => ({
           id: Number(row.id),
           email: row.email,
@@ -974,6 +1080,11 @@ app.patch(
   authenticateAdmin,
   async (req: AuthRequest, res: Response) => {
     const { status, adminNotes } = req.body || {};
+    const finalReport = req.body?.finalReport ?? req.body?.final_report;
+    if (status === "final_report_ready") {
+      res.status(400).json({ error: "Use the release endpoint to approve an audit" });
+      return;
+    }
     if (status !== undefined && !HUMAN_AUDIT_STATUSES.includes(status)) {
       res.status(400).json({ error: "Invalid audit status" });
       return;
@@ -982,16 +1093,20 @@ app.patch(
       res.status(400).json({ error: "Admin notes must be text" });
       return;
     }
+    if (finalReport !== undefined && (typeof finalReport !== "object" || finalReport === null || Array.isArray(finalReport))) {
+      res.status(400).json({ error: "Final report must be a JSON object" });
+      return;
+    }
     try {
       const result = await pool.query(
-        `UPDATE human_audits
+         `UPDATE human_audits
          SET status = COALESCE($1, status),
              admin_notes = COALESCE($2, admin_notes),
-             final_report_ready_at = CASE WHEN $1 = 'final_report_ready' THEN COALESCE(final_report_ready_at, NOW()) ELSE final_report_ready_at END,
+              final_report = COALESCE($3, final_report),
              updated_at = NOW()
-         WHERE id = $3
+          WHERE id = $4
          RETURNING *`,
-        [status || null, adminNotes === undefined ? null : adminNotes, String(req.params.id)],
+        [status || null, adminNotes === undefined ? null : adminNotes, finalReport === undefined ? null : JSON.stringify(finalReport), String(req.params.id)],
       );
       if (result.rows.length === 0) {
         res.status(404).json({ error: "Audit not found" });
@@ -1002,6 +1117,82 @@ app.patch(
     } catch (error) {
       console.error("Admin audit update error:", error);
       res.status(500).json({ error: "Failed to update audit" });
+    }
+  },
+);
+
+app.post(
+  "/api/admin/human-audits/:id/release",
+  authenticateAdmin,
+  async (req: AuthRequest, res: Response) => {
+    const report = req.body?.finalReport ?? req.body?.final_report;
+    const score = report?.score;
+    const feedback = report?.feedback;
+    if (
+      !report || typeof report !== "object" ||
+      typeof score?.overall !== "number" || score.overall < 0 || score.overall > 100 ||
+      typeof feedback?.roast !== "string" ||
+      !Array.isArray(feedback?.mistakes) ||
+      typeof feedback?.profileType !== "string"
+    ) {
+      res.status(400).json({ error: "Final report must include a valid score.overall and feedback roast, mistakes, and profileType" });
+      return;
+    }
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const auditResult = await client.query(
+        "SELECT * FROM human_audits WHERE id = $1 FOR UPDATE",
+        [String(req.params.id)],
+      );
+      if (auditResult.rows.length === 0) {
+        await client.query("ROLLBACK");
+        res.status(404).json({ error: "Audit not found" });
+        return;
+      }
+      const audit = auditResult.rows[0];
+      if (isDeepStrictEqual(report, audit.client_brief)) {
+        await client.query("ROLLBACK");
+        res.status(400).json({ error: "Edit the AI draft before approving and releasing it" });
+        return;
+      }
+      if (!audit.analysis_id) {
+        await client.query("ROLLBACK");
+        res.status(400).json({ error: "Audit is not linked to an analysis" });
+        return;
+      }
+      await client.query(
+        `UPDATE human_audits
+         SET final_report = $1, status = 'final_report_ready',
+             final_report_ready_at = NOW(), reviewed_by_email = $2, updated_at = NOW()
+         WHERE id = $3`,
+        [JSON.stringify(report), req.user!.email, String(req.params.id)],
+      );
+      await client.query(
+        `UPDATE analyses
+         SET overall_score = $1, photo_quality = COALESCE($2, photo_quality),
+             attraction_signals = COALESCE($3, attraction_signals),
+             personality_signals = COALESCE($4, personality_signals),
+             match_targeting = COALESCE($5, match_targeting),
+             first_impression = COALESCE($6, first_impression),
+             roast = $7, mistakes = $8, profile_type = $9,
+             profile_type_explanation = COALESCE($10, profile_type_explanation)
+         WHERE id = $11`,
+        [
+          score.overall, score.photoQuality, score.attractionSignals,
+          score.personalitySignals, score.matchTargeting, score.firstImpression,
+          feedback.roast, JSON.stringify(feedback.mistakes), feedback.profileType,
+          feedback.profileTypeExplanation, audit.analysis_id,
+        ],
+      );
+      await client.query("COMMIT");
+      res.json({ audit: await getAuditWithQuestions(String(req.params.id)) });
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      console.error("Audit release error:", error);
+      res.status(500).json({ error: "Failed to release audit" });
+    } finally {
+      client.release();
     }
   },
 );
@@ -1038,7 +1229,7 @@ app.post(
   },
 );
 
-app.get("/api/admin/feedback", async (req: Request, res: Response) => {
+app.get("/api/admin/feedback", authenticateAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const result = await pool.query(
       `SELECT * FROM feedback_submissions ORDER BY created_at DESC LIMIT 200`

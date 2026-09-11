@@ -32,7 +32,7 @@ shared/
 
 ## Features
 
-1. **Magnet Profile Audit**: One AI-assisted product based on Magnet's structured dating-profile review framework. It collects profile screenshots/photos, context, and photo-preference calibration, then returns a complete report.
+1. **Magnet Profile Audit**: One AI-assisted product based on Magnet's structured dating-profile review framework. It collects profile screenshots/photos, context, and photo-preference calibration, then returns a score and first read while the complete AI draft waits for admin review.
 2. **One Free Analysis Per Email (Per Platform)**: Server-side enforcement via `free_audits` table — each email gets one free analysis for one dating platform
 3. **Match Targeting**: Choose who you want to attract (7 preset types + custom)
 4. **Screenshot Upload**: Upload screenshots of dating profile instead of typing it out (uses OpenAI vision)
@@ -40,16 +40,16 @@ shared/
 6. **Email Collection**: Required email field on form
 7. **Shareable Results**: Copy Magnet Score roast for social sharing (viral loop)
 8. **Before/After Examples**: Landing page shows transformation case study
-9. **Complete Audit Report**: Magnet Score, photo ranking/order, photo signals, accidental messaging, prompt rewrites, profile archetype, immediate fixes, reshoot direction, and platform-aware recommendations.
-10. **Dashboard Page**: Functional dashboard — fetches real analysis history from DB, shows score trend chart, per-platform health status with re-analyze buttons, and analysis history.
-11. **Audit Admin**: Authenticated admin queue for completed profile audits, saved submission context, generated report JSON, status, and internal notes. Access is restricted by the `ADMIN_EMAILS` comma-separated environment variable.
+9. **Admin-Gated Complete Audit Report**: Users receive the complete photo ranking/order, signals, rewrites, fixes, reshoot direction, and platform recommendations only after an admin edits and approves the AI draft.
+10. **Dashboard Page**: Functional dashboard — fetches redacted analysis history, shows score trends and review status, and loads an approved report through the authorized audit endpoint.
+11. **Audit Admin**: Authenticated admin queue for reviewing and editing AI draft JSON, previewing the user report, and explicitly approving release. Access is restricted by the `ADMIN_EMAILS` comma-separated environment variable.
 
 ## Database Tables
 
 - `users` — user accounts (id SERIAL PK, email TEXT UNIQUE, password_hash TEXT, created_at)
 - `free_audits` — tracks which emails have used their free Magnet analysis per platform (id, email, platform, created_at; UNIQUE on email+platform)
 - `analyses` — persists every analysis result (id SERIAL PK, user_email TEXT, platform TEXT, overall_score INT, photo_quality INT, attraction_signals INT, personality_signals INT, match_targeting INT, first_impression INT, roast TEXT, mistakes JSONB, profile_type TEXT, profile_type_explanation TEXT, created_at TIMESTAMP); indexed on user_email
-- `human_audits` — stores the single Profile Audit submission, calibration signals, generated report in `client_brief`, status, access token, and admin notes
+- `human_audits` — stores the Profile Audit submission, calibration signals, untouched AI draft in `client_brief`, separately approved `final_report`, linked analysis, review status/token, reviewer email, and admin notes
 - `human_audit_questions` / `human_audit_answers` — optional follow-up history retained for admin use
 
 ## Design System

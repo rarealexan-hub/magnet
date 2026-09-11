@@ -66,6 +66,16 @@ body {
   --text-dim: #9C9690;
 }
 
+.audit-pending-card { text-align: left; }
+.audit-private-link { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 18px 0; }
+.audit-private-link code { flex: 1; min-width: 220px; padding: 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; font-size: 11px; overflow-wrap: anywhere; }
+.photo-placeholder { display: flex; align-items: center; justify-content: center; min-height: 84px; background: var(--surface-2); color: var(--text-muted); border: 1px dashed var(--border); font-size: 12px; }
+.photo-signal-thumb.photo-placeholder { width: 58px; height: 58px; min-height: 58px; text-align: center; }
+.admin-report-editor { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 8px; background: #1f1d1b; color: #f5f2ee; font: 12px/1.5 monospace; resize: vertical; }
+.admin-preview-overlay { position: fixed; inset: 0; z-index: 20; overflow: auto; padding: 24px; background: rgba(26,24,22,.72); }
+.admin-preview-panel { max-width: 860px; margin: 0 auto; padding: 18px; background: var(--bg); border-radius: 12px; }
+.audit-queue-count { margin: 8px 0; color: var(--text-muted); font-size: 12px; font-weight: 700; }
+
 body {
   font-family: 'DM Sans', -apple-system, sans-serif;
   background: var(--bg);

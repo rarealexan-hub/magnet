@@ -1,0 +1,57 @@
+Goal: no user sees the full Magnet audit until an admin has reviewed, edited, and approved it. The AI output becomes a draft for the admin, not the final report.
+
+Current code (verify before changing):
+- POST /api/analyze runs analyzeProfile in a background job, inserts into analyses (full_report_data) and into human_audits with status "final_report_ready", and GET /api/analyze/result/:jobId sends the entire report to the browser.
+- GET /api/dashboard also returns full_report_data, so the full report leaks there too.
+- HumanAuditAdmin in client/src/components/HumanAudit.tsx shows the report as read only JSON.
+- server/index.ts has no CREATE TABLE for human_audits, human_audit_questions, or human_audit_answers.
+- HumanAuditFlow and HumanAuditStatus call /api/human-audits routes that do not exist on the server.
+- GET /api/admin/feedback has no auth check.
+
+Do not change: sign in, Google sign in, the intake questions, the AI prompt in server/ai.ts, the free audit limit logic, the OpenAI integration or its env vars, the landing page design.
+
+1. Database
+- Add CREATE TABLE IF NOT EXISTS for human_audits, human_audit_questions, and human_audit_answers to the startup migrations. Inspect the live database first so the definitions match the columns that already exist. Never drop or rename columns.
+- Add to human_audits: analysis_id INTEGER, final_report JSONB, reviewed_by_email TEXT. client_brief stays the untouched AI draft. final_report is the approved version.
+
+2. Submission
+- In /api/analyze, create the human_audits row with status "awaiting_admin_review", analysis_id set, and client_brief set to the AI result.
+- If saving the human_audits row fails, the job must end in an error state. Do not swallow that error.
+- Keep the jobId polling flow and response shape. The job result becomes a first read only: score (all categories), feedback.roast, feedback.mistakes, feedback.profileType, feedback.profileTypeExplanation, feedback.leadPhotoTeaser, reportPhotos, analysisId, plus new fields auditId, accessToken, reviewStatus. Strip every other feedback field on the server. Hiding them in the client is not enough.
+
+3. User report endpoint
+- Add GET /api/audits/:auditId. Authorize with ?token= matching access_token, or a signed in user whose email matches the audit. Otherwise 403.
+- Always return the first read and the status. Return the full report (from final_report) only when status is "final_report_ready". Otherwise return report: null.
+
+4. Dashboard
+- /api/dashboard stops returning full_report_data. Each analysis includes auditId and reviewStatus. The full report view loads from GET /api/audits/:auditId.
+
+5. User facing pending state
+- After submission, Results shows the first read, then a pending card in place of the full report button: "Your full audit is in review. It will be ready within 48 hours." Do not say we will email them. Email is not built yet.
+- Show a private link they can save, /?audit=<auditId>&token=<accessToken>, with a Copy link button. If they are signed out, also offer to create an account so the audit appears on their dashboard.
+- App.tsx already reads URL params. When ?audit and ?token are present, load GET /api/audits/:auditId and show the pending card or the full report.
+- While the page is open and pending, poll every 60 seconds.
+- Dashboard shows an "In review" badge for pending audits and opens the full report once released.
+- FullReport must render when the uploaded photos are not in memory (a user returning days later). Show labeled placeholders ("Photo 1", "Photo 2") instead of broken images.
+
+6. Admin review
+- Queue shows "Awaiting review" audits first, with a count at the top.
+- Replace the read only JSON block with an editable JSON editor, prefilled from final_report if it exists, otherwise client_brief. Show a clear error if the JSON does not parse.
+- Buttons: "Save edits" (saves final_report, status unchanged), "Preview as user" (renders the edited JSON with the same FullReport component users see), "Reset to AI draft", and "Approve and release".
+- "Approve and release" calls a new POST /api/admin/human-audits/:id/release. It validates the JSON (parses; score.overall is a number from 0 to 100; feedback has roast, mistakes, profileType), saves final_report, sets status "final_report_ready", final_report_ready_at, and reviewed_by_email, and copies the edited scores, roast, mistakes, and profile type back to the linked analyses row so the dashboard stays accurate. Confirm in the UI before releasing.
+- PATCH /api/admin/human-audits/:id must reject status "final_report_ready", and the dropdown must not offer it. Release only happens through the release endpoint.
+- Hide the "Optional follow-up" question UI for now. Users have no way to answer, so a sent question goes nowhere. Keep the tables.
+
+7. Cleanup and security
+- Add authenticateAdmin to GET /api/admin/feedback.
+- Delete HumanAuditFlow and HumanAuditStatus if nothing uses them after this change.
+- Update replit.md to describe the review gate accurately.
+
+Acceptance checks. Run each one and show me the results before finishing:
+1. npm run build passes with no TypeScript errors.
+2. Submit a test audit while signed out. The poll result contains none of: categoryAnalysis, promptRecommendations, photoSwapRecommendations, photoOrderRecommendation, photoRanking, accidentalSignals, immediateFixes, reshootBriefs, platformRecommendations, sampleProfile, potentialMatches, matchPotential, betterLeadPhotoSuggestion, personalitySignalsPromptRewrite.
+3. GET /api/audits/:id with the right token returns report: null and status awaiting_admin_review. Wrong token returns 403. No token and no login returns 403.
+4. GET /api/dashboard for the owner contains no full report fields while pending.
+5. As admin, edit one prompt rewrite, preview it, release it. GET /api/audits/:id now returns the edited text, not the AI draft.
+6. A signed in non admin gets 403 on every /api/admin route, including /api/admin/feedback.
+7. PATCH with status "final_report_ready" returns 400.

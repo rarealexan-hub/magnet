@@ -191,6 +191,13 @@ export interface ProfileResult {
   score: ProfileScore;
   feedback: ProfileFeedback;
   analysisId?: number;
+  auditId?: number;
+  accessToken?: string;
+  reviewStatus?: HumanAuditStatus;
+  reportPhotos?: {
+    currentPhotos: string[];
+    additionalPhotos: string[];
+  } | null;
 }
 
 export interface AnalysisRecord {
@@ -199,6 +206,8 @@ export interface AnalysisRecord {
   platform: string;
   score: ProfileScore;
   feedback: ProfileFeedback;
+  auditId?: number | null;
+  reviewStatus?: HumanAuditStatus | null;
   created_at: string;
 }
 
@@ -251,6 +260,9 @@ export interface HumanAudit {
     rankedIds: string[];
   };
   clientBrief?: Record<string, unknown> | null;
+  finalReport?: Record<string, unknown> | null;
+  analysisId?: number | null;
+  reviewedByEmail?: string | null;
   adminNotes?: string | null;
   questions: HumanAuditQuestion[];
   createdAt: string;
@@ -265,6 +277,7 @@ export interface HumanAuditListItem {
   status: HumanAuditStatus;
   questionCount: number;
   openQuestionCount: number;
+  awaitingReviewCount?: number;
   createdAt: string;
   updatedAt: string;
 }

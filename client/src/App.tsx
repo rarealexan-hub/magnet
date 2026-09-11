@@ -7,7 +7,7 @@ import { FullReport } from "./components/FullReport";
 import { Dashboard } from "./components/Dashboard";
 import { AuthModal } from "./components/AuthModal";
 import { UserMenu } from "./components/UserMenu";
-import { HumanAuditAdmin } from "./components/HumanAudit";
+import { HumanAuditAdmin } from "./components/HumanAuditAdmin";
 import { PrivacyPolicy } from "./components/PrivacyPolicy";
 import { useAuth } from "./hooks/useAuth";
 import type { ProfileInput, ProfileResult, AnalysisRecord } from "@shared/types";
@@ -24,6 +24,7 @@ export default function App() {
   const [fullReportViewed, setFullReportViewed] = useState(false);
   const [authContext, setAuthContext] = useState<"default" | "save-results">("default");
   const [repeatAuditEmail, setRepeatAuditEmail] = useState("");
+  const [auditAccess, setAuditAccess] = useState<{ auditId: number; token: string; status: string } | null>(null);
   const { user, loading, token, login, loginWithGoogle, register, logout } = useAuth();
 
   useEffect(() => {
@@ -168,6 +169,42 @@ export default function App() {
 
   }, []);
 
+  // Private audit links work for signed-out users as well as dashboard owners.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const auditId = params.get("audit");
+    const accessToken = params.get("token");
+    if (!auditId || !accessToken) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/audits/${auditId}?token=${encodeURIComponent(accessToken)}`);
+        if (!res.ok) throw new Error("This private audit link is no longer valid.");
+        const data = await res.json();
+        if (cancelled) return;
+        // The gated endpoint returns the first-read fields at the top level.
+        // Keep the approved report separate so draft-only responses never leak
+        // into the full-report view.
+        const first = data.firstRead || data;
+        const reportPhotos = data.reportPhotos || {};
+        const input: ProfileInput = {
+          platform: (data.platform || "other") as ProfileInput["platform"], email: data.email || "",
+          bio: "", prompts: [], photoDescriptions: [], screenshots: [],
+          currentPhotos: reportPhotos.currentPhotos || [], additionalPhotos: reportPhotos.additionalPhotos || [], targetType: "",
+        };
+        setAuditAccess({ auditId: Number(auditId), token: accessToken, status: data.status });
+        setProfileInput(input);
+        setResult({ ...(data.status === "final_report_ready" && data.report ? data.report : first), analysisId: data.analysisId, auditId: Number(auditId), accessToken, reviewStatus: data.status } as any);
+        setFullReportViewed(data.status === "final_report_ready");
+        setView(data.status === "final_report_ready" && data.report ? "full-report" : "results");
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
   useEffect(() => {
     const viewNames: Record<string, string> = {
       landing: "Landing",
@@ -195,6 +232,10 @@ export default function App() {
   const handleResult = (data: ProfileResult, input: ProfileInput) => {
     setResult(data);
     setProfileInput(input);
+    const gated = data as any;
+    if (gated.auditId && gated.accessToken) {
+      setAuditAccess({ auditId: gated.auditId, token: gated.accessToken, status: gated.reviewStatus || "awaiting_admin_review" });
+    }
     setView("results");
   };
 
@@ -256,6 +297,8 @@ export default function App() {
       score: analysis.score,
       feedback: analysis.feedback,
       analysisId: analysis.id,
+      auditId: (analysis as any).auditId,
+      reviewStatus: (analysis as any).reviewStatus,
     });
     setProfileInput({
       platform: analysis.platform as ProfileInput["platform"],
@@ -271,12 +314,24 @@ export default function App() {
     setView("results");
   };
 
-  const handleViewFullReportFromDashboard = (analysis: AnalysisRecord) => {
+  const handleViewFullReportFromDashboard = async (analysis: AnalysisRecord) => {
+    const auditId = (analysis as any).auditId;
+    if ((analysis as any).reviewStatus !== "final_report_ready") {
+      setResult({ score: analysis.score, feedback: analysis.feedback, analysisId: analysis.id, auditId, reviewStatus: (analysis as any).reviewStatus } as any);
+      setProfileInput({ platform: analysis.platform as ProfileInput["platform"], email: analysis.email, bio: "", prompts: [], photoDescriptions: [], screenshots: [], currentPhotos: [], additionalPhotos: [], targetType: "" });
+      setView("results");
+      return;
+    }
+    let report: any = null;
+    if (auditId && token) {
+      const response = await fetch(`/api/audits/${auditId}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (response.ok) report = (await response.json()).report;
+    }
     setResult({
-      score: analysis.score,
-      feedback: analysis.feedback,
+      ...(report || { score: analysis.score, feedback: analysis.feedback }),
       analysisId: analysis.id,
-    });
+      auditId, reviewStatus: "final_report_ready",
+    } as any);
     setProfileInput({
       platform: analysis.platform as ProfileInput["platform"],
       email: analysis.email,
@@ -335,6 +390,8 @@ export default function App() {
               fullReportViewed={fullReportViewed}
               user={user}
               onSignIn={openAuthForResults}
+              reviewStatus={(result as any).reviewStatus}
+              auditAccess={auditAccess}
             />
           )}
           {view === "full-report" && result && profileInput && (

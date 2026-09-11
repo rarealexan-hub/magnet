@@ -24,7 +24,12 @@ function parsePhotoData(raw: string): { data: string; mimeType: string } | null 
 
 function PhotoThumb({ raw, label }: { raw: string; label: string }) {
   const parsed = parsePhotoData(raw);
-  if (!parsed) return null;
+  if (!parsed) return (
+    <div className="photo-thumb-wrap photo-missing">
+      <div className="photo-placeholder">📷</div>
+      <span className="photo-thumb-label">{label}</span>
+    </div>
+  );
   return (
     <div className="photo-thumb-wrap">
       <img
@@ -101,7 +106,9 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isA
     firstImpression: "Your first photo should be a clear headshot or upper body shot with good lighting. No sunglasses, no group photos, no heavy filters.",
   };
 
-  const hasPrompts = profileInput.prompts?.some(p => p.trim());
+  const hasPrompts = !!profileInput.prompts?.some(p => p.trim()) ||
+    !!feedback.promptRecommendations?.length ||
+    !!feedback.personalitySignalsPromptRewrite;
   const hasBio = !!profileInput.bio?.trim();
 
   return (
@@ -413,7 +420,7 @@ export function FullReport({ result, profileInput, onBack, onAnalyzeAnother, isA
                   return (
                   <div className="photo-signal-item" key={`${photo.photo}-${index}`}>
                     <span className="photo-signal-rank">{photo.rank || index + 1}</span>
-                    {parsedPhoto && <img className="photo-signal-thumb" src={`data:${parsedPhoto.mimeType};base64,${parsedPhoto.data}`} alt={photo.photo} />}
+                     {parsedPhoto ? <img className="photo-signal-thumb" src={`data:${parsedPhoto.mimeType};base64,${parsedPhoto.data}`} alt={photo.photo} /> : <div className="photo-signal-thumb photo-placeholder">Photo {index + 1}</div>}
                     <div>
                       <strong>{parsedPhoto ? (isExtra ? "Extra photo option" : currentIndex === 0 ? "Lead photo" : "Profile photo") : photo.photo}</strong>
                       <p>{photo.signal}</p><small>{photo.recommendation}</small>
