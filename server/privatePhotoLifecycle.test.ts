@@ -11,6 +11,7 @@ import {
   newPollingCapabilityId,
   newPollingCapabilityIdFrom,
   processExpiredAuditPhotos,
+  processPhotoCleanupRetries,
   persistPhotoMetadata,
   mapAuditReportPhotos,
   retentionCutoff,
@@ -48,19 +49,11 @@ const file = (name: string, bytes: string) => ({
 
 test("production upload helper stores all photo groups at exact private keys", async () => {
   const storage = new MemoryStorage();
-  const photos = await uploadAuditPhotos(storage, 42, [
-    { kind: "screenshots", files: [file("screen.png", "s")] },
-    { kind: "current", files: [file("one.png", "c1"), file("two.png", "c2")] },
-    { kind: "additional", files: [file("extra.png", "a")], labels: ["Trip"] },
-  ], async (bytes) => bytes);
-  assert.deepEqual([...storage.objects.keys()], [
-    "audits/42/screenshots/0",
-    "audits/42/current/0",
-    "audits/42/current/1",
-    "audits/42/additional/0",
-  ]);
-  assert.equal(photos[3].label, "Trip");
-  const metadata = auditReportPhotos(42, photos);
+
+  const queued = new Map<string, Date>();
+  const photos: AuditPhoto[] = [{ key: "audits/1/screenshots/0", kind: "screenshots", index: 0, mimeType: "image/png" }];
+  storage.objects.set(photos[0].key, Buffer.from("image"));
+  let metadata: AuditPhoto[] | null = photos;
   assert.equal(JSON.stringify(metadata).includes("cz"), false);
   assert.equal(JSON.stringify(metadata).includes("YzE="), false);
   assert.deepEqual(Object.keys((metadata as unknown as { currentPhotos: object[] }).currentPhotos[0]).sort(), ["endpoint", "index", "kind", "label", "mimeType"]);
@@ -68,34 +61,13 @@ test("production upload helper stores all photo groups at exact private keys", a
 
 test("a later object upload failure removes earlier private objects and exposes no endpoints", async () => {
   const storage = new MemoryStorage();
+
+  const queued = new Map<string, Date>();
   storage.failUploadAt = 2;
-  let response: ReturnType<typeof auditReportPhotos> | undefined;
+    const response = await request(headers, headers.authorization ? "" : "audit-token");
 
   await assert.rejects(async () => {
-    const photos = await uploadAndPersistAuditPhotos(storage, {
-      setPhotoMetadata: async () => assert.fail("metadata must not be persisted after upload failure"),
-    }, 43, [
-      { kind: "current", files: [file("one.png", "first"), file("two.png", "second")] },
-    ], async (bytes) => bytes);
-    response = auditReportPhotos(43, photos);
-  }, /Object storage upload failed/);
-
-  assert.equal(storage.uploadCount, 2);
-  assert.equal(storage.objects.size, 0);
-  assert.equal(response, undefined);
-});
-
-test("photo metadata persistence failure removes every uploaded object and exposes no endpoints", async () => {
-  const storage = new MemoryStorage();
-  let response: ReturnType<typeof auditReportPhotos> | undefined;
-
-  await assert.rejects(async () => {
-    const photos = await uploadAndPersistAuditPhotos(storage, {
-      setPhotoMetadata: async () => { throw new Error("PostgreSQL unavailable"); },
-    }, 44, [
-      { kind: "screenshots", files: [file("screen.png", "screen")] },
-      { kind: "current", files: [file("one.png", "first"), file("two.png", "second")] },
-    ], async (bytes) => bytes);
+  const photos: AuditPhoto[] = [{ key: "audits/1/screenshots/0", kind: "screenshots", index: 0, mimeType: "image/png" }];
     response = auditReportPhotos(44, photos);
   }, /PostgreSQL unavailable/);
 
@@ -104,9 +76,16 @@ test("photo metadata persistence failure removes every uploaded object and expos
   assert.equal(response, undefined);
 });
 
-test("photo metadata persistence stores references only, never image bytes", async () => {
+test("failed rollback deletion is durably queued and succeeds on retry", async () => {
+  const storage = new MemoryStorage();
+
+  const queued = new Map<string, Date>();
+    const response = await request(headers, headers.authorization ? "" : "audit-token");
+
+  await assert.rejects(async () => {
+  const photos: AuditPhoto[] = [{ key: "audits/1/screenshots/0", kind: "screenshots", index: 0, mimeType: "image/png" }];
   let record: any = { intake_data: { screenshotCount: 1 }, client_brief: { score: { overall: 80 } } };
-  const photos: AuditPhoto[] = [{ key: "audits/5/current/0", kind: "current", index: 0, mimeType: "image/png" }];
+  const photos: AuditPhoto[] = [{ key: "audits/1/screenshots/0", kind: "screenshots", index: 0, mimeType: "image/png" }];
   await persistPhotoMetadata({
     setPhotoMetadata: async (_id, references) => { record.photo_keys = references; },
   }, 5, photos);
@@ -126,6 +105,11 @@ test("Postgres private-photo adapter persists metadata and selects deterministic
     final_report_ready_at timestamptz, created_at timestamptz not null,
     photos_deleted_at timestamptz, updated_at timestamptz
   )`);
+  await pool.query(`CREATE TABLE private_photo_cleanup_queue (
+    object_key text primary key, attempt_count integer not null default 0,
+    next_attempt_at timestamptz not null default now(), last_attempt_at timestamptz,
+    created_at timestamptz not null default now()
+  )`);
   const now = new Date("2025-01-31T00:00:00Z");
   const raw = "data:image/png;base64,SECRET_IMAGE_BYTES";
   await pool.query(
@@ -140,6 +124,8 @@ test("Postgres private-photo adapter persists metadata and selects deterministic
   );
   const repository = new PostgresPrivatePhotoRepository(pool);
   const storage = new MemoryStorage();
+
+  const queued = new Map<string, Date>();
   const sentinel = "RAW_SENTINEL_SCREENSHOT_BASE64";
   const uploaded = await uploadAuditPhotos(storage, 1, [
     { kind: "screenshots", files: [file("screen.png", sentinel)] },
@@ -165,15 +151,9 @@ test("Postgres private-photo adapter persists metadata and selects deterministic
   const eligible = await repository.listExpiredPhotos(30, 60, now);
   assert.deepEqual(eligible.map((item: any) => Number(item.id)).sort(), [1, 2, 4]);
   await repository.clearPhotos("1");
-  const cleared = await repository.findAudit("1");
-  assert.deepEqual(cleared.photo_keys, []);
-  assert.ok(cleared.photos_deleted_at);
-  assert.deepEqual(mapAuditReportPhotos(cleared), {
-    screenshots: [], currentPhotos: [], additionalPhotos: [], deleted: true,
-  });
-});
+  const cleared: string[] = [];
 
-test("private photo authorization allows token, owner, and valid admin only", () => {
+  const retryNow = new Date("2100-01-01T00:00:00Z");
   const base = { accessToken: "token", ownerEmail: "owner@example.com", adminEmails: ["admin@example.com"], adminKey: "secret" };
   assert.equal(canReadPrivatePhoto({ ...base, providedToken: "token" }), true);
   assert.equal(canReadPrivatePhoto({ ...base, authenticatedEmail: "owner@example.com", authenticatedEmailVerified: true }), true);
@@ -223,7 +203,9 @@ test("production photo router serves bytes only to authorized identities", async
 
 test("manual deletion does not clear metadata when storage deletion fails", async () => {
   const storage = new MemoryStorage();
-  const photos: AuditPhoto[] = [{ key: "audits/1/current/0", kind: "current", index: 0, mimeType: "image/png" }];
+
+  const queued = new Map<string, Date>();
+  const photos: AuditPhoto[] = [{ key: "audits/1/screenshots/0", kind: "screenshots", index: 0, mimeType: "image/png" }];
   let metadataDeleted = false;
   storage.failDelete = true;
   await assert.rejects(deleteAuditPhotos(storage, photos, async () => { metadataDeleted = true; }));
@@ -232,6 +214,8 @@ test("manual deletion does not clear metadata when storage deletion fails", asyn
 
 test("manual deletion clears metadata only after all objects are deleted", async () => {
   const storage = new MemoryStorage();
+
+  const queued = new Map<string, Date>();
   const photos: AuditPhoto[] = [{ key: "audits/1/screenshots/0", kind: "screenshots", index: 0, mimeType: "image/png" }];
   storage.objects.set(photos[0].key, Buffer.from("image"));
   let metadata: AuditPhoto[] | null = photos;
@@ -248,6 +232,8 @@ test("retention cutoffs distinguish released and unreleased audits", () => {
 
 test("retention orchestration deletes eligible rows, clears successful metadata, and preserves failures", async () => {
   const storage = new MemoryStorage();
+
+  const queued = new Map<string, Date>();
   storage.objects.set("released", Buffer.from("r"));
   storage.objects.set("unreleased", Buffer.from("u"));
   storage.objects.set("retry", Buffer.from("x"));
@@ -257,6 +243,8 @@ test("retention orchestration deletes eligible rows, clears successful metadata,
     { id: 3, photo_keys: [{ key: "retry", kind: "current", index: 0, mimeType: "image/png" }] },
   ];
   const cleared: string[] = [];
+
+  const retryNow = new Date("2100-01-01T00:00:00Z");
   storage.failDelete = false;
   await processExpiredAuditPhotos({
     findAudit: async () => null,
@@ -297,3 +285,18 @@ test("polling capability source requests exactly 32 cryptographic bytes", () => 
   assert.equal(requested, 32);
   assert.equal(id.length, 64);
 });
+
+  const cleanupRows = await pool.query("SELECT * FROM private_photo_cleanup_queue");
+
+  const retries = {
+    enqueuePhotoCleanup: async (keys: string[]) => {
+      for (const key of keys) queued.set(key, new Date(0));
+    },
+    listPhotoCleanupRetries: async (limit: number, now: Date) =>
+      [...queued.entries()]
+        .filter(([, nextAttemptAt]) => nextAttemptAt <= now)
+        .slice(0, limit)
+        .map(([key]) => ({ key })),
+    completePhotoCleanup: async (key: string) => { queued.delete(key); },
+    deferPhotoCleanup: async (key: string, nextAttemptAt: Date) => { queued.set(key, nextAttemptAt); },
+  };

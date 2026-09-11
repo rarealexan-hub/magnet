@@ -34,6 +34,7 @@ import {
   newPollingCapabilityId,
   createPrivatePhotoRouter,
   processExpiredAuditPhotos,
+  processPhotoCleanupRetries,
   type AuditPhoto,
 } from "./privatePhotoLifecycle.js";
 import { PostgresPrivatePhotoRepository } from "./privatePhotoRepository.js";
@@ -167,6 +168,15 @@ async function initAuditTracking() {
     await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS photo_keys JSONB NOT NULL DEFAULT '[]'`);
     await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS photos_deleted_at TIMESTAMPTZ`);
     await pool.query(`ALTER TABLE human_audits ADD COLUMN IF NOT EXISTS report_email_sent_at TIMESTAMPTZ`);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS private_photo_cleanup_queue (
+        object_key TEXT PRIMARY KEY,
+        attempt_count INTEGER NOT NULL DEFAULT 0,
+        next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        last_attempt_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS human_audit_questions (
         id BIGSERIAL PRIMARY KEY,
@@ -1119,7 +1129,7 @@ app.post(
            { kind: "screenshots", files: screenshotFiles, labels: screenshotLabels },
            { kind: "current", files: currentPhotoFiles },
            { kind: "additional", files: additionalPhotoFiles, labels: additionalPhotoLabels },
-         ], convertHeicBuffer);
+         ], convertHeicBuffer, privatePhotoRepository);
         const firstRead = {
           score: result.score,
           feedback: {
@@ -1585,6 +1595,7 @@ async function cleanupExpiredAuditPhotos() {
   const releasedDays = retentionDays(releasedSetting, 30);
   const unreleasedDays = retentionDays(unreleasedSetting, 60);
   await processExpiredAuditPhotos(privatePhotoRepository, objectStorage, { releasedDays, unreleasedDays });
+  await processPhotoCleanupRetries(privatePhotoRepository, objectStorage);
 }
 void cleanupExpiredAuditPhotos().catch((error) => console.error("Audit photo cleanup error:", error));
 const photoCleanupTimer = setInterval(() => void cleanupExpiredAuditPhotos().catch((error) => console.error("Audit photo cleanup error:", error)), 24 * 60 * 60 * 1000);

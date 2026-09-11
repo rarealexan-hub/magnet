@@ -1,10 +1,10 @@
 import type { Pool } from "pg";
-import type { AuditPhoto, PrivatePhotoRepository } from "./privatePhotoLifecycle.js";
+import type { AuditPhoto, PhotoCleanupRetryRepository, PrivatePhotoRepository } from "./privatePhotoLifecycle.js";
 
 /** PostgreSQL boundary for private-photo metadata. All callers use this adapter,
  * keeping photo lifecycle SQL deterministic and preventing accidental payload
  * persistence in route code. */
-export class PostgresPrivatePhotoRepository implements PrivatePhotoRepository {
+export class PostgresPrivatePhotoRepository implements PrivatePhotoRepository, PhotoCleanupRetryRepository {
   constructor(private readonly db: Pick<Pool, "query">) {}
 
   async findAudit(id: string): Promise<any | null> {
@@ -37,5 +37,41 @@ export class PostgresPrivatePhotoRepository implements PrivatePhotoRepository {
       [releasedDays, unreleasedDays, now],
     );
     return result.rows;
+  }
+
+  async enqueuePhotoCleanup(keys: string[]): Promise<void> {
+    const uniqueKeys = [...new Set(keys)];
+    if (!uniqueKeys.length) return;
+    const values = uniqueKeys.map((_, index) => `($${index + 1})`).join(", ");
+    await this.db.query(
+      `INSERT INTO private_photo_cleanup_queue (object_key)
+       VALUES ${values}
+       ON CONFLICT (object_key) DO NOTHING`,
+      uniqueKeys,
+    );
+  }
+
+  async listPhotoCleanupRetries(limit: number, now: Date): Promise<Array<{ key: string }>> {
+    const result = await this.db.query(
+      `SELECT object_key AS key FROM private_photo_cleanup_queue
+       WHERE next_attempt_at <= $1
+       ORDER BY next_attempt_at, created_at
+       LIMIT $2`,
+      [now, limit],
+    );
+    return result.rows;
+  }
+
+  async completePhotoCleanup(key: string): Promise<void> {
+    await this.db.query("DELETE FROM private_photo_cleanup_queue WHERE object_key = $1", [key]);
+  }
+
+  async deferPhotoCleanup(key: string, nextAttemptAt: Date): Promise<void> {
+    await this.db.query(
+      `UPDATE private_photo_cleanup_queue
+       SET attempt_count = attempt_count + 1, next_attempt_at = $1, last_attempt_at = NOW()
+       WHERE object_key = $2`,
+      [nextAttemptAt, key],
+    );
   }
 }

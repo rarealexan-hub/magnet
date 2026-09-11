@@ -14,6 +14,12 @@ export interface PrivatePhotoStorage {
   delete(key: string, options?: { ignoreNotFound?: boolean }): Promise<{ ok: boolean; error?: { message?: string } }>;
 }
 
+export interface PhotoCleanupRetryRepository {
+  enqueuePhotoCleanup(keys: string[]): Promise<void>;
+  listPhotoCleanupRetries(limit: number, now: Date): Promise<Array<{ key: string }>>;
+  completePhotoCleanup(key: string): Promise<void>;
+  deferPhotoCleanup(key: string, nextAttemptAt: Date): Promise<void>;
+}
 export interface PrivatePhotoFile {
   buffer: Buffer;
   mimetype?: string;
@@ -45,17 +51,34 @@ export function mapAuditReportPhotos(row: {
   return auditReportPhotos(row.id, row.photo_keys || [], !!row.photos_deleted_at);
 }
 
-export async function deleteAuditObjects(storage: PrivatePhotoStorage, keys: string[], bestEffort = false) {
+export async function deleteAuditObjects(storage: PrivatePhotoStorage, keys: string[], bestEffort = false): Promise<string[]> {
+  const failedKeys: string[] = [];
   await Promise.all(keys.map(async (key) => {
     try {
       const result = await storage.delete(key, { ignoreNotFound: true });
       if (!result.ok) throw new Error(result.error?.message || "Object storage deletion failed");
     } catch (error) {
       if (!bestEffort) throw error;
+      failedKeys.push(key);
     }
   }));
+  return failedKeys;
 }
 
+async function rollbackAuditObjects(
+  storage: PrivatePhotoStorage,
+  keys: string[],
+  cleanupRetries?: Pick<PhotoCleanupRetryRepository, "enqueuePhotoCleanup">,
+): Promise<void> {
+  const failedKeys = await deleteAuditObjects(storage, keys, true);
+  if (failedKeys.length && cleanupRetries) {
+    try {
+      await cleanupRetries.enqueuePhotoCleanup(failedKeys);
+    } catch (error) {
+      console.error("Failed to queue audit photo cleanup retries:", failedKeys, error);
+    }
+  }
+}
 /** Delete objects before committing metadata. A failed object deletion deliberately
  * leaves the database record untouched so a later retry can recover the photos. */
 export async function deleteAuditPhotos(
@@ -72,6 +95,7 @@ export async function uploadAuditPhotos(
   auditId: string | number,
   groups: Array<{ kind: string; files: PrivatePhotoFile[]; labels?: string[] }>,
   convertHeic: (buffer: Buffer) => Promise<Buffer>,
+  cleanupRetries?: Pick<PhotoCleanupRetryRepository, "enqueuePhotoCleanup">,
 ): Promise<AuditPhoto[]> {
   const uploaded: AuditPhoto[] = [];
   try {
@@ -94,7 +118,7 @@ export async function uploadAuditPhotos(
     }
     return uploaded;
   } catch (error) {
-    await deleteAuditObjects(storage, uploaded.map((photo) => photo.key), true);
+    await rollbackAuditObjects(storage, uploaded.map((photo) => photo.key), cleanupRetries);
     throw error;
   }
 }
@@ -105,17 +129,38 @@ export async function uploadAndPersistAuditPhotos(
   auditId: string | number,
   groups: Array<{ kind: string; files: PrivatePhotoFile[]; labels?: string[] }>,
   convertHeic: (buffer: Buffer) => Promise<Buffer>,
+  cleanupRetries?: Pick<PhotoCleanupRetryRepository, "enqueuePhotoCleanup">,
 ): Promise<AuditPhoto[]> {
-  const photos = await uploadAuditPhotos(storage, auditId, groups, convertHeic);
+  const photos = await uploadAuditPhotos(storage, auditId, groups, convertHeic, cleanupRetries);
   try {
     await persistPhotoMetadata(repository, auditId, photos);
     return photos;
   } catch (error) {
-    await deleteAuditObjects(storage, photos.map((photo) => photo.key), true);
+    await rollbackAuditObjects(storage, photos.map((photo) => photo.key), cleanupRetries);
     throw error;
   }
 }
 
+export async function processPhotoCleanupRetries(
+  repository: PhotoCleanupRetryRepository,
+  storage: PrivatePhotoStorage,
+  options: { limit?: number; now?: Date; retryDelayMs?: number } = {},
+): Promise<void> {
+  const now = options.now || new Date();
+  const rows = await repository.listPhotoCleanupRetries(options.limit || 100, now);
+  for (const row of rows) {
+    try {
+      await deleteAuditObjects(storage, [row.key]);
+      await repository.completePhotoCleanup(row.key);
+    } catch (error) {
+      await repository.deferPhotoCleanup(
+        row.key,
+        new Date(now.getTime() + (options.retryDelayMs || 15 * 60 * 1000)),
+      );
+      console.error("Audit photo cleanup retry failed:", row.key, error);
+    }
+  }
+}
 export function newPollingCapabilityId(): string {
   return newPollingCapabilityIdFrom((size) => crypto.randomBytes(size));
 }

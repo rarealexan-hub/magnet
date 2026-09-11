@@ -1,1 +1,2 @@
 - [Temporary server ports](temporary-server-ports.md) — workflow reconciliation may re-add ports opened by temporary acceptance servers; clean them after the final restart.
+- [PostgreSQL test compatibility](postgres-test-compatibility.md) — prefer portable multi-row VALUES over unnest when repository SQL must run under pg-mem.
