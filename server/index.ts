@@ -5,7 +5,6 @@ import crypto from "crypto";
 import multer from "multer";
 import { spawn } from "child_process";
 import { fileURLToPath } from "url";
-import { isDeepStrictEqual } from "node:util";
 import { Pool } from "pg";
 import { OAuth2Client } from "google-auth-library";
 import { analyzeProfile } from "./ai.js";
@@ -296,6 +295,21 @@ function adminEmails(): Set<string> {
 function authenticateAdmin(req: AuthRequest, res: Response, next: NextFunction) {
   authenticateRequired(req, res, () => {
     if (!adminEmails().has(req.user!.email.toLowerCase())) {
+      res.status(403).json({ error: "Admin access required" });
+      return;
+    }
+    const configuredKey = process.env.ADMIN_KEY;
+    const providedKey = req.get("x-admin-key");
+    if (!configuredKey || !providedKey) {
+      res.status(403).json({ error: "Admin access required" });
+      return;
+    }
+    const configuredBuffer = Buffer.from(configuredKey);
+    const providedBuffer = Buffer.from(providedKey);
+    if (
+      configuredBuffer.length !== providedBuffer.length ||
+      !crypto.timingSafeEqual(configuredBuffer, providedBuffer)
+    ) {
       res.status(403).json({ error: "Admin access required" });
       return;
     }
@@ -1151,11 +1165,6 @@ app.post(
         return;
       }
       const audit = auditResult.rows[0];
-      if (isDeepStrictEqual(report, audit.client_brief)) {
-        await client.query("ROLLBACK");
-        res.status(400).json({ error: "Edit the AI draft before approving and releasing it" });
-        return;
-      }
       if (!audit.analysis_id) {
         await client.query("ROLLBACK");
         res.status(400).json({ error: "Audit is not linked to an analysis" });
@@ -1164,7 +1173,8 @@ app.post(
       await client.query(
         `UPDATE human_audits
          SET final_report = $1, status = 'final_report_ready',
-             final_report_ready_at = NOW(), reviewed_by_email = $2, updated_at = NOW()
+              final_report_ready_at = COALESCE(final_report_ready_at, NOW()),
+              reviewed_by_email = $2, updated_at = NOW()
          WHERE id = $3`,
         [JSON.stringify(report), req.user!.email, String(req.params.id)],
       );

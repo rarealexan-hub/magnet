@@ -31,8 +31,11 @@ const EDITABLE_STATUSES: HumanAuditStatus[] = [
   "followup_complete",
 ];
 
-function authHeaders(token?: string): HeadersInit {
-  return token ? { Authorization: `Bearer ${token}` } : {};
+function authHeaders(token?: string, adminKey?: string): HeadersInit {
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(adminKey ? { "x-admin-key": adminKey } : {}),
+  };
 }
 
 export function HumanAuditAdmin({ token, onBack }: Props) {
@@ -44,10 +47,18 @@ export function HumanAuditAdmin({ token, onBack }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [adminKey, setAdminKey] = useState(() => sessionStorage.getItem("magnet_admin_key") || "");
+  const [adminKeyInput, setAdminKeyInput] = useState("");
+  const [needsAdminKey, setNeedsAdminKey] = useState(false);
 
-  const loadAudits = async () => {
+  const noteForbidden = (response: Response) => {
+    if (response.status === 403) setNeedsAdminKey(true);
+  };
+
+  const loadAudits = async (key = adminKey) => {
     try {
-      const response = await fetch("/api/admin/human-audits", { headers: authHeaders(token) });
+      const response = await fetch("/api/admin/human-audits", { headers: authHeaders(token, key) });
+      noteForbidden(response);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Could not load review queue.");
       setAudits(data.audits);
@@ -61,7 +72,8 @@ export function HumanAuditAdmin({ token, onBack }: Props) {
   const loadAudit = async (id: number) => {
     setError("");
     try {
-      const response = await fetch(`/api/admin/human-audits/${id}`, { headers: authHeaders(token) });
+      const response = await fetch(`/api/admin/human-audits/${id}`, { headers: authHeaders(token, adminKey) });
+      noteForbidden(response);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Could not load client brief.");
       setSelected(data.audit);
@@ -98,9 +110,10 @@ export function HumanAuditAdmin({ token, onBack }: Props) {
     try {
       const response = await fetch(`/api/admin/human-audits/${selected.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", ...authHeaders(token) },
+        headers: { "Content-Type": "application/json", ...authHeaders(token, adminKey) },
         body: JSON.stringify(patch),
       });
+      noteForbidden(response);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Could not update audit.");
       setSelected(data.audit);
@@ -126,9 +139,10 @@ export function HumanAuditAdmin({ token, onBack }: Props) {
     try {
       const response = await fetch(`/api/admin/human-audits/${selected.id}/release`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders(token) },
+        headers: { "Content-Type": "application/json", ...authHeaders(token, adminKey) },
         body: JSON.stringify({ finalReport }),
       });
+      noteForbidden(response);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Could not release report.");
       setSelected(data.audit);
@@ -145,6 +159,16 @@ export function HumanAuditAdmin({ token, onBack }: Props) {
   }
 
   const awaitingCount = audits.filter((audit) => audit.status === "awaiting_admin_review").length;
+  const saveAdminKey = () => {
+    const nextKey = adminKeyInput.trim();
+    if (!nextKey) return;
+    sessionStorage.setItem("magnet_admin_key", nextKey);
+    setAdminKey(nextKey);
+    setAdminKeyInput("");
+    setNeedsAdminKey(false);
+    setLoading(true);
+    void loadAudits(nextKey);
+  };
   const previewInput: ProfileInput | null = selected ? {
     platform: selected.platform as ProfileInput["platform"],
     email: selected.email,
@@ -165,6 +189,20 @@ export function HumanAuditAdmin({ token, onBack }: Props) {
         <button className="audit-refresh" onClick={() => void loadAudits()}><RefreshCw size={14} /> Refresh</button>
       </div>
       <div className="audit-admin-layout">
+        {needsAdminKey && (
+          <div className="brief-block admin-key-prompt">
+            <h3>Admin key required</h3>
+            <p>Enter the admin key for this browser session.</p>
+            <input
+              type="password"
+              value={adminKeyInput}
+              onChange={(event) => setAdminKeyInput(event.target.value)}
+              onKeyDown={(event) => { if (event.key === "Enter") saveAdminKey(); }}
+              autoComplete="off"
+            />
+            <button className="audit-primary-btn" onClick={saveAdminKey}>Continue</button>
+          </div>
+        )}
         <aside className="audit-queue">
           <div className="audit-admin-title"><p className="audit-eyebrow">Review queue</p><h1>Profile audits</h1></div>
           <p className="audit-queue-count">{awaitingCount} Awaiting review</p>
@@ -196,7 +234,9 @@ export function HumanAuditAdmin({ token, onBack }: Props) {
                   <button className="audit-secondary-btn" onClick={saveEdits} disabled={saving}>Save edits</button>
                   <button className="audit-secondary-btn" onClick={() => { const report = parseReport(); if (report) setPreview(report); }}>Preview as user</button>
                   <button className="audit-secondary-btn" onClick={() => { setReportJson(JSON.stringify(selected.clientBrief || {}, null, 2)); setError(""); }}>Reset to AI draft</button>
-                  <button className="audit-primary-btn" onClick={() => void release()} disabled={saving || selected.status === "final_report_ready"}>Approve and release</button>
+                  <button className="audit-primary-btn" onClick={() => void release()} disabled={saving}>
+                    {selected.status === "final_report_ready" ? "Release update" : "Approve and release"}
+                  </button>
                 </div>
               </div>
               <div className="brief-block">

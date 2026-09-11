@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { User } from "lucide-react";
 import { Landing } from "./components/Landing";
 import { ProfileForm } from "./components/ProfileForm";
@@ -235,9 +235,27 @@ export default function App() {
     const gated = data as any;
     if (gated.auditId && gated.accessToken) {
       setAuditAccess({ auditId: gated.auditId, token: gated.accessToken, status: gated.reviewStatus || "awaiting_admin_review" });
+      window.history.replaceState(
+        {},
+        "",
+        `/?audit=${encodeURIComponent(gated.auditId)}&token=${encodeURIComponent(gated.accessToken)}`,
+      );
     }
     setView("results");
   };
+
+  const handleAuditReady = useCallback((report: ProfileResult, status: string) => {
+    setResult((current) => ({
+      ...report,
+      analysisId: report.analysisId ?? current?.analysisId,
+      auditId: report.auditId ?? current?.auditId,
+      accessToken: report.accessToken ?? current?.accessToken,
+      reviewStatus: status as ProfileResult["reviewStatus"],
+    }));
+    setAuditAccess((current) => current ? { ...current, status } : current);
+    setFullReportViewed(true);
+    setView("full-report");
+  }, []);
 
   const handleStartOver = () => {
     setView("landing");
@@ -392,6 +410,7 @@ export default function App() {
               onSignIn={openAuthForResults}
               reviewStatus={(result as any).reviewStatus}
               auditAccess={auditAccess}
+              onAuditReady={handleAuditReady}
             />
           )}
           {view === "full-report" && result && profileInput && (

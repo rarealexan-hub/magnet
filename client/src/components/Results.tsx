@@ -61,6 +61,7 @@ interface Props {
   onSignIn?: () => void;
   reviewStatus?: string;
   auditAccess?: { auditId: number; token: string; status: string } | null;
+  onAuditReady?: (report: ProfileResult, status: string) => void;
 }
 
 const QUICK_SUGGESTIONS: Record<string, { tip: string }> = {
@@ -116,7 +117,7 @@ function ImmediateDirection({ score, onFullReport }: { score: ProfileResult["sco
   );
 }
 
-export function Results({ result, profileInput, onStartOver, onFullReport, onBundle, fullReportViewed, user, onSignIn, reviewStatus, auditAccess }: Props) {
+export function Results({ result, profileInput, onStartOver, onFullReport, onBundle, fullReportViewed, user, onSignIn, reviewStatus, auditAccess, onAuditReady }: Props) {
   const pending = reviewStatus === "awaiting_admin_review";
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -124,9 +125,29 @@ export function Results({ result, profileInput, onStartOver, onFullReport, onBun
 
   useEffect(() => {
     if (!auditAccess || reviewStatus !== "awaiting_admin_review") return;
-    const timer = window.setInterval(() => window.location.reload(), 60000);
+    const checkStatus = async () => {
+      try {
+        const response = await fetch(
+          `/api/audits/${auditAccess.auditId}?token=${encodeURIComponent(auditAccess.token)}`,
+        );
+        if (!response.ok) return;
+        const data = await response.json();
+        if (data.status === "final_report_ready" && data.report) {
+          onAuditReady?.({
+            ...data.report,
+            analysisId: data.analysisId,
+            auditId: auditAccess.auditId,
+            accessToken: auditAccess.token,
+            reviewStatus: data.status,
+          }, data.status);
+        }
+      } catch {
+        // Keep the first read visible and try again on the next interval.
+      }
+    };
+    const timer = window.setInterval(() => void checkStatus(), 60000);
     return () => window.clearInterval(timer);
-  }, [auditAccess, reviewStatus]);
+  }, [auditAccess, reviewStatus, onAuditReady]);
 
   const { score, feedback } = result;
 
