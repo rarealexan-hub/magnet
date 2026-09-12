@@ -6,3 +6,32 @@ id = "o0nudlq55NtQThtlSg4eB"
 uri = "file://magnet-export.zip"
 type = "unspecified"
 title = "Magnet — project source (no node_modules)"
+logical_id = "3b340a7d-ef2c-49d1-bd96-84e6c529b2a8"
+
+[[outputs]]
+id = "f1WmSOc8QYHfJSfB4Ok59"
+uri = "file://screenshots/photos-extra-390.png"
+type = "image"
+title = "Photos step — 390px"
+description = "Mobile acceptance screenshot with three extra-photo thumbnails in a two-column grid."
+logical_id = "6a8eb170-408a-491d-9042-ec0578d6bd6b"
+content_hash = "sha256:946b571a638d49f9dbf9741fe221dc31a10f665a3cd3a9802a05be7021332927"
+size = 46525
+mtime_ms = 1789213093083
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:fad33dde-edaf-4d31-8107-4d6dd099bf1e/6a8eb170-408a-491d-9042-ec0578d6bd6b/095564fc-aed0-4e59-a50e-bbe32147bc3e"
+storage_version_token = "1789213162229444"
+content_type = "image/png"
+
+[[outputs]]
+id = "t8utlPJFd0rUWNXRrB63D"
+uri = "file://screenshots/photos-extra-1280.png"
+type = "image"
+title = "Photos step — 1280px"
+description = "Desktop acceptance screenshot with three extra-photo thumbnails and corner remove controls."
+logical_id = "ec57447c-33d4-42d6-9736-de6a70122f06"
+content_hash = "sha256:63e0aaffb849167c4b5380fd33bab80ea2561a66a27369ac9544fea65c8eb377"
+size = 68394
+mtime_ms = 1789213092779
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:fad33dde-edaf-4d31-8107-4d6dd099bf1e/ec57447c-33d4-42d6-9736-de6a70122f06/01d53178-0b61-4b99-a1f1-a3de0d0d1365"
+storage_version_token = "1789213162819842"
+content_type = "image/png"

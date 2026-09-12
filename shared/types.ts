@@ -21,6 +21,28 @@ export const PLATFORMS = [
 
 export type PlatformId = typeof PLATFORMS[number]["id"];
 
+// Checked Sept 2026. Hinge and Bumble publish 6 photo slots in their help centers. Tinder's limit is 9 per third-party sources only. Raya allows unlimited photos; 9 is the server's cap. Recheck when an app changes its layout.
+export const PLATFORM_PHOTO_SLOTS: Record<PlatformId, number> = {
+  hinge: 6,
+  tinder: 9,
+  bumble: 6,
+  raya: 9,
+  okcupid: 9,
+  "coffee-meets-bagel": 9,
+  match: 9,
+  happn: 9,
+  "the-league": 9,
+  feeld: 9,
+  hily: 9,
+  "plenty-of-fish": 9,
+  zoosk: 9,
+  grindr: 9,
+  badoo: 9,
+  blk: 9,
+  her: 9,
+  other: 9,
+};
+
 export const PLATFORM_LABEL: Record<string, string> = Object.fromEntries(PLATFORMS.map(p => [p.id, p.label]));
 export const PLATFORM_COLOR: Record<string, string> = Object.fromEntries(PLATFORMS.map(p => [p.id, p.color]));
 

@@ -284,7 +284,7 @@ const ALLOWED_MIME_TYPES = [
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 20 * 1024 * 1024, files: 25 },
+  limits: { fileSize: 20 * 1024 * 1024, files: 29 },
   fileFilter: (_req, file, cb) => {
     if (
       ALLOWED_MIME_TYPES.includes(file.mimetype) ||
@@ -298,7 +298,7 @@ const upload = multer({
 });
 
 const analyzeUpload = upload.fields([
-  { name: "screenshots", maxCount: 6 },
+  { name: "screenshots", maxCount: 10 },
   { name: "currentPhotos", maxCount: 9 },
   { name: "additionalPhotos", maxCount: 10 },
 ]);

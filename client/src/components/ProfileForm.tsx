@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Plus, X, Loader2, Upload, GripVertical, ImagePlus, ChevronUp, ChevronDown, Camera } from "lucide-react";
-import { TARGET_QUALITIES, GENDER_OPTIONS, PARTNER_PREFERENCES, PLATFORMS, PLATFORM_AUDIT_FOCUS, PLATFORM_PROMPTS } from "@shared/types";
+import { TARGET_QUALITIES, GENDER_OPTIONS, PARTNER_PREFERENCES, PLATFORMS, PLATFORM_AUDIT_FOCUS, PLATFORM_PHOTO_SLOTS, PLATFORM_PROMPTS } from "@shared/types";
 import type { ProfileInput, ProfileResult, PlatformId } from "@shared/types";
 import { trackAnalysisStarted, trackAnalysisComplete } from "../lib/analytics";
 
@@ -29,13 +29,13 @@ interface SelectedPrompt {
   answer: string;
 }
 
-const MAX_SCREENSHOTS = 6;
-const MAX_CURRENT_PHOTOS = 9;
+const MAX_SCREENSHOTS = 10;
 const MAX_ADDITIONAL_PHOTOS = 10;
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif", "image/bmp", "image/tiff", "image/svg+xml"];
 const HEIC_TYPES = ["image/heic", "image/heif"];
-const SELECTABLE_PLATFORMS = PLATFORMS;
+const HIDDEN_PLATFORM_OPTIONS = new Set<PlatformId>(["okcupid", "coffee-meets-bagel", "plenty-of-fish", "zoosk", "badoo"]);
+const SELECTABLE_PLATFORMS = PLATFORMS.filter((platform) => !HIDDEN_PLATFORM_OPTIONS.has(platform.id));
 
 const CALIBRATION_EXAMPLES = [
   { id: "clear-solo", label: "Clear solo portrait", detail: "Face-forward, relaxed, easy to read", tone: "sand" },
@@ -374,7 +374,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   const handleCurrentPhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.length) {
       setProcessingOtherPhotos(true);
-      void processFiles(Array.from(e.target.files), setCurrentPhotos, currentPhotos, MAX_CURRENT_PHOTOS)
+      void processFiles(Array.from(e.target.files), setCurrentPhotos, currentPhotos, PLATFORM_PHOTO_SLOTS[platform])
         .finally(() => setProcessingOtherPhotos(false));
     }
     e.target.value = "";
@@ -390,7 +390,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
     }
     setError("");
     setProcessingOtherPhotos(true);
-    void processFiles(files, setCurrentPhotos, currentPhotos, MAX_CURRENT_PHOTOS)
+    void processFiles(files, setCurrentPhotos, currentPhotos, PLATFORM_PHOTO_SLOTS[platform])
       .finally(() => setProcessingOtherPhotos(false));
   };
 
@@ -486,7 +486,9 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
     current: UploadedPhoto[],
     ref: React.RefObject<HTMLInputElement | null>
   ) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) void processFiles(Array.from(e.target.files), setter, current, 5);
+    const total = friendsPhotos.length + selfiePhotos.length + familyPhotos.length + activitiesPhotos.length;
+    const maxForCategory = current.length + Math.min(5 - current.length, MAX_ADDITIONAL_PHOTOS - total);
+    if (e.target.files) void processFiles(Array.from(e.target.files), setter, current, maxForCategory);
     if (ref.current) ref.current.value = "";
   };
 
@@ -642,10 +644,10 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
     const addLabeled = (photos: UploadedPhoto[], label: string) => {
       photos.forEach((p) => { fd.append("additionalPhotos", p.file); fd.append("additionalPhotoLabels", label); });
     };
-    addLabeled(friendsPhotos, "With friends");
-    addLabeled(selfiePhotos, "Selfie");
-    addLabeled(familyPhotos, "Family");
-    addLabeled(activitiesPhotos, "Activity / hobby");
+    addLabeled(friendsPhotos, "Full-body shot");
+    addLabeled(selfiePhotos, "Candid face shot");
+    addLabeled(familyPhotos, "Travel & adventure");
+    addLabeled(activitiesPhotos, "With friends");
     return fd;
   };
 
@@ -744,6 +746,11 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   };
 
   const handlePhotosNext = () => {
+    const slots = PLATFORM_PHOTO_SLOTS[platform];
+    if (currentPhotos.length > slots) {
+      setError(`${PLATFORMS.find((item) => item.id === platform)?.label} shows up to ${slots} photos. Remove ${currentPhotos.length - slots} to continue.`);
+      return;
+    }
     setError("");
     setStep("details");
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -810,6 +817,13 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
   if (step === "photos") {
     const leadPhoto = currentPhotos[0] ?? null;
     const otherPhotos = currentPhotos.slice(1);
+    const photoSlots = PLATFORM_PHOTO_SLOTS[platform];
+    const extraCurrentPhotos = Math.max(0, currentPhotos.length - photoSlots);
+    const photoLimitError = extraCurrentPhotos > 0
+      ? `${platformInfo?.label} shows up to ${photoSlots} photos. Remove ${extraCurrentPhotos} to continue.`
+      : "";
+    const additionalPhotoCount = friendsPhotos.length + selfiePhotos.length + familyPhotos.length + activitiesPhotos.length;
+    const additionalPhotosAtLimit = additionalPhotoCount >= MAX_ADDITIONAL_PHOTOS;
     const CATEGORIES = [
       { key: "friends", label: "Full-body shots", hint: "Profiles hiding their body get 40%+ fewer matches", ref: friendsRef, photos: friendsPhotos, setter: setFriendsPhotos },
       { key: "selfies", label: "Candid face shot", hint: "Face clearly visible, looking at camera — natural, not posed. Think candid headshot.", ref: selfiesRef, photos: selfiePhotos, setter: setSelfiePhotos },
@@ -823,19 +837,39 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           <div className="form-header">
             <h2>Your photos are everything.</h2>
             <p>We analyze each photo — what it signals, what to fix, and what to swap in.</p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,.heic,.heif"
-                multiple
-                style={{ display: "none" }}
-                onChange={handleScreenshotSelect}
-              />
-              <button type="button" className="evidence-inline-action evidence-inline-action-prominent" onClick={() => triggerScreenshotUpload("Full profile view")}>
-                <Camera size={15} />
-                Upload screenshots of your {platformInfo?.label} profile
-              </button>
-              {screenshots.length > 0 && <p className="form-hint">{screenshots.length} profile screenshot{screenshots.length === 1 ? "" : "s"} ready for your audit.</p>}
+          </div>
+
+          <div className="form-section">
+            <div className="form-label-row">
+              <label className="form-label">Which app?</label>
+              <span className="platform-limit-note">Pick one</span>
+            </div>
+            <div className="platform-select">
+              {SELECTABLE_PLATFORMS.map((p) => (
+                <button key={p.id} type="button" className={`platform-btn ${platform === p.id ? "active" : ""}`} onClick={() => handlePlatformChange(p.id)}>
+                  <span className="platform-btn-dot" style={{ background: p.color }} />
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <div className="platform-context-card" style={{ borderColor: platformInfo?.color }}>
+              <span className="platform-context-kicker">Audit structure</span>
+              <strong>{platformInfo?.label} profile, not a generic dating profile</strong>
+              <p>{PLATFORM_AUDIT_FOCUS[platform]}</p>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.heic,.heif"
+              multiple
+              style={{ display: "none" }}
+              onChange={handleScreenshotSelect}
+            />
+            <button type="button" className="evidence-inline-action evidence-inline-action-prominent" onClick={() => triggerScreenshotUpload("Full profile view")}>
+              <Camera size={15} />
+              Upload screenshots of your {platformInfo?.label} profile
+            </button>
+            {screenshots.length > 0 && <p className="form-hint">{screenshots.length} profile screenshot{screenshots.length === 1 ? "" : "s"} ready for your audit.</p>}
           </div>
 
           <input id="lead-photo-input" ref={leadPhotoRef} type="file" accept="image/*,.heic,.heif" onChange={handleLeadPhotoSelect} style={{ display: "none" }} />
@@ -891,7 +925,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           {/* Other profile photos */}
           <div className="photos-section">
             <label className="form-label">Other profile photos <span className="form-label-optional">in order</span></label>
-            <p className="form-hint">Add the rest of your photos as they appear on your profile.</p>
+            <p className="form-hint">Add photos 2 to {photoSlots} in the order they appear on your {platformInfo?.label} profile.</p>
             {otherPhotos.length > 0 && (
               <div className="photo-grid sortable" style={{ marginBottom: 12 }}>
                 {otherPhotos.map((p, i) => (
@@ -963,7 +997,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               <input id="other-photos-mobile-camera" className="mobile-photo-input" type="file" accept="image/*" capture="environment" onChange={handleCurrentPhotos} />
               {processingOtherPhotos && <p className="mobile-photo-processing">Processing your photos…</p>}
             </div>
-            {error && <div className="upload-inline-error" role="alert">{error}</div>}
+            {photoLimitError && <div className="upload-inline-error" role="alert">{photoLimitError}</div>}
           </div>
 
           {/* Specific additional photos */}
@@ -973,6 +1007,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
               <span className="form-label-badge">Optional but suggested</span>
             </div>
             <p className="form-hint">Go through your favorites album and upload some that didn't make the cut the first time around.</p>
+            {additionalPhotosAtLimit && <p className="form-hint">You've added the maximum of 10 extra photos.</p>}
             <div className="category-photo-list">
               {CATEGORIES.map(({ key, label, hint, ref, photos, setter }) => (
                 <div
@@ -981,14 +1016,14 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                   onDragEnter={(e) => handleUploadDragOver(e, key)}
                   onDragOver={(e) => handleUploadDragOver(e, key)}
                   onDragLeave={handleUploadDragLeave}
-                  onDrop={(e) => handlePhotoDrop(e, setter, photos, 5)}
+                  onDrop={(e) => handlePhotoDrop(e, setter, photos, photos.length + Math.min(5 - photos.length, MAX_ADDITIONAL_PHOTOS - additionalPhotoCount))}
                 >
                   <div className="category-photo-header">
                     <div>
                       <span className="category-photo-label">{label}</span>
                       <span className="category-photo-hint">{hint}</span>
                     </div>
-                    <button type="button" className="photos-add-more-btn" onClick={() => ref.current?.click()}>
+                    <button type="button" className="photos-add-more-btn" onClick={() => ref.current?.click()} disabled={additionalPhotosAtLimit || photos.length >= 5}>
                       <Plus size={13} /> Add
                     </button>
                   </div>
@@ -997,7 +1032,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
                       {photos.map((p, i) => (
                         <div key={i} className="category-photo-thumb">
                           <img src={p.preview} alt={`${label} ${i + 1}`} />
-                          <button type="button" className="category-photo-remove" onClick={() => removeCategoryPhoto(setter, i)}><X size={11} /></button>
+                          <button type="button" className="category-photo-remove" onClick={() => removeCategoryPhoto(setter, i)}><X size={14} /></button>
                         </div>
                       ))}
                     </div>
@@ -1009,7 +1044,7 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
 
           {error && <div className="form-error">{error}</div>}
 
-          <button type="button" className="submit-btn" onClick={handlePhotosNext}>
+          <button type="button" className="submit-btn" onClick={handlePhotosNext} disabled={!!photoLimitError}>
             {currentPhotos.length > 0
               ? `Continue with ${currentPhotos.length} photo${currentPhotos.length !== 1 ? "s" : ""} →`
               : "Continue →"}
@@ -1032,28 +1067,6 @@ export function ProfileForm({ onResult, onBack, userEmail, preselectedPlatform }
           <div className="form-header">
             <h2>Quick profile details</h2>
             <p>A few things to help us give you accurate, targeted feedback.</p>
-          </div>
-
-          <div className="form-section">
-            <div className="form-label-row">
-              <label className="form-label">Which app?</label>
-              <span className="platform-limit-note">Pick one</span>
-            </div>
-            <div className="platform-select">
-              {SELECTABLE_PLATFORMS.map((p) => (
-                <button key={p.id} type="button" className={`platform-btn ${platform === p.id ? "active" : ""}`} onClick={() => handlePlatformChange(p.id)}>
-                  <span className="platform-btn-dot" style={{ background: p.color }} />
-                  {p.label}
-                </button>
-              ))}
-            </div>
-            <div className="platform-context-card" style={{ borderColor: platformInfo?.color }}>
-              <span className="platform-context-kicker">Audit structure</span>
-              <strong>{platformInfo?.label} profile, not a generic dating profile</strong>
-              <p>
-                {PLATFORM_AUDIT_FOCUS[platform]}
-              </p>
-            </div>
           </div>
 
           <div className="form-section screenshot-evidence-section">

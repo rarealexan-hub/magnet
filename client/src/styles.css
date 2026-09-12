@@ -917,7 +917,7 @@ h2, h3, h4, h5, h6 {
 .screenshot-evidence-item {
   position: relative;
   display: grid;
-  grid-template-columns: 58px 1fr auto;
+  grid-template-columns: 96px 1fr auto;
   align-items: center;
   gap: 10px;
   padding: 8px;
@@ -925,7 +925,7 @@ h2, h3, h4, h5, h6 {
   border: 1px solid var(--border);
   border-radius: 8px;
 }
-.screenshot-evidence-item img { width: 58px; height: 58px; object-fit: cover; border-radius: 5px; }
+.screenshot-evidence-item img { width: 96px; height: auto; aspect-ratio: 9 / 16; object-fit: contain; background: var(--surface-2); border-radius: 5px; }
 .screenshot-evidence-label { display: block; margin-bottom: 4px; color: var(--text-muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
 .screenshot-evidence-input { width: 100%; min-height: 34px; padding: 7px 9px; font-size: 12px; }
 .screenshot-fallback-note { margin-top: 12px; color: var(--text-muted); font-size: 12px; line-height: 1.45; }
@@ -1878,6 +1878,8 @@ h2, h3, h4, h5, h6 {
   border-top: 1px solid var(--border);
   padding-top: 28px;
 }
+
+.photos-section + .photos-section { margin-top: 28px; }
 
 .photo-grid {
   display: grid;
@@ -6933,20 +6935,19 @@ button {
 }
 
 .category-photo-thumbs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .category-photo-thumb {
   position: relative;
-  width: 68px;
-  height: 68px;
-  border-radius: 8px;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
   overflow: hidden;
   border: 1px solid var(--border);
-  flex-shrink: 0;
 }
 
 .category-photo-thumb img {
@@ -6958,10 +6959,10 @@ button {
 
 .category-photo-remove {
   position: absolute;
-  top: 3px;
-  right: 3px;
-  width: 18px;
-  height: 18px;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
   background: rgba(9, 9, 11, 0.8);
   border: none;
   border-radius: 50%;
@@ -6971,7 +6972,6 @@ button {
   justify-content: center;
   cursor: pointer;
   padding: 0;
-  transition: background 0.15s;
 }
 
 .category-photo-remove:hover {
@@ -7528,12 +7528,13 @@ button {
 
   /* Wider touch targets for remove buttons */
   .screenshot-remove,
-  .bio-screenshot-remove,
-  .category-photo-remove,
   .prompt-answer-remove {
     min-width: 36px;
     min-height: 36px;
   }
+
+  .category-photo-thumbs { grid-template-columns: repeat(2, 1fr); }
+  .category-photo-remove, .bio-screenshot-remove { width: 32px; height: 32px; top: 6px; right: 6px; }
 }
 
 /* Safe area insets for notched/pill-shaped phones (iPhone X+) */
